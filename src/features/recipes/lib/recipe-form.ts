@@ -7,7 +7,6 @@ import {
   type PeopleRecipeInput,
   type RecipeType,
 } from "@/lib/recipes/schema";
-import { defaultPeopleExportColumns } from "@/lib/exports/people-export-columns";
 
 function splitLines(value: FormDataEntryValue | null) {
   if (typeof value !== "string") {
@@ -60,9 +59,6 @@ export function getEmptyPeopleRecipeDraft(): PeopleRecipeInput {
       personSeniorities: [],
       personDepartments: [],
     },
-    exportSettings: {
-      columns: [...defaultPeopleExportColumns],
-    },
   };
 }
 
@@ -89,7 +85,6 @@ export function getPeopleRecipeDraft(recipe: PeopleRecipe | null) {
     name: recipe.name,
     notes: recipe.notes,
     peopleFilters: recipe.peopleFilters,
-    exportSettings: recipe.exportSettings,
   });
 }
 
@@ -135,9 +130,6 @@ export function parseRecipeFormData(formData: FormData, type: RecipeType) {
       personLocations: getMultiValueEntries(formData, "personLocations"),
       personSeniorities: formData.getAll("personSeniorities").map(String),
       personDepartments: formData.getAll("personDepartments").map(String),
-    },
-    exportSettings: {
-      columns: getMultiValueEntries(formData, "exportColumns"),
     },
   });
 }

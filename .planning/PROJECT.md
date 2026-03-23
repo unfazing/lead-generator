@@ -12,7 +12,7 @@ Turn precise Apollo filters into verified-email exports quickly without wasting 
 
 ### Validated
 
-- [x] Save reusable recipes that remember search inputs and export configuration — validated in Phase 1.
+- [x] Save reusable recipes that remember Apollo search inputs only — validated in Phase 1 and refined after Phase 3 UI cleanup.
 - [x] Show current Apollo API usage data in the frontend before search execution — validated in Phase 1.
 - [x] Search Apollo companies using configurable filter criteria and reuse snapshots safely — validated in Phase 2.
 - [x] Search Apollo people from matched companies in both manual-select and all-company modes — validated in Phase 3.
@@ -47,7 +47,7 @@ Apollo basic-plan efficiency is a primary product concern. The system should avo
 |----------|-----------|---------|
 | Build the first version as a single-user web application | The tool is only for personal use right now, so multi-user complexity would slow delivery without adding value | Validated in Phase 1 |
 | Support both manual company selection and all-company people-search execution | Some runs need tighter control while others should be repeatable end-to-end | — Pending |
-| Save recipes with both search filters and output/export setup | Repeated prospecting sessions should require minimal reconfiguration | Validated in Phase 1 |
+| Keep recipes focused on repeatable Apollo query inputs only | Export layout belongs to snapshot/run context so search recipes stay reusable and narrow in purpose | Validated after Phase 3 UI cleanup |
 | Reuse matching company snapshots by default and make refresh explicit | Company search is credit-bearing, so the safe default should avoid silent repeat calls | Validated in Phase 2 |
 | Keep company-search inputs aligned with Apollo request semantics | Input drift creates invalid searches and poor UX, so the filter contract must drive control choice | Validated in Phase 2 |
 | Keep people preview snapshot-bound before retrieval planning | Retrieval should begin from reviewed, persisted preview state rather than transient search output | Validated in Phase 3 |

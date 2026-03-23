@@ -11,7 +11,6 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **RECP-01**: User can create a saved recipe with Apollo company-search filters
 - [x] **RECP-02**: User can add person-search filters to a saved recipe
-- [x] **RECP-03**: User can save output column selections and CSV export settings as part of a recipe
 - [ ] **RECP-04**: User can load an existing recipe and rerun it without re-entering filters
 
 ### Company Search
@@ -46,7 +45,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Export
 
 - [ ] **EXPT-01**: User can export verified-email results to CSV
-- [ ] **EXPT-02**: User can export only the configured output columns saved in the active recipe or run setup
+- [ ] **EXPT-02**: User can export only the configured output columns saved on the active snapshot or run setup
 - [ ] **EXPT-03**: User can exclude duplicate contacts from an export
 - [ ] **EXPT-04**: User can trace exported rows back to their source company, source run, and verification status
 
@@ -81,7 +80,6 @@ Requirements for initial release. Each maps to roadmap phases.
 |-------------|-------|--------|
 | RECP-01 | Phase 1 | Complete |
 | RECP-02 | Phase 1 | Complete |
-| RECP-03 | Phase 1 | Complete |
 | RECP-04 | Phase 5 | Pending |
 | COMP-01 | Phase 2 | Complete |
 | COMP-02 | Phase 2 | Complete |
@@ -106,8 +104,8 @@ Requirements for initial release. Each maps to roadmap phases.
 | EXPT-04 | Phase 5 | Pending |
 
 **Coverage:**
-- v1 requirements: 25 total
-- Mapped to phases: 25
+- v1 requirements: 24 total
+- Mapped to phases: 24
 - Unmapped: 0
 
 ---

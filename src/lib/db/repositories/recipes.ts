@@ -27,8 +27,25 @@ async function readRecipes() {
   try {
     const contents = await readFile(filePath, "utf8");
     const parsed = JSON.parse(contents) as unknown;
+    const normalized = Array.isArray(parsed)
+      ? parsed.map((recipe) => {
+          if (
+            recipe &&
+            typeof recipe === "object" &&
+            "type" in recipe &&
+            recipe.type === "people" &&
+            "exportSettings" in recipe
+          ) {
+            const normalizedRecipe = { ...(recipe as Record<string, unknown>) };
+            delete normalizedRecipe.exportSettings;
+            return normalizedRecipe;
+          }
 
-    const typed = typedRecipeCollectionSchema.safeParse(parsed);
+          return recipe;
+        })
+      : parsed;
+
+    const typed = typedRecipeCollectionSchema.safeParse(normalized);
     if (typed.success) {
       return typed.data;
     }

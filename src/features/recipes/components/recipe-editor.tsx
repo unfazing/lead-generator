@@ -1,6 +1,5 @@
 import { saveRecipeAction } from "@/app/recipes/actions";
 import { MultiValueInput } from "@/features/recipes/components/multi-value-input";
-import { peopleExportColumnOptions } from "@/lib/exports/people-export-columns";
 import { employeeRangeOptions } from "@/lib/apollo/company-filter-definitions";
 import {
   peopleDepartmentFilterOptions,
@@ -32,10 +31,6 @@ function hasSelectedValue(values: readonly string[], value: string) {
   return values.includes(value);
 }
 
-function hasSelectedExportColumn(values: readonly string[], value: string) {
-  return values.includes(value);
-}
-
 function getTitle(type: RecipeType, recipe: CompanyRecipe | PeopleRecipe | null) {
   if (type === "company") {
     return recipe ? "Refine company search recipe" : "Create company search recipe";
@@ -55,7 +50,7 @@ export function RecipeEditor(props: RecipeEditorProps) {
         <p>
           {type === "company"
             ? "Save reusable company filters separately so any people search can be paired with them later."
-            : "Save reusable people filters and export defaults separately so they can be mixed with any company result set."}
+            : "Save reusable people filters separately so they can be mixed with any company result set later."}
         </p>
       </div>
 
@@ -86,30 +81,6 @@ export function RecipeEditor(props: RecipeEditorProps) {
                 required
               />
             </div>
-            {type === "people" ? (
-              <div className="field full">
-                <label>Export columns</label>
-                <div className="option-grid">
-                  {peopleExportColumnOptions.map((option) => (
-                    <label key={option.value} className="option-pill">
-                      <input
-                        defaultChecked={hasSelectedExportColumn(
-                          props.draft.exportSettings.columns,
-                          option.value,
-                        )}
-                        name="exportColumns"
-                        type="checkbox"
-                        value={option.value}
-                      />
-                      <span>{option.label}</span>
-                    </label>
-                  ))}
-                </div>
-                <span className="field-hint">
-                  Select from the available people fields the app can actually carry into export.
-                </span>
-              </div>
-            ) : null}
             <div className="field full">
               <label htmlFor={`${type}-notes`}>Notes</label>
               <textarea

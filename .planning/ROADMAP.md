@@ -23,9 +23,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 ### Phase 1: Recipe and Usage Foundation
 **Goal**: Users can define reusable Apollo prospecting recipes and see baseline account usage before starting searches.
 **Depends on**: Nothing (first phase)
-**Requirements**: [RECP-01, RECP-02, RECP-03, COST-01]
+**Requirements**: [RECP-01, RECP-02, COST-01]
 **Success Criteria** (what must be TRUE):
-  1. User can create a recipe that stores company filters, person filters, and export column settings in one place.
+  1. User can create reusable company and people recipes that store Apollo query inputs for later reruns.
   2. User can reopen the app and still see previously saved recipes ready for editing or execution.
   3. User can see current Apollo API or credit usage information in the frontend before starting a run.
 **Plans**: 3 plans
@@ -89,7 +89,7 @@ Plans:
 **Requirements**: [RECP-04, EXPT-01, EXPT-02, EXPT-03, EXPT-04]
 **Success Criteria** (what must be TRUE):
   1. User can load an existing recipe, rerun it, and reach export-ready results without re-entering filters.
-  2. User can export verified-email results to CSV using the configured output columns from the active recipe or run.
+  2. User can export verified-email results to CSV using the configured output columns from the active snapshot or run.
   3. Exported CSVs exclude duplicates and preserve source company, source run, and verification-status provenance.
 **Plans**: 2 plans
 
