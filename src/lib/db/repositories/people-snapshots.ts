@@ -4,12 +4,17 @@ import path from "node:path";
 import { ensureDataDirectory } from "@/lib/db/client";
 import type { PeopleSearchResult } from "@/lib/apollo/people-search";
 import type { PeopleSnapshotSelectionMode } from "@/lib/db/schema/people-snapshots";
+import {
+  peopleSearchPayloadSchema,
+  type PeopleSearchPayload,
+} from "@/lib/people-search/schema";
 
 export type PeopleSnapshotRecord = {
   id: string;
   companyRecipeId: string;
   companySnapshotId: string;
   peopleRecipeId: string;
+  recipeParams: PeopleSearchPayload;
   selectionMode: PeopleSnapshotSelectionMode;
   selectedCompanyIds: string[];
   signature: string;
@@ -23,7 +28,18 @@ const snapshotFilePath = path.join(process.cwd(), "data", "people-snapshots.json
 async function readSnapshots() {
   try {
     const contents = await readFile(snapshotFilePath, "utf8");
-    return JSON.parse(contents) as PeopleSnapshotRecord[];
+    const parsed = JSON.parse(contents) as Array<
+      Omit<PeopleSnapshotRecord, "recipeParams"> & {
+        recipeParams?: PeopleSearchPayload;
+      }
+    >;
+
+    return parsed.map((record) => ({
+      ...record,
+      recipeParams: peopleSearchPayloadSchema.parse(
+        record.recipeParams ?? record.result.request,
+      ),
+    }));
   } catch (error) {
     if (
       error instanceof Error &&
@@ -61,6 +77,7 @@ export async function savePeopleSnapshot(
     companyRecipeId: string;
     companySnapshotId: string;
     peopleRecipeId: string;
+    recipeParams: PeopleSearchPayload;
     selectionMode: PeopleSnapshotSelectionMode;
     selectedCompanyIds: string[];
   },
@@ -68,6 +85,7 @@ export async function savePeopleSnapshot(
 ) {
   const records = await readSnapshots();
   const now = new Date().toISOString();
+  const recipeParams = peopleSearchPayloadSchema.parse(meta.recipeParams);
   const existing = records.find(
     (record) =>
       record.signature === result.signature &&
@@ -78,6 +96,7 @@ export async function savePeopleSnapshot(
   if (existing) {
     const updated: PeopleSnapshotRecord = {
       ...existing,
+      recipeParams,
       updatedAt: now,
       selectedCompanyIds: meta.selectedCompanyIds,
       selectionMode: meta.selectionMode,
@@ -94,6 +113,7 @@ export async function savePeopleSnapshot(
     companyRecipeId: meta.companyRecipeId,
     companySnapshotId: meta.companySnapshotId,
     peopleRecipeId: meta.peopleRecipeId,
+    recipeParams,
     selectionMode: meta.selectionMode,
     selectedCompanyIds: meta.selectedCompanyIds,
     signature: result.signature,

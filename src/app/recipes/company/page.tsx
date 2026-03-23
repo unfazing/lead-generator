@@ -24,17 +24,14 @@ export default async function CompanyRecipesPage({
   const peopleRecipeId = getSingleParam(params, "peopleRecipe");
   const editorMode = getSingleParam(params, "editorMode") === "new" ? "new" : "edit";
 
-  const [companyRecipes, peopleRecipes] = await Promise.all([
-    listRecipesByType("company"),
-    listRecipesByType("people"),
-  ]);
+  const companyRecipes = await listRecipesByType("company");
 
   const selectedCompanyRecipe = companyRecipeId
     ? await getRecipeById(companyRecipeId)
-    : companyRecipes[0] ?? null;
+    : null;
   const selectedPeopleRecipe = peopleRecipeId
     ? await getRecipeById(peopleRecipeId)
-    : peopleRecipes[0] ?? null;
+    : null;
 
   const companyRecipe =
     selectedCompanyRecipe?.type === "company" ? selectedCompanyRecipe : null;
@@ -87,12 +84,26 @@ export default async function CompanyRecipesPage({
           />
         </div>
         <div className="stack">
-          <RecipeEditor
-            draft={companyDraft}
-            pairedRecipeId={peopleRecipe?.id ?? null}
-            recipe={editorMode === "new" ? null : companyRecipe}
-            type="company"
-          />
+          {editorMode === "new" || companyRecipe ? (
+            <RecipeEditor
+              key={`${editorMode}-${companyRecipe?.id ?? "new"}`}
+              draft={companyDraft}
+              pairedRecipeId={peopleRecipe?.id ?? null}
+              recipe={editorMode === "new" ? null : companyRecipe}
+              type="company"
+            />
+          ) : (
+            <section className="card">
+              <div className="workspace-header">
+                <p className="eyebrow">Company recipe</p>
+                <h1>Choose a recipe</h1>
+                <p>
+                  Select a saved company recipe from the left to edit it, or click
+                  `New company recipe` to start a fresh one.
+                </p>
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </main>

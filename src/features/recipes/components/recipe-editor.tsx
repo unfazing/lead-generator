@@ -1,4 +1,4 @@
-import { saveRecipeAction } from "@/app/recipes/actions";
+import { deleteRecipeAction, saveRecipeAction } from "@/app/recipes/actions";
 import { MultiValueInput } from "@/features/recipes/components/multi-value-input";
 import { employeeRangeOptions } from "@/lib/apollo/company-filter-definitions";
 import {
@@ -32,11 +32,11 @@ function hasSelectedValue(values: readonly string[], value: string) {
 }
 
 function getTitle(type: RecipeType, recipe: CompanyRecipe | PeopleRecipe | null) {
-  if (type === "company") {
-    return recipe ? "Refine company search recipe" : "Create company search recipe";
+  if (recipe) {
+    return recipe.name;
   }
 
-  return recipe ? "Refine people search recipe" : "Create people search recipe";
+  return "New recipe";
 }
 
 export function RecipeEditor(props: RecipeEditorProps) {
@@ -576,6 +576,11 @@ export function RecipeEditor(props: RecipeEditorProps) {
           <button className="primary-button" type="submit">
             {recipe ? "Update recipe" : "Save recipe"}
           </button>
+          {recipe ? (
+            <button className="secondary-button destructive-button" formAction={deleteRecipeAction}>
+              Delete recipe
+            </button>
+          ) : null}
         </div>
       </form>
     </section>

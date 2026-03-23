@@ -12,6 +12,7 @@ export async function POST(request: Request) {
       companyRecipeId: parsed.companyRecipeId,
       companySnapshotId: parsed.companySnapshotId,
       peopleRecipeId: parsed.peopleRecipeId,
+      recipeParams: parsed,
       selectionMode: parsed.mode,
       selectedCompanyIds: parsed.selectedCompanyIds,
     },

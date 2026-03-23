@@ -167,3 +167,15 @@ export async function updatePeopleRecipe(recipeId: string, input: PeopleRecipeIn
 
   return updatedRecipe;
 }
+
+export async function deleteRecipe(recipeId: string) {
+  const recipes = await readRecipes();
+  const existingRecipe = recipes.find((recipe) => recipe.id === recipeId);
+
+  if (!existingRecipe) {
+    throw new Error("Recipe not found");
+  }
+
+  await writeRecipes(recipes.filter((recipe) => recipe.id !== recipeId));
+  return existingRecipe;
+}

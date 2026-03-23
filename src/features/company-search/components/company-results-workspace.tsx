@@ -10,6 +10,7 @@ import type { PeopleRecipe } from "@/lib/recipes/schema";
 import { PeopleResultsTable } from "@/features/people-search/components/people-results-table";
 import { PeopleSearchPanel } from "@/features/people-search/components/people-search-panel";
 import { SnapshotColumnPicker } from "@/features/snapshots/components/snapshot-column-picker";
+import { SnapshotParamsViewer } from "@/features/snapshots/components/snapshot-params-viewer";
 import { SnapshotResultsTable } from "@/features/snapshots/components/snapshot-results-table";
 
 type CompanyResultsWorkspaceProps = {
@@ -42,6 +43,7 @@ export function CompanyResultsWorkspace({
     getInitialOptionalColumns(companySnapshot),
   );
   const [showColumnControls, setShowColumnControls] = useState(false);
+  const [showParams, setShowParams] = useState(false);
   const [selectedCompanyIds, setSelectedCompanyIds] = useState<string[]>([]);
 
   const availableOptionalColumns = companySnapshot
@@ -60,6 +62,7 @@ export function CompanyResultsWorkspace({
 
   useEffect(() => {
     setSelectedOptionalColumns(getInitialOptionalColumns(companySnapshot));
+    setShowParams(false);
     setSelectedCompanyIds([]);
   }, [companySnapshot]);
 
@@ -92,6 +95,13 @@ export function CompanyResultsWorkspace({
                 setShowColumnControls((current) => !current)
               }
               selectedColumns={selectedOptionalColumns}
+            />
+          }
+          paramsViewer={
+            <SnapshotParamsViewer
+              isVisible={showParams}
+              onToggleVisibility={() => setShowParams((current) => !current)}
+              params={companySnapshot.recipeParams}
             />
           }
           emptyMessage="No company snapshot yet. Use the company search panel to create or reuse a snapshot for preview."

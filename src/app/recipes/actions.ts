@@ -13,6 +13,7 @@ import {
 import {
   createCompanyRecipe,
   createPeopleRecipe,
+  deleteRecipe,
   getRecipeById,
   updateCompanyRecipe,
   updatePeopleRecipe,
@@ -76,6 +77,49 @@ export async function saveRecipeAction(formData: FormData) {
 
   redirect(
     `${recipe.type === "company" ? "/recipes/company" : "/recipes/people"}${
+      query.size > 0 ? `?${query.toString()}` : ""
+    }`,
+  );
+}
+
+export async function deleteRecipeAction(formData: FormData) {
+  const recipeId = formData.get("recipeId");
+  const recipeType = recipeTypeSchema.parse(formData.get("recipeType"));
+  const pairedCompanyRecipeId = formData.get("pairedCompanyRecipeId");
+  const pairedPeopleRecipeId = formData.get("pairedPeopleRecipeId");
+
+  if (typeof recipeId !== "string" || !recipeId) {
+    throw new Error("Recipe is required");
+  }
+
+  await deleteRecipe(recipeId);
+
+  revalidatePath("/recipes/company");
+  revalidatePath("/recipes/people");
+  revalidatePath("/search");
+
+  const query = new URLSearchParams();
+
+  if (
+    recipeType === "people" &&
+    typeof pairedCompanyRecipeId === "string" &&
+    pairedCompanyRecipeId
+  ) {
+    query.set("companyRecipe", pairedCompanyRecipeId);
+  }
+
+  if (
+    recipeType === "company" &&
+    typeof pairedPeopleRecipeId === "string" &&
+    pairedPeopleRecipeId
+  ) {
+    query.set("peopleRecipe", pairedPeopleRecipeId);
+  }
+
+  query.set("editorMode", "new");
+
+  redirect(
+    `${recipeType === "company" ? "/recipes/company" : "/recipes/people"}${
       query.size > 0 ? `?${query.toString()}` : ""
     }`,
   );
@@ -177,6 +221,7 @@ export async function runPeopleSearchAction(formData: FormData) {
       companyRecipeId,
       companySnapshotId,
       peopleRecipeId,
+      recipeParams: payload,
       selectionMode: mode,
       selectedCompanyIds,
     },

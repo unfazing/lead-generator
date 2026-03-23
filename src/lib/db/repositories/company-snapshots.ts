@@ -2,12 +2,19 @@ import { randomUUID } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { ensureDataDirectory } from "@/lib/db/client";
-import type { CompanySearchResult } from "@/lib/apollo/company-search";
+import {
+  type CompanySearchResult,
+} from "@/lib/apollo/company-search";
+import {
+  companySearchPayloadSchema,
+  type CompanySearchPayload,
+} from "@/lib/company-search/schema";
 
 export type CompanySnapshotRecord = {
   id: string;
   recipeId: string;
   signature: string;
+  recipeParams: CompanySearchPayload;
   createdAt: string;
   updatedAt: string;
   result: CompanySearchResult;
@@ -18,7 +25,18 @@ const snapshotFilePath = path.join(process.cwd(), "data", "company-snapshots.jso
 async function readSnapshots() {
   try {
     const contents = await readFile(snapshotFilePath, "utf8");
-    return JSON.parse(contents) as CompanySnapshotRecord[];
+    const parsed = JSON.parse(contents) as Array<
+      Omit<CompanySnapshotRecord, "recipeParams"> & {
+        recipeParams?: CompanySearchPayload;
+      }
+    >;
+
+    return parsed.map((record) => ({
+      ...record,
+      recipeParams: companySearchPayloadSchema.parse(
+        record.recipeParams ?? record.result.request,
+      ),
+    }));
   } catch (error) {
     if (
       error instanceof Error &&
@@ -71,6 +89,7 @@ export async function saveCompanySnapshot(
 ) {
   const records = await readSnapshots();
   const now = new Date().toISOString();
+  const recipeParams = companySearchPayloadSchema.parse(result.request);
   const existing = records.find(
     (record) =>
       record.recipeId === recipeId && record.signature === result.signature,
@@ -79,6 +98,7 @@ export async function saveCompanySnapshot(
   if (existing) {
     const updated: CompanySnapshotRecord = {
       ...existing,
+      recipeParams,
       updatedAt: now,
       result,
     };
@@ -94,6 +114,7 @@ export async function saveCompanySnapshot(
     id: randomUUID(),
     recipeId,
     signature: result.signature,
+    recipeParams,
     createdAt: now,
     updatedAt: now,
     result,

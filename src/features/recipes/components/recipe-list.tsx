@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { deleteRecipeAction } from "@/app/recipes/actions";
 import type { CompanyRecipe, PeopleRecipe, RecipeType } from "@/lib/recipes/schema";
 
 type RecipeListProps =
@@ -58,19 +59,39 @@ export function RecipeList({
         ) : null}
         {recipes.map((recipe) => {
           const isActive = recipe.id === activeRecipeId;
+          const recipeHref = getRecipeHref(recipe.id);
 
           return (
-            <Link
+            <div
               key={recipe.id}
               className={`recipe-list-item${isActive ? " active" : ""}`}
-              href={getRecipeHref(recipe.id)}
             >
-              <strong>{recipe.name}</strong>
-              <span className="meta">{getRecipeMeta(type, recipe)}</span>
-              <span className="meta">
-                Updated {new Date(recipe.updatedAt).toLocaleDateString()}
-              </span>
-            </Link>
+              <Link className="recipe-list-link" href={recipeHref}>
+                <strong>{recipe.name}</strong>
+                <span className="meta">{getRecipeMeta(type, recipe)}</span>
+                <span className="meta">
+                  Updated {new Date(recipe.updatedAt).toLocaleDateString()}
+                </span>
+              </Link>
+              <form action={deleteRecipeAction}>
+                <input type="hidden" name="recipeId" value={recipe.id} />
+                <input type="hidden" name="recipeType" value={type} />
+                {type === "company" ? (
+                  pairedRecipeId ? (
+                    <input type="hidden" name="pairedPeopleRecipeId" value={pairedRecipeId} />
+                  ) : null
+                ) : pairedRecipeId ? (
+                  <input type="hidden" name="pairedCompanyRecipeId" value={pairedRecipeId} />
+                ) : null}
+                <button
+                  aria-label={`Delete ${recipe.name}`}
+                  className="secondary-button recipe-delete-button"
+                  type="submit"
+                >
+                  Delete
+                </button>
+              </form>
+            </div>
           );
         })}
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent } from "react";
 
 type MultiValueInputProps = {
   name: string;
@@ -23,6 +23,11 @@ export function MultiValueInput({
 }: MultiValueInputProps) {
   const [items, setItems] = useState(values);
   const [draft, setDraft] = useState("");
+
+  useEffect(() => {
+    setItems(values);
+    setDraft("");
+  }, [values]);
 
   function addToken(rawValue: string) {
     const nextValues = rawValue

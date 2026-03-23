@@ -119,6 +119,11 @@ a {
   color: var(--text);
 }
 
+.destructive-button {
+  border-color: rgba(153, 27, 27, 0.2);
+  color: #991b1b;
+}
+
 .workspace-shell {
   display: grid;
   gap: 24px;
@@ -374,8 +379,10 @@ a {
 }
 
 .recipe-list-item {
-  display: grid;
-  gap: 8px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   padding: 16px;
   border-radius: 16px;
   border: 1px solid var(--line);
@@ -406,6 +413,19 @@ a {
 .recipe-list-item strong {
   font-size: 1rem;
   line-height: 1.25;
+}
+
+.recipe-list-link {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.recipe-delete-button {
+  padding: 8px 12px;
+  font-size: 0.82rem;
+  white-space: nowrap;
 }
 
 .meta {
@@ -460,6 +480,35 @@ a {
   border-radius: 16px;
   background: rgba(255, 250, 241, 0.55);
   padding: 14px 16px;
+}
+
+.snapshot-params-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.snapshot-params-item {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 250, 241, 0.7);
+}
+
+.snapshot-params-item dt {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.snapshot-params-item dd {
+  margin: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
 }
 
 .results-table {

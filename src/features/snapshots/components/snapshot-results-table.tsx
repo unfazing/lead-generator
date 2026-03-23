@@ -8,6 +8,7 @@ type SnapshotResultsTableProps<Row extends { apollo_id: string }> = {
   selectedColumns: string[];
   source: "live" | "fixture";
   columnPicker?: ReactNode;
+  paramsViewer?: ReactNode;
   selectedRowIds?: string[];
   onToggleRow?: (rowId: string) => void;
 };
@@ -20,6 +21,7 @@ export function SnapshotResultsTable<Row extends { apollo_id: string }>({
   selectedColumns,
   source,
   columnPicker,
+  paramsViewer,
   selectedRowIds = [],
   onToggleRow,
 }: SnapshotResultsTableProps<Row>) {
@@ -38,7 +40,12 @@ export function SnapshotResultsTable<Row extends { apollo_id: string }>({
           <span className="meta">{metaDetail}</span>
         </div>
       </div>
-      {columnPicker ? <div className="table-toolbar-panel">{columnPicker}</div> : null}
+      {columnPicker || paramsViewer ? (
+        <div className="table-toolbar-panel">
+          {paramsViewer}
+          {columnPicker}
+        </div>
+      ) : null}
       <div className="table-shell">
         <table className="results-table">
           <thead>

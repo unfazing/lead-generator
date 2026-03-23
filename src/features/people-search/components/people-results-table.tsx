@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { PeopleSnapshotRecord } from "@/lib/db/repositories/people-snapshots";
 import { SnapshotColumnPicker } from "@/features/snapshots/components/snapshot-column-picker";
+import { SnapshotParamsViewer } from "@/features/snapshots/components/snapshot-params-viewer";
 import { SnapshotResultsTable } from "@/features/snapshots/components/snapshot-results-table";
 
 const defaultColumns = [
@@ -35,9 +36,11 @@ export function PeopleResultsTable({ snapshot }: PeopleResultsTableProps) {
     getInitialOptionalColumns(snapshot),
   );
   const [showColumnControls, setShowColumnControls] = useState(false);
+  const [showParams, setShowParams] = useState(false);
 
   useEffect(() => {
     setSelectedOptionalColumns(getInitialOptionalColumns(snapshot));
+    setShowParams(false);
   }, [snapshot]);
 
   if (!snapshot) {
@@ -79,6 +82,13 @@ export function PeopleResultsTable({ snapshot }: PeopleResultsTableProps) {
             setShowColumnControls((current) => !current)
           }
           selectedColumns={selectedOptionalColumns}
+        />
+      }
+      paramsViewer={
+        <SnapshotParamsViewer
+          isVisible={showParams}
+          onToggleVisibility={() => setShowParams((current) => !current)}
+          params={snapshot.recipeParams}
         />
       }
       emptyMessage="No people snapshot yet. Run people search from the current company and people recipe pairing."
