@@ -71,7 +71,7 @@ Plans:
 **Goal:** Users can work through separate company-search and people-search workflows, using first-class company snapshots to update people recipes with organization IDs and provenance before explicitly reviewing people snapshots.
 **Requirements**: [COMP-02, COMP-03, COMP-04, PEOP-01, PEOP-02, PEOP-03, PEOP-04]
 **Depends on:** Phase 3
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 - [x] 03.1-01-PLAN.md — Split `/search` into instructions-first company and people workflow entry routes with no implicit defaults

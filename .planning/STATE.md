@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03.1-02-PLAN.md
-last_updated: "2026-03-23T15:33:35.297Z"
+stopped_at: Completed 03.1-03-PLAN.md
+last_updated: "2026-03-23T15:36:21.944Z"
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 12
-  completed_plans: 11
+  completed_plans: 12
 ---
 
 # Project State
@@ -49,6 +49,7 @@ Plan: 3 of 3
 
 | Phase 03.1 P01 | 12min | 2 tasks | 9 files |
 | Phase 03.1 P02 | 14min | 2 tasks | 13 files |
+| Phase 03.1 P03 | 7min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,9 @@ Recent decisions affecting current work:
 - [Phase 03.1]: Company snapshot review now lives on /search/company/[snapshotId] and no longer embeds downstream people-search stages.
 - [Phase 03.1]: People search runs from the saved people recipe state only after an explicit snapshot-import apply step.
 - [Phase 03.1]: Imported organization provenance is persisted per source snapshot with mode, selected IDs, and timestamp metadata.
+- [Phase 03.1]: Reviewed people results now render only on /search/people/[peopleSnapshotId].
+- [Phase 03.1]: People search redirects straight into the persisted people snapshot route instead of back into the workflow form.
+- [Phase 03.1]: Phase 03.1 roadmap metadata now names the split search workflows and excludes retrieval planning.
 
 ### Pending Todos
 
@@ -84,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T15:33:35.290Z
-Stopped at: Completed 03.1-02-PLAN.md
+Last session: 2026-03-23T15:36:21.932Z
+Stopped at: Completed 03.1-03-PLAN.md
 Resume file: None
