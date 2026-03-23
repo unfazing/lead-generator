@@ -28,7 +28,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   1. User can create a recipe that stores company filters, person filters, and export column settings in one place.
   2. User can reopen the app and still see previously saved recipes ready for editing or execution.
   3. User can see current Apollo API or credit usage information in the frontend before starting a run.
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
 - [ ] 01-01: Create app shell, persistence primitives, and recipe data model
@@ -43,7 +43,7 @@ Plans:
   1. User can submit company-search filters from a saved or in-progress recipe and receive paginated company previews.
   2. User can persist a company result set as a local snapshot tied to the originating filters.
   3. User can see when a company search is too broad and must be refined before continuing.
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
 - [ ] 02-01: Implement Apollo company search service and normalized snapshot storage
@@ -59,7 +59,7 @@ Plans:
   2. User can preview matched people and persist the people snapshot tied to the source company selection.
   3. User can see an estimated credit cost and configured stop conditions before starting verified-email retrieval.
   4. User can start verified-email retrieval only from a reviewed people result set after confirming the plan.
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
 - [ ] 03-01: Implement company-selection modes and people preview storage
@@ -76,7 +76,7 @@ Plans:
   3. User can compare estimated versus actual usage after a run completes.
   4. User can distinguish verified business-email results from non-verified or unusable outcomes before export.
   5. User can avoid unnecessary repeat processing through dedupe or reuse checks before enrichment starts.
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
 - [ ] 04-01: Implement durable retrieval execution, throttling, and progress tracking
@@ -91,7 +91,7 @@ Plans:
   1. User can load an existing recipe, rerun it, and reach export-ready results without re-entering filters.
   2. User can export verified-email results to CSV using the configured output columns from the active recipe or run.
   3. Exported CSVs exclude duplicates and preserve source company, source run, and verification-status provenance.
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
 - [ ] 05-01: Build export service and configurable CSV column projection
@@ -104,8 +104,8 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 2.2 -> 3 -> 3.1 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Recipe and Usage Foundation | 0/TBD | Not started | - |
-| 2. Company Search and Snapshot Preview | 0/TBD | Not started | - |
-| 3. People Discovery and Run Planning | 0/TBD | Not started | - |
-| 4. Retrieval Execution and Run Safety | 0/TBD | Not started | - |
-| 5. Verified Export and Repeatable Reruns | 0/TBD | Not started | - |
+| 1. Recipe and Usage Foundation | 0/3 | Not started | - |
+| 2. Company Search and Snapshot Preview | 0/3 | Not started | - |
+| 3. People Discovery and Run Planning | 0/3 | Not started | - |
+| 4. Retrieval Execution and Run Safety | 0/3 | Not started | - |
+| 5. Verified Export and Repeatable Reruns | 0/2 | Not started | - |
