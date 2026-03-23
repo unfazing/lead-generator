@@ -217,13 +217,17 @@ export async function applyOrganizationImportsToPeopleRecipe(
   recipeId: string,
   imports: PeopleRecipeOrganizationImport[],
 ) {
-  const normalizedImports = normalizeOrganizationImports(imports);
   const recipes = await readRecipes();
   const existingRecipe = recipes.find((recipe) => recipe.id === recipeId);
 
   if (!existingRecipe || existingRecipe.type !== "people") {
     throw new Error("People recipe not found");
   }
+
+  const normalizedImports = normalizeOrganizationImports([
+    ...existingRecipe.organizationImports,
+    ...imports,
+  ]);
 
   const organizationIds = Array.from(
     new Set(normalizedImports.flatMap((entry) => entry.organizationIds)),

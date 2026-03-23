@@ -505,6 +505,16 @@ a {
   display: none;
 }
 
+.snapshot-switcher-select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fffdf8;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+}
+
 .snapshot-param-summary {
   display: grid;
   gap: 4px;
@@ -801,6 +811,165 @@ a {
 
 .subtle-card {
   background: rgba(255, 250, 241, 0.65);
+}
+
+.workflow-summary-row {
+  display: grid;
+  gap: 4px;
+}
+
+.compact-summary-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0;
+}
+
+.compact-summary-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 250, 241, 0.7);
+}
+
+.compact-summary-item-wide {
+  max-width: 100%;
+}
+
+.compact-summary-item dt,
+.compact-summary-item dd {
+  margin: 0;
+}
+
+.compact-summary-item dt {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.compact-summary-item dd {
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.workflow-inline-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.snapshot-card-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.snapshot-card-header-copy {
+  min-width: 0;
+}
+
+.snapshot-group-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.snapshot-recipe-tile {
+  display: block;
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fffdf8;
+  padding: 12px 14px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.snapshot-recipe-tile.active {
+  border-color: rgba(15, 118, 110, 0.35);
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.snapshot-card-header-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.snapshot-card-header-inline h2 {
+  font-size: 1.55rem;
+}
+
+.snapshot-card-header-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+.snapshot-select-inline {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.snapshot-select-button {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fffdf8;
+  padding: 7px 12px;
+  font: inherit;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.snapshot-choice-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 5;
+  min-width: 220px;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fffdf8;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+}
+
+.snapshot-choice-item {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  padding: 8px 10px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.snapshot-choice-item.active {
+  border-color: rgba(15, 118, 110, 0.25);
+  background: rgba(15, 118, 110, 0.08);
 }
 
 .workspace-header h2 {

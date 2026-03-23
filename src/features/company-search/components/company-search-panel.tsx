@@ -3,12 +3,10 @@ import { InfoTip } from "@/features/ui/components/info-tip";
 import {
   companyFilterDefinitions,
 } from "@/lib/apollo/company-filter-definitions";
-import type { CompanySnapshotRecord } from "@/lib/db/repositories/company-snapshots";
 import type { CompanyRecipe } from "@/lib/recipes/schema";
 
 type CompanySearchPanelProps = {
   recipe: CompanyRecipe | null;
-  snapshot: CompanySnapshotRecord | null;
 };
 
 function formatFilterLabel(key: string) {
@@ -45,7 +43,6 @@ function hasMeaningfulValue(value: unknown) {
 
 export function CompanySearchPanel({
   recipe,
-  snapshot: _snapshot,
 }: CompanySearchPanelProps) {
   if (!recipe) {
     return (

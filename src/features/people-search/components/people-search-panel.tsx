@@ -5,7 +5,11 @@ import {
   applyCompaniesToPeopleRecipeAction,
   runPeopleSearchAction,
 } from "@/app/recipes/actions";
+import {
+  peopleFilterDefinitions,
+} from "@/lib/apollo/people-filter-definitions";
 import { CompanySnapshotPreview } from "@/features/search-workspace/components/company-snapshot-preview";
+import { InfoTip } from "@/features/ui/components/info-tip";
 import type { CompanySnapshotRecord } from "@/lib/db/repositories/company-snapshots";
 import type {
   PeopleRecipe,
@@ -18,13 +22,68 @@ type SnapshotOption = {
   snapshot: CompanySnapshotRecord;
 };
 
+type SnapshotRecipeGroup = {
+  recipeId: string;
+  recipeName: string;
+  snapshots: SnapshotOption[];
+};
+
 type PeopleSearchPanelProps = {
   activeSourceSnapshotIds: string[];
   peopleRecipe: PeopleRecipe | null;
-  snapshotOptions: SnapshotOption[];
+  snapshotGroups: SnapshotRecipeGroup[];
 };
 
 type ImportMode = "selected" | "all";
+
+type SnapshotSelectionState = {
+  enabled: boolean;
+  importMode: ImportMode;
+  selectedCompanyIds: string[];
+};
+
+type SavedCompanyChip = {
+  id: string;
+  label: string;
+};
+
+function formatFilterLabel(key: string) {
+  return key
+    .split(/(?=[A-Z])|_/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function getDisplayValue(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.length > 0 ? value.join(", ") : "None";
+  }
+
+  return String(value ?? "").trim() || "None";
+}
+
+function hasMeaningfulValue(value: unknown) {
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+
+  if (typeof value === "number") {
+    return true;
+  }
+
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  return String(value ?? "").trim().length > 0;
+}
+
+function getInitialActiveSnapshotIds(snapshotGroups: SnapshotRecipeGroup[]) {
+  return Object.fromEntries(
+    snapshotGroups.map((group) => [group.recipeId, group.snapshots[0]?.snapshot.id ?? ""]),
+  ) as Record<string, string>;
+}
 
 function areStringArraysEqual(left: string[], right: string[]) {
   return (
@@ -35,42 +94,77 @@ function areStringArraysEqual(left: string[], right: string[]) {
 
 function getInitialSelectionState(
   snapshotOptions: SnapshotOption[],
-  activeSourceSnapshotIds: string[],
+  _activeSourceSnapshotIds: string[],
   imports: PeopleRecipeOrganizationImport[],
 ) {
   const importMap = new Map(imports.map((entry) => [entry.snapshotId, entry]));
-  const activeSet = new Set(
-    activeSourceSnapshotIds.length > 0
-      ? activeSourceSnapshotIds
-      : imports.map((entry) => entry.snapshotId),
-  );
 
   return Object.fromEntries(
     snapshotOptions.map((option) => [
       option.snapshot.id,
       {
-        enabled: activeSet.has(option.snapshot.id),
+        enabled: false,
         importMode: importMap.get(option.snapshot.id)?.importMode ?? "all",
         selectedCompanyIds:
           importMap.get(option.snapshot.id)?.selectedCompanyIds ?? [],
       },
     ]),
-  ) as Record<
-    string,
-    {
-      enabled: boolean;
-      importMode: ImportMode;
-      selectedCompanyIds: string[];
-    }
-  >;
+  ) as Record<string, SnapshotSelectionState>;
+}
+
+function getImportSummary(
+  snapshotOption: SnapshotOption,
+  state: SnapshotSelectionState,
+) {
+  if (!state.enabled) {
+    return "Not included in the next import.";
+  }
+
+  if (state.importMode === "all") {
+    return `All ${snapshotOption.snapshot.result.rows.length} companies will be added to this recipe.`;
+  }
+
+  if (state.selectedCompanyIds.length === 0) {
+    return "Choose one or more companies from this snapshot before applying.";
+  }
+
+  return `${state.selectedCompanyIds.length} selected compan${
+    state.selectedCompanyIds.length === 1 ? "y" : "ies"
+  } will be added to this recipe.`;
 }
 
 export function PeopleSearchPanel({
   activeSourceSnapshotIds,
   peopleRecipe,
-  snapshotOptions,
+  snapshotGroups,
 }: PeopleSearchPanelProps) {
+  const snapshotOptions = snapshotGroups.flatMap((group) => group.snapshots);
+  const savedCompanies = Array.from(
+    peopleRecipe?.peopleFilters.organizationIds ?? [],
+  )
+    .map<SavedCompanyChip>((organizationId) => {
+      const matchingRow = snapshotOptions
+        .flatMap((option) => option.snapshot.result.rows)
+        .find((row) => row.apollo_id === organizationId);
+
+      return {
+        id: organizationId,
+        label:
+          matchingRow?.name ||
+          matchingRow?.primary_domain ||
+          matchingRow?.website_url ||
+          organizationId,
+      };
+    })
+    .sort((left, right) => left.label.localeCompare(right.label));
   const organizationImports = peopleRecipe?.organizationImports ?? [];
+  const labelMap = new Map(
+    peopleFilterDefinitions.map((definition) => [definition.key, definition.label]),
+  );
+  const [activeSnapshotIds, setActiveSnapshotIds] = useState(() =>
+    getInitialActiveSnapshotIds(snapshotGroups),
+  );
+  const [showSnapshotChooser, setShowSnapshotChooser] = useState<Record<string, boolean>>({});
   const [selectionState, setSelectionState] = useState(() =>
     getInitialSelectionState(
       snapshotOptions,
@@ -78,13 +172,6 @@ export function PeopleSearchPanel({
       organizationImports,
     ),
   );
-
-  const importedSummary = organizationImports.map((entry) => ({
-    ...entry,
-    recipeName:
-      snapshotOptions.find((option) => option.snapshot.id === entry.snapshotId)
-        ?.recipeName ?? "Unknown recipe",
-  }));
 
   if (!peopleRecipe) {
     return (
@@ -108,6 +195,27 @@ export function PeopleSearchPanel({
       entry.importMode === "selected" && entry.selectedCompanyIds.length === 0,
   );
   const currentOrganizationCount = peopleRecipe.peopleFilters.organizationIds.length;
+  const selectedSnapshotCount = enabledSnapshots.length;
+  const selectedCompanyCount = importPlan.reduce(
+    (sum, entry) => sum + entry.selectedCompanyIds.length,
+    0,
+  );
+  const sortedFilters = Object.entries(peopleRecipe.peopleFilters).sort(
+    ([leftKey], [rightKey]) => {
+      const leftLabel =
+        labelMap.get(leftKey as keyof typeof peopleRecipe.peopleFilters) ??
+        formatFilterLabel(leftKey);
+      const rightLabel =
+        labelMap.get(rightKey as keyof typeof peopleRecipe.peopleFilters) ??
+        formatFilterLabel(rightKey);
+
+      return leftLabel.localeCompare(rightLabel);
+    },
+  );
+  const populatedFilters = sortedFilters.filter(([, value]) =>
+    hasMeaningfulValue(value),
+  );
+  const emptyFilters = sortedFilters.filter(([, value]) => !hasMeaningfulValue(value));
 
   function updateSnapshotState(
     snapshotId: string,
@@ -147,165 +255,337 @@ export function PeopleSearchPanel({
     });
   }
 
+  function updateActiveSnapshot(recipeId: string, snapshotId: string) {
+    setActiveSnapshotIds((current) =>
+      current[recipeId] === snapshotId
+        ? current
+        : {
+            ...current,
+            [recipeId]: snapshotId,
+          },
+    );
+  }
+
+  function toggleSnapshotChooser(recipeId: string) {
+    setShowSnapshotChooser((current) => ({
+      ...current,
+      [recipeId]: !current[recipeId],
+    }));
+  }
+
   return (
     <section className="stack">
       <section className="card stack">
         <div className="workspace-header">
-          <p className="eyebrow">People recipe import</p>
-          <h2>Apply companies from one or more company snapshots to this recipe.</h2>
-          <p>
-            Snapshot choice is explicit. Import updates the saved people recipe with organization IDs and per-snapshot provenance. Search is a separate action.
-          </p>
-        </div>
-
-        <div className="pairing-summary">
-          <div className="stat-tile">
-            <span className="meta">People recipe</span>
-            <strong>{peopleRecipe.name}</strong>
-          </div>
-          <div className="stat-tile">
-            <span className="meta">Current organization IDs</span>
-            <strong>{currentOrganizationCount}</strong>
-          </div>
-          <div className="stat-tile">
-            <span className="meta">Imported sources</span>
-            <strong>{peopleRecipe.organizationImports.length}</strong>
+          <p className="eyebrow">People recipe companies</p>
+          <div className="heading-with-tip">
+            <h2>Companies already on this recipe.</h2>
+            <InfoTip
+              content="These are the organization IDs currently saved on the people recipe. You can add more companies from saved company snapshots below, then run people search separately."
+              label="People recipe companies help"
+            />
           </div>
         </div>
 
-        {importedSummary.length > 0 ? (
-          <div className="subtle-card card stack">
-            <p className="meta">Current recipe imports</p>
-            {importedSummary.map((entry) => (
-              <div key={entry.snapshotId} className="meta">
-                {entry.recipeName} · {entry.importMode} · {entry.organizationIds.length} IDs
-              </div>
+        {savedCompanies.length > 0 ? (
+          <div className="chip-grid">
+            {savedCompanies.map((company) => (
+              <span key={company.id} className="chip">
+                {company.label}
+              </span>
             ))}
           </div>
-        ) : null}
+        ) : (
+          <div className="empty-message">
+            No companies are attached to this people recipe yet.
+          </div>
+        )}
 
-        <div className="stack">
-          {snapshotOptions.map((option) => {
-            const state = selectionState[option.snapshot.id] ?? {
-              enabled: false,
-              importMode: "all" as const,
-              selectedCompanyIds: [],
-            };
+        <section className="filter-section">
+          <details className="filter-details">
+            <summary className="filter-details-summary">
+              Active recipe fields
+            </summary>
+            <div className="field-grid filter-details-body">
+              {populatedFilters.map(([key, value]) => {
+                const label =
+                  labelMap.get(key as keyof typeof peopleRecipe.peopleFilters) ??
+                  formatFilterLabel(key);
+                const displayValue = getDisplayValue(value);
 
-            return (
-              <section key={option.snapshot.id} className="card stack">
-                <div className="workspace-header">
-                  <div className="workspace-actions">
-                    <label className="option-pill">
-                      <input
-                        checked={state.enabled}
-                        onChange={(event) =>
-                          updateSnapshotState(option.snapshot.id, (current) => ({
-                            ...current,
-                            enabled: event.target.checked,
-                          }))
-                        }
-                        type="checkbox"
-                      />
-                      <span>Use snapshot</span>
-                    </label>
+                return (
+                  <div
+                    key={key}
+                    className={`field search-filter-summary${
+                      Array.isArray(value) ? " full" : ""
+                    }`}
+                  >
+                    <label>{label}</label>
+                    <div className="summary-value">{displayValue}</div>
                   </div>
-                  <h3>{option.recipeName}</h3>
-                  <p>
-                    Snapshot {option.snapshot.id.slice(0, 8)} · {option.snapshot.result.rows.length} companies
-                  </p>
-                </div>
+                );
+              })}
+            </div>
+          </details>
+          <details className="filter-details">
+            <summary className="filter-details-summary">
+              Unused recipe fields
+            </summary>
+            <div className="field-grid filter-details-body">
+              {emptyFilters.map(([key, value]) => {
+                const label =
+                  labelMap.get(key as keyof typeof peopleRecipe.peopleFilters) ??
+                  formatFilterLabel(key);
+                const displayValue = getDisplayValue(value);
 
-                {state.enabled ? (
+                return (
+                  <div
+                    key={key}
+                    className={`field search-filter-summary${
+                      Array.isArray(value) ? " full" : ""
+                    }`}
+                  >
+                    <label>{label}</label>
+                    <div className="summary-value">{displayValue}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </details>
+        </section>
+
+        <section className="stack">
+          <div className="workspace-header">
+            <p className="eyebrow">Add more companies</p>
+            <div className="heading-with-tip">
+              <h3>Choose from company recipes that already have saved snapshots.</h3>
+              <InfoTip
+                content="Pick a company recipe, review its latest snapshot by default, switch to an older snapshot only if needed, then apply the companies you want to add."
+                label="Add more companies help"
+              />
+            </div>
+          </div>
+
+          {snapshotGroups.map((group) => (
+            <section key={group.recipeId} className="card stack">
+              {(() => {
+                const activeSnapshotId =
+                  activeSnapshotIds[group.recipeId] ?? group.snapshots[0]?.snapshot.id;
+                const option =
+                  group.snapshots.find((entry) => entry.snapshot.id === activeSnapshotId) ??
+                  group.snapshots[0];
+
+                if (!option) {
+                  return null;
+                }
+
+                const state = selectionState[option.snapshot.id] ?? {
+                  enabled: false,
+                  importMode: "all" as const,
+                  selectedCompanyIds: [],
+                };
+                const activeSnapshotLabel =
+                  option.snapshot.id === group.snapshots[0]?.snapshot.id
+                    ? "Latest"
+                    : option.snapshot.id.slice(0, 8);
+
+                return (
                   <>
-                    <div className="option-grid">
-                      <label
-                        className={`option-pill${
-                          state.importMode === "selected" ? " chip-active" : ""
-                        }`}
-                      >
-                        <input
-                          checked={state.importMode === "selected"}
-                          name={`import-mode-${option.snapshot.id}`}
-                          onChange={() =>
-                            updateSnapshotState(option.snapshot.id, (current) => ({
-                              ...current,
-                              importMode: "selected",
-                            }))
-                          }
-                          type="radio"
-                          value="selected"
-                        />
-                        <span>Selected companies</span>
-                      </label>
-                      <label
-                        className={`option-pill${
-                          state.importMode === "all" ? " chip-active" : ""
-                        }`}
-                      >
-                        <input
-                          checked={state.importMode === "all"}
-                          name={`import-mode-${option.snapshot.id}`}
-                          onChange={() =>
-                            updateSnapshotState(option.snapshot.id, (current) => ({
-                              ...current,
-                              importMode: "all",
-                              selectedCompanyIds: [],
-                            }))
-                          }
-                          type="radio"
-                          value="all"
-                        />
-                        <span>All companies</span>
-                      </label>
-                    </div>
-
-                    <CompanySnapshotPreview
-                      onSelectionChange={(selectedCompanyIds) =>
+                    <div
+                      className={`snapshot-recipe-tile${state.enabled ? " active" : ""}`}
+                      onClick={() =>
                         updateSnapshotState(option.snapshot.id, (current) => ({
-                          ...current,
-                          selectedCompanyIds,
+                          enabled: !current.enabled,
+                          importMode: "all",
+                          selectedCompanyIds: [],
                         }))
                       }
-                      selectable={state.importMode === "selected"}
-                      snapshot={option.snapshot}
-                      summarySlot={
-                        <p className="meta">
-                          {state.importMode === "selected"
-                            ? state.selectedCompanyIds.length > 0
-                              ? `${state.selectedCompanyIds.length} companies selected for import`
-                              : "Select at least one company in this snapshot"
-                            : `All ${option.snapshot.result.rows.length} companies will be imported`}
-                        </p>
-                      }
-                    />
-                  </>
-                ) : null}
-              </section>
-            );
-          })}
-        </div>
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          updateSnapshotState(option.snapshot.id, (current) => ({
+                            enabled: !current.enabled,
+                            importMode: "all",
+                            selectedCompanyIds: [],
+                          }));
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <div className="snapshot-group-header-row">
+                        <div className="heading-with-tip snapshot-card-header-inline">
+                          <h2>{group.recipeName}</h2>
+                          <span className="badge">Company recipe</span>
+                        </div>
+                        <div className="snapshot-card-header-actions">
+                          <span className="meta">
+                            {option.snapshot.result.rows.length} companies
+                          </span>
+                          {group.snapshots.length > 1 ? (
+                            <div
+                              className="snapshot-select-inline"
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <button
+                                className="snapshot-select-button"
+                                onClick={() => toggleSnapshotChooser(group.recipeId)}
+                                type="button"
+                              >
+                                Snapshot: {activeSnapshotLabel}
+                              </button>
+                              {showSnapshotChooser[group.recipeId] ? (
+                                <div className="snapshot-choice-menu">
+                                  {group.snapshots.map((snapshotOption, index) => (
+                                    <button
+                                      key={snapshotOption.snapshot.id}
+                                      className={`snapshot-choice-item${
+                                        snapshotOption.snapshot.id === option.snapshot.id
+                                          ? " active"
+                                          : ""
+                                      }`}
+                                      onClick={() => {
+                                        updateActiveSnapshot(group.recipeId, snapshotOption.snapshot.id);
+                                        setShowSnapshotChooser((current) => ({
+                                          ...current,
+                                          [group.recipeId]: false,
+                                        }));
+                                      }}
+                                      type="button"
+                                    >
+                                      <span>
+                                        {index === 0 ? "Latest" : `Older ${index}`} ·{" "}
+                                        {snapshotOption.snapshot.id.slice(0, 8)}
+                                      </span>
+                                      <span className="meta">
+                                        {snapshotOption.snapshot.result.rows.length} companies
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
 
-        <form action={applyCompaniesToPeopleRecipeAction} className="workspace-actions">
-          <input type="hidden" name="peopleRecipeId" value={peopleRecipe.id} />
-          <input type="hidden" name="importPlan" value={JSON.stringify(importPlan)} />
-          <button
-            className="primary-button"
-            disabled={importPlan.length === 0 || hasInvalidSelectedImport}
-            type="submit"
-          >
-            Apply companies to recipe
-          </button>
-        </form>
+                    {state.enabled ? (
+                      <>
+                        <div className="option-grid">
+                          <button
+                            className={`option-pill chip-button${
+                              state.importMode === "selected" ? " chip-active" : ""
+                            }`}
+                            onClick={() =>
+                              updateSnapshotState(option.snapshot.id, (current) => ({
+                                ...current,
+                                importMode: "selected",
+                              }))
+                            }
+                            type="button"
+                          >
+                            Selected companies
+                          </button>
+                          <button
+                            className={`option-pill chip-button${
+                              state.importMode === "all" ? " chip-active" : ""
+                            }`}
+                            onClick={() =>
+                              updateSnapshotState(option.snapshot.id, (current) => ({
+                                ...current,
+                                importMode: "all",
+                                selectedCompanyIds: [],
+                              }))
+                            }
+                            type="button"
+                          >
+                            All companies
+                          </button>
+                        </div>
+
+                        <CompanySnapshotPreview
+                          onSelectionChange={(selectedCompanyIds) =>
+                            updateSnapshotState(option.snapshot.id, (current) => ({
+                              ...current,
+                              selectedCompanyIds,
+                            }))
+                          }
+                          selectable={state.importMode === "selected"}
+                          snapshot={option.snapshot}
+                          summarySlot={
+                            <div className="workflow-inline-summary">
+                              <span className="meta">
+                                {getImportSummary(option, state)}
+                              </span>
+                            </div>
+                          }
+                        />
+                      </>
+                    ) : null}
+                  </>
+                );
+              })()}
+            </section>
+          ))}
+        </section>
+
+        <section className="subtle-card card stack">
+          <div className="workspace-header">
+            <p className="eyebrow">Apply company selection</p>
+            <div className="heading-with-tip">
+              <h3>Add the selected companies to this recipe.</h3>
+              <InfoTip
+                content="This appends the selected companies onto the recipe, removes duplicates automatically, and does not run people search."
+                label="Apply company selection help"
+              />
+            </div>
+          </div>
+
+          <dl className="compact-summary-list">
+            <div className="compact-summary-item">
+              <dt>Snapshots in use</dt>
+              <dd>{selectedSnapshotCount}</dd>
+            </div>
+            <div className="compact-summary-item">
+              <dt>Checked companies</dt>
+              <dd>{selectedCompanyCount}</dd>
+            </div>
+          </dl>
+
+          {hasInvalidSelectedImport ? (
+            <div className="warning-banner">
+              <strong>Finish snapshot selection</strong>
+              <p>
+                One or more snapshots are set to selected-company mode but do not have any companies checked yet.
+              </p>
+            </div>
+          ) : null}
+
+          <form action={applyCompaniesToPeopleRecipeAction} className="workspace-actions">
+            <input type="hidden" name="peopleRecipeId" value={peopleRecipe.id} />
+            <input type="hidden" name="importPlan" value={JSON.stringify(importPlan)} />
+            <button
+              className="primary-button"
+              disabled={importPlan.length === 0 || hasInvalidSelectedImport}
+              type="submit"
+            >
+              Apply companies to recipe
+            </button>
+          </form>
+        </section>
       </section>
 
       <section className="card stack">
         <div className="workspace-header">
           <p className="eyebrow">People search</p>
-          <h2>Run people search from the saved recipe state.</h2>
-          <p>
-            Search uses the organization IDs currently saved on the recipe. Importing snapshots does not trigger search automatically.
-          </p>
+          <div className="heading-with-tip">
+            <h2>Run people search from the saved recipe state.</h2>
+            <InfoTip
+              content="Search uses the organization IDs currently saved on the recipe. Choosing companies above does not trigger search automatically."
+              label="People search help"
+            />
+          </div>
         </div>
         <form action={runPeopleSearchAction} className="workspace-actions">
           <input type="hidden" name="peopleRecipeId" value={peopleRecipe.id} />

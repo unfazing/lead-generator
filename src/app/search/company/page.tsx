@@ -1,12 +1,10 @@
-import Link from "next/link";
-import { CompanySearchWarning } from "@/features/company-search/components/company-search-warning";
 import { CompanySearchPanel } from "@/features/company-search/components/company-search-panel";
+import { SavedCompanySnapshotsPanel } from "@/features/company-search/components/saved-company-snapshots-panel";
 import { RecipeEditor } from "@/features/recipes/components/recipe-editor";
 import { RecipeList } from "@/features/recipes/components/recipe-list";
 import { getCompanyRecipeDraft } from "@/features/recipes/lib/recipe-form";
 import { WorkspaceEmptyState } from "@/features/search-workspace/components/workspace-empty-state";
 import { WorkspaceStageNav } from "@/features/search-workspace/components/workspace-stage-nav";
-import { summarizeSnapshotParams } from "@/features/search-workspace/lib/snapshot-param-summary";
 import {
   buildSearchWorkspaceQuery,
   parseSearchWorkspaceContext,
@@ -45,9 +43,6 @@ export default async function CompanySearchPage({ searchParams }: SearchPageProp
     editorMode === "new" ? null : companyRecipe,
   );
   const snapshots = companyRecipe ? await listSnapshotsForRecipe(companyRecipe.id) : [];
-  const activeSnapshot = context.companySnapshotId
-    ? snapshots.find((snapshot) => snapshot.id === context.companySnapshotId) ?? null
-    : null;
   const closeHref = companyRecipe
     ? `/search/company?${buildSearchWorkspaceQuery({
         workflow: "company",
@@ -104,61 +99,11 @@ export default async function CompanySearchPage({ searchParams }: SearchPageProp
             <>
               <CompanySearchPanel
                 recipe={companyRecipe}
-                snapshot={activeSnapshot}
               />
-              <CompanySearchWarning warnings={activeSnapshot?.result.warnings ?? []} />
-              <section className="card stack">
-                <div className="workspace-header">
-                  <p className="eyebrow">Saved company snapshots</p>
-                  <h2>Open a company snapshot to review and select companies.</h2>
-                </div>
-                {snapshots.length === 0 ? (
-                  <div className="empty-message">
-                    No snapshots yet. Run a live company search or reopen a stored snapshot to create one.
-                  </div>
-                ) : (
-                  <div className="recipe-list">
-                    {snapshots.map((snapshot) => {
-                      const paramSummary = summarizeSnapshotParams(snapshot.recipeParams);
-                      const href = `/search/company/${snapshot.id}?${buildSearchWorkspaceQuery({
-                        workflow: "company",
-                        companyRecipeId: companyRecipe.id,
-                      })}`;
-
-                      return (
-                        <div
-                          key={snapshot.id}
-                          className={`recipe-list-item snapshot-list-item${
-                            snapshot.id === activeSnapshot?.id ? " active" : ""
-                          }`}
-                        >
-                          <Link className="recipe-list-link" href={href}>
-                            <strong>{snapshot.result.rows.length} companies</strong>
-                            <span className="meta">
-                              {new Date(snapshot.updatedAt).toLocaleDateString()} · {snapshot.id.slice(0, 8)}
-                            </span>
-                          </Link>
-                          {paramSummary.length > 0 ? (
-                            <details className="snapshot-param-disclosure">
-                              <summary className="meta">Show params</summary>
-                              <div className="snapshot-param-summary">
-                                {paramSummary.map((entry) => (
-                                  <span
-                                    key={`${snapshot.id}-${entry}`}
-                                    className="meta"
-                                  >
-                                    {entry}
-                                  </span>
-                                ))}
-                              </div>
-                            </details>
-                          ) : null}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </section>
+              <SavedCompanySnapshotsPanel
+                initialSnapshotId={context.companySnapshotId ?? null}
+                snapshots={snapshots}
+              />
             </>
           )}
         </div>
