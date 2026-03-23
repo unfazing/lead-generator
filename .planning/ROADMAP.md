@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Recipe and Usage Foundation** - Define reusable recipe state and expose baseline Apollo usage visibility. Completed 2026-03-23.
 - [x] **Phase 2: Company Search and Snapshot Preview** - Let the user search Apollo companies, inspect results, and persist company snapshots safely. Completed 2026-03-23.
 - [x] **Phase 3: People Discovery and Run Planning** - Turn reviewed companies into people previews and gated retrieval plans with estimated cost. Completed 2026-03-23.
-- [ ] **Phase 4: Retrieval Execution and Run Safety** - Execute verified-email retrieval with monitoring, resumability, and spend protection.
+- [ ] **Phase 4: Retrieval Execution and Run Safety** - Execute Apollo `match` / `bulk_match` verified-email enrichment with monitoring, resumability, and spend protection.
 - [ ] **Phase 5: Verified Export and Repeatable Reruns** - Export trusted CSVs with provenance, dedupe, and recipe-driven replay.
 
 ## Phase Details
@@ -72,18 +72,19 @@ Plans:
 **Requirements**: [COMP-02, COMP-03, COMP-04, PEOP-01, PEOP-02, PEOP-03, PEOP-04]
 **Depends on:** Phase 3
 **Plans:** 3/3 plans complete
+**Completed:** 2026-03-24
 
 Plans:
 - [x] 03.1-01-PLAN.md — Split `/search` into instructions-first company and people workflow entry routes with no implicit defaults
 - [x] 03.1-02-PLAN.md — Make company search produce first-class snapshots and let people search import organization IDs from company snapshots into people recipes with provenance
-- [ ] 03.1-03-PLAN.md — Add explicit people search execution and people snapshot review stages, then sync roadmap metadata
+- [x] 03.1-03-PLAN.md — Add explicit people search execution and people snapshot review stages, then sync roadmap metadata
 
 ### Phase 4: Retrieval Execution and Run Safety
-**Goal**: Users can run verified-email retrieval safely, monitor progress live, and recover from interruptions without losing trustworthy cost and quality state.
+**Goal**: Users can run Apollo `match` / `bulk_match` verified-email enrichment safely, monitor progress live, and recover from interruptions without losing trustworthy cost and quality state.
 **Depends on**: Phase 3
 **Requirements**: [COST-04, COST-05, EMAI-02, EMAI-03, EMAI-04]
 **Success Criteria** (what must be TRUE):
-  1. User can monitor retrieval progress and status from the frontend while a run is active.
+  1. User can start and monitor Apollo `match` / `bulk_match` enrichment progress and status from the frontend while a run is active.
   2. User can resume or safely inspect an interrupted retrieval run without losing batch state.
   3. User can compare estimated versus actual usage after a run completes.
   4. User can distinguish verified business-email results from non-verified or unusable outcomes before export.
@@ -91,9 +92,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: Implement durable retrieval execution, throttling, and progress tracking
-- [ ] 04-02: Add resume-safe run state and actual-usage reconciliation
-- [ ] 04-03: Enforce pre-enrichment dedupe and email-quality classification
+- [ ] 04-01: Implement durable Apollo `match` / `bulk_match` execution, throttling, and progress tracking
+- [ ] 04-02: Add resume-safe run state and actual-usage reconciliation for enrichment runs
+- [ ] 04-03: Enforce pre-enrichment dedupe and Apollo result-quality classification
 
 ### Phase 5: Verified Export and Repeatable Reruns
 **Goal**: Users can export trusted verified-email CSVs and rerun successful workflows without rebuilding setup or re-exporting duplicates.
@@ -119,5 +120,6 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 2.2 -> 3 -> 3.1 -> 4 -> 5
 | 1. Recipe and Usage Foundation | 3/3 | Complete | 2026-03-23 |
 | 2. Company Search and Snapshot Preview | 3/3 | Complete | 2026-03-23 |
 | 3. People Discovery and Run Planning | 3/3 | Complete | 2026-03-23 |
+| 03.1. Rework the search flow | 3/3 | Complete | 2026-03-24 |
 | 4. Retrieval Execution and Run Safety | 0/3 | Not started | - |
 | 5. Verified Export and Repeatable Reruns | 0/2 | Not started | - |

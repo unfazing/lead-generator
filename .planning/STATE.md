@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: unknown
-stopped_at: Completed 03.1-03-PLAN.md
-last_updated: "2026-03-23T15:36:21.944Z"
+status: ready_to_plan
+stopped_at: Phase 03.1 complete; next step is plan Phase 4
+last_updated: "2026-03-24T12:20:00+08:00"
 progress:
   total_phases: 6
   completed_phases: 4
@@ -19,12 +19,12 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-03-23)
 
 **Core value:** Turn precise Apollo filters into verified-email exports quickly without wasting API credits.
-**Current focus:** Phase 03.1 — rework-the-search-flow
+**Current focus:** Phase 4 — retrieval-execution-and-run-safety
 
 ## Current Position
 
-Phase: 03.1 (rework-the-search-flow) — EXECUTING
-Plan: 3 of 3
+Phase: 4 (retrieval-execution-and-run-safety) — READY TO PLAN
+Plan: 0 of 3
 
 ## Performance Metrics
 
@@ -66,12 +66,12 @@ Recent decisions affecting current work:
 - Phase 3: Verified-email retrieval readiness requires a persisted people snapshot, a saved run plan, and explicit confirmation.
 - [Phase 03.1]: Search workspace routes now read only explicit recipe and snapshot IDs from the URL; they never auto-select the first saved record.
 - [Phase 03.1]: Company and people search now enter through separate routes so server actions can redirect back into the correct workflow context.
-- [Phase 03.1]: Company snapshot review now lives on /search/company/[snapshotId] and no longer embeds downstream people-search stages.
 - [Phase 03.1]: People search runs from the saved people recipe state only after an explicit snapshot-import apply step.
 - [Phase 03.1]: Imported organization provenance is persisted per source snapshot with mode, selected IDs, and timestamp metadata.
-- [Phase 03.1]: Reviewed people results now render only on /search/people/[peopleSnapshotId].
-- [Phase 03.1]: People search redirects straight into the persisted people snapshot route instead of back into the workflow form.
-- [Phase 03.1]: Phase 03.1 roadmap metadata now names the split search workflows and excludes retrieval planning.
+- [Phase 03.1]: Snapshot review is now inline within the workflow pages rather than on separate snapshot routes.
+- [Phase 03.1]: Recipe authoring now happens inline inside `/search/company` and `/search/people`; `/recipes/*` remains only as compatibility redirects.
+- [Phase 03.1]: Shared snapshot viewers now power company and people review surfaces with common sort, filter, and export behavior.
+- [Phase 03.1]: Phase 03.1 is UAT-complete and the next active phase is Phase 4 retrieval execution.
 
 ### Pending Todos
 
@@ -88,6 +88,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T15:36:21.932Z
-Stopped at: Completed 03.1-03-PLAN.md
+Last session: 2026-03-24T12:20:00+08:00
+Stopped at: Phase 4 context created; ready for `$gsd-plan-phase 4`
 Resume file: None
