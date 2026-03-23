@@ -33,6 +33,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
   const peopleRecipeId = getSingleParam(params, "peopleRecipe");
   const snapshotId = getSingleParam(params, "snapshot");
   const editorTab = getSingleParam(params, "editorTab") === "people" ? "people" : "company";
+  const editorMode = getSingleParam(params, "editorMode") === "new" ? "new" : "edit";
 
   const [companyRecipes, peopleRecipes] = await Promise.all([
     listRecipesByType("company"),
@@ -40,11 +41,11 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
   ]);
 
   const selectedCompanyRecipe =
-    companyRecipeId && companyRecipeId !== "new"
+    companyRecipeId
       ? await getRecipeById(companyRecipeId)
       : companyRecipes[0] ?? null;
   const selectedPeopleRecipe =
-    peopleRecipeId && peopleRecipeId !== "new"
+    peopleRecipeId
       ? await getRecipeById(peopleRecipeId)
       : peopleRecipes[0] ?? null;
 
@@ -54,10 +55,10 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
     selectedPeopleRecipe?.type === "people" ? selectedPeopleRecipe : null;
 
   const companyDraft = getCompanyRecipeDraft(
-    companyRecipeId === "new" ? null : companyRecipe,
+    editorTab === "company" && editorMode === "new" ? null : companyRecipe,
   );
   const peopleDraft = getPeopleRecipeDraft(
-    peopleRecipeId === "new" ? null : peopleRecipe,
+    editorTab === "people" && editorMode === "new" ? null : peopleRecipe,
   );
   const usageSummary = await getApolloUsageSummary();
   const snapshots = companyRecipe
@@ -74,6 +75,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
         peopleRecipeId ? ["peopleRecipe", peopleRecipeId] : null,
         snapshotId ? ["snapshot", snapshotId] : null,
         ["editorTab", "company"],
+        ["editorMode", editorTab === "company" ? editorMode : "edit"],
       ].filter(Boolean) as string[][],
     ),
   ).toString()}`;
@@ -84,6 +86,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
         peopleRecipeId ? ["peopleRecipe", peopleRecipeId] : null,
         snapshotId ? ["snapshot", snapshotId] : null,
         ["editorTab", "people"],
+        ["editorMode", editorTab === "people" ? editorMode : "edit"],
       ].filter(Boolean) as string[][],
     ),
   ).toString()}`;
@@ -103,14 +106,14 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
       <div className="workspace-grid workspace-grid-wide">
         <div className="stack">
           <RecipeList
-            activeRecipeId={companyRecipeId === "new" ? null : companyRecipe?.id ?? null}
-            pairedRecipeId={peopleRecipeId === "new" ? null : peopleRecipe?.id ?? null}
+            activeRecipeId={companyRecipe?.id ?? null}
+            pairedRecipeId={peopleRecipe?.id ?? null}
             recipes={companyRecipes}
             type="company"
           />
           <RecipeList
-            activeRecipeId={peopleRecipeId === "new" ? null : peopleRecipe?.id ?? null}
-            pairedRecipeId={companyRecipeId === "new" ? null : companyRecipe?.id ?? null}
+            activeRecipeId={peopleRecipe?.id ?? null}
+            pairedRecipeId={companyRecipe?.id ?? null}
             recipes={peopleRecipes}
             type="people"
           />
@@ -149,15 +152,15 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
             {editorTab === "company" ? (
               <RecipeEditor
                 draft={companyDraft}
-                pairedRecipeId={peopleRecipeId === "new" ? null : peopleRecipe?.id ?? null}
-                recipe={companyRecipeId === "new" ? null : companyRecipe}
+                pairedRecipeId={peopleRecipe?.id ?? null}
+                recipe={editorMode === "new" ? null : companyRecipe}
                 type="company"
               />
             ) : (
               <RecipeEditor
                 draft={peopleDraft}
-                pairedRecipeId={companyRecipeId === "new" ? null : companyRecipe?.id ?? null}
-                recipe={peopleRecipeId === "new" ? null : peopleRecipe}
+                pairedRecipeId={companyRecipe?.id ?? null}
+                recipe={editorMode === "new" ? null : peopleRecipe}
                 type="people"
               />
             )}

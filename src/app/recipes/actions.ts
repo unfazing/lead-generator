@@ -63,6 +63,9 @@ export async function saveRecipeAction(formData: FormData) {
     query.set("peopleRecipe", peopleRecipeId);
   }
 
+  query.set("editorTab", recipe.type);
+  query.set("editorMode", "edit");
+
   redirect(`/recipes${query.size > 0 ? `?${query.toString()}` : ""}`);
 }
 
