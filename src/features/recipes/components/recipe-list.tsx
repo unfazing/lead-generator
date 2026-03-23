@@ -35,7 +35,7 @@ export function RecipeList({ recipes, activeRecipeId }: RecipeListProps) {
               <strong>{recipe.name}</strong>
               <span className="meta">
                 {recipe.companyFilters.qOrganizationKeywordTags.length} company keywords •{" "}
-                {recipe.peopleFilters.titles.length} people titles
+                {recipe.peopleFilters.personTitles.length} people titles
               </span>
               <span className="meta">
                 Updated {new Date(recipe.updatedAt).toLocaleDateString()}

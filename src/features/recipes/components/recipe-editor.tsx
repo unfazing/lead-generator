@@ -1,4 +1,11 @@
 import { saveRecipeAction } from "@/app/recipes/actions";
+import {
+  employeeRangeOptions,
+} from "@/lib/apollo/company-filter-definitions";
+import {
+  peopleDepartmentFilterOptions,
+  peopleSeniorityFilterOptions,
+} from "@/lib/apollo/people-filter-definitions";
 import type { Recipe, RecipeInput } from "@/lib/recipes/schema";
 
 type RecipeEditorProps = {
@@ -8,6 +15,10 @@ type RecipeEditorProps = {
 
 function joinValues(values: string[]) {
   return values.join("\n");
+}
+
+function hasSelectedValue(values: readonly string[], value: string) {
+  return values.includes(value);
 }
 
 export function RecipeEditor({ recipe, draft }: RecipeEditorProps) {
@@ -89,13 +100,25 @@ export function RecipeEditor({ recipe, draft }: RecipeEditorProps) {
           </div>
           <div className="field">
             <label htmlFor="organizationNumEmployeesRanges">Employee ranges</label>
-            <textarea
-              defaultValue={joinValues(
-                draft.companyFilters.organizationNumEmployeesRanges,
-              )}
-              id="organizationNumEmployeesRanges"
-              name="organizationNumEmployeesRanges"
-            />
+            <div className="option-grid">
+              {employeeRangeOptions.map((option) => (
+                <label key={option.value} className="option-pill">
+                  <input
+                    defaultChecked={hasSelectedValue(
+                      draft.companyFilters.organizationNumEmployeesRanges,
+                      option.value,
+                    )}
+                    name="organizationNumEmployeesRanges"
+                    type="checkbox"
+                    value={option.value}
+                  />
+                  <span>{option.label}</span>
+                </label>
+              ))}
+            </div>
+            <span className="field-hint">
+              Constrained Apollo employee-band values.
+            </span>
           </div>
           <div className="field">
             <label htmlFor="organizationIndustryTagIds">Industry tag IDs</label>
@@ -122,28 +145,72 @@ export function RecipeEditor({ recipe, draft }: RecipeEditorProps) {
             />
           </div>
           <div className="field">
-            <label htmlFor="peopleTitles">People titles</label>
+            <label htmlFor="personTitles">People titles</label>
             <textarea
-              defaultValue={joinValues(draft.peopleFilters.titles)}
-              id="peopleTitles"
-              name="peopleTitles"
+              defaultValue={joinValues(draft.peopleFilters.personTitles)}
+              id="personTitles"
+              name="personTitles"
+              placeholder="sales director"
             />
+            <span className="field-hint">
+              Maps to Apollo `person_titles` array values.
+            </span>
           </div>
           <div className="field">
-            <label htmlFor="peopleSeniority">People seniority</label>
+            <label htmlFor="personLocations">People locations</label>
             <textarea
-              defaultValue={joinValues(draft.peopleFilters.seniority)}
-              id="peopleSeniority"
-              name="peopleSeniority"
+              defaultValue={joinValues(draft.peopleFilters.personLocations)}
+              id="personLocations"
+              name="personLocations"
+              placeholder="California, US"
             />
+            <span className="field-hint">
+              Maps to Apollo `person_locations` array values.
+            </span>
           </div>
-          <div className="field">
-            <label htmlFor="peopleDepartments">People departments</label>
-            <textarea
-              defaultValue={joinValues(draft.peopleFilters.departments)}
-              id="peopleDepartments"
-              name="peopleDepartments"
-            />
+          <div className="field full">
+            <label>People seniority</label>
+            <div className="option-grid">
+              {peopleSeniorityFilterOptions.map((option) => (
+                <label key={option.value} className="option-pill">
+                  <input
+                    defaultChecked={hasSelectedValue(
+                      draft.peopleFilters.personSeniorities,
+                      option.value,
+                    )}
+                    name="personSeniorities"
+                    type="checkbox"
+                    value={option.value}
+                  />
+                  <span>{option.label}</span>
+                </label>
+              ))}
+            </div>
+            <span className="field-hint">
+              Constrained values for Apollo `person_seniorities`.
+            </span>
+          </div>
+          <div className="field full">
+            <label>People departments</label>
+            <div className="option-grid">
+              {peopleDepartmentFilterOptions.map((option) => (
+                <label key={option.value} className="option-pill">
+                  <input
+                    defaultChecked={hasSelectedValue(
+                      draft.peopleFilters.personDepartments,
+                      option.value,
+                    )}
+                    name="personDepartments"
+                    type="checkbox"
+                    value={option.value}
+                  />
+                  <span>{option.label}</span>
+                </label>
+              ))}
+            </div>
+            <span className="field-hint">
+              Constrained values for Apollo `person_departments`.
+            </span>
           </div>
         </div>
         <div className="workspace-actions">

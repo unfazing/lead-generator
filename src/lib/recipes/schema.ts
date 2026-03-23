@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { companySearchPayloadSchema } from "@/lib/company-search/schema";
+import { peopleSearchPayloadSchema } from "@/lib/people-search/schema";
 
 const legacyCompanyFiltersSchema = z.object({
   keywords: z.array(z.string().min(1)).default([]),
@@ -7,7 +8,7 @@ const legacyCompanyFiltersSchema = z.object({
   employeeRanges: z.array(z.string().min(1)).default([]),
 });
 
-export const recipeFiltersSchema = z.object({
+const legacyPeopleFiltersSchema = z.object({
   peopleTitles: z.array(z.string().min(1)).default([]),
   peopleSeniority: z.array(z.string().min(1)).default([]),
   peopleDepartments: z.array(z.string().min(1)).default([]),
@@ -41,11 +42,25 @@ export const recipeSchema = z.object({
         organizationIndustryTagIds: [],
       });
     }),
-  peopleFilters: z.object({
-    titles: recipeFiltersSchema.shape.peopleTitles,
-    seniority: recipeFiltersSchema.shape.peopleSeniority,
-    departments: recipeFiltersSchema.shape.peopleDepartments,
-  }),
+  peopleFilters: z
+    .union([
+      peopleSearchPayloadSchema,
+      legacyPeopleFiltersSchema,
+    ])
+    .transform((value) => {
+      if ("personTitles" in value) {
+        return peopleSearchPayloadSchema.parse(value);
+      }
+
+      return peopleSearchPayloadSchema.parse({
+        page: 1,
+        perPage: 25,
+        personTitles: value.peopleTitles,
+        personLocations: [],
+        personSeniorities: value.peopleSeniority,
+        personDepartments: value.peopleDepartments,
+      });
+    }),
   exportSettings: exportSettingsSchema,
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),

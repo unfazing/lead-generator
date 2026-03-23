@@ -28,9 +28,12 @@ export function getEmptyRecipeDraft(): RecipeInput {
       organizationIndustryTagIds: [],
     },
     peopleFilters: {
-      titles: [],
-      seniority: [],
-      departments: [],
+      page: 1,
+      perPage: 25,
+      personTitles: [],
+      personLocations: [],
+      personSeniorities: [],
+      personDepartments: [],
     },
     exportSettings: {
       columns: ["full_name", "title", "company_name", "email"],
@@ -77,9 +80,12 @@ export function parseRecipeFormData(formData: FormData) {
       ),
     },
     peopleFilters: {
-      titles: splitLines(formData.get("peopleTitles")),
-      seniority: splitLines(formData.get("peopleSeniority")),
-      departments: splitLines(formData.get("peopleDepartments")),
+      page: 1,
+      perPage: 25,
+      personTitles: splitLines(formData.get("personTitles")),
+      personLocations: splitLines(formData.get("personLocations")),
+      personSeniorities: formData.getAll("personSeniorities").map(String),
+      personDepartments: formData.getAll("personDepartments").map(String),
     },
     exportSettings: {
       columns: splitLines(formData.get("exportColumns")),
