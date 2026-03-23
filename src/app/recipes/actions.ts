@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { searchCompanies, createCompanySearchSignature } from "@/lib/apollo/company-search";
 import { searchPeople } from "@/lib/apollo/people-search";
-import { companySearchPayloadSchema } from "@/lib/company-search/schema";
 import { getLatestSnapshotForSignature, saveCompanySnapshot } from "@/lib/db/repositories/company-snapshots";
 import { savePeopleSnapshot } from "@/lib/db/repositories/people-snapshots";
 import {
@@ -82,17 +81,6 @@ export async function saveRecipeAction(formData: FormData) {
   );
 }
 
-function splitLines(value: FormDataEntryValue | null) {
-  if (typeof value !== "string") {
-    return [];
-  }
-
-  return value
-    .split(/\r?\n|,/)
-    .map((item) => item.trim())
-    .filter(Boolean);
-}
-
 export async function runCompanySearchAction(formData: FormData) {
   const recipeId = formData.get("companyRecipeId");
   const mode = formData.get("mode") === "latest" ? "latest" : "reuse";
@@ -101,27 +89,6 @@ export async function runCompanySearchAction(formData: FormData) {
   if (typeof recipeId !== "string" || !recipeId) {
     throw new Error("Company recipe is required for company search");
   }
-
-  const payload = companySearchPayloadSchema.parse({
-    page: 1,
-    perPage: 25,
-    organizationName: String(formData.get("organizationName") ?? ""),
-    organizationWebsite: String(formData.get("organizationWebsite") ?? ""),
-    organizationLocations: splitLines(formData.get("organizationLocations")),
-    organizationNumEmployeesRanges: formData
-      .getAll("organizationNumEmployeesRanges")
-      .map(String),
-    organizationIds: splitLines(formData.get("organizationIds")),
-    qOrganizationKeywordTags: splitLines(
-      formData.get("qOrganizationKeywordTags"),
-    ),
-    organizationNotKeywordTags: splitLines(
-      formData.get("organizationNotKeywordTags"),
-    ),
-    organizationIndustryTagIds: splitLines(
-      formData.get("organizationIndustryTagIds"),
-    ),
-  });
 
   const recipe = await getRecipeById(recipeId);
 
@@ -132,13 +99,7 @@ export async function runCompanySearchAction(formData: FormData) {
   if (recipe.type !== "company") {
     throw new Error("Selected recipe is not a company recipe");
   }
-
-  await updateCompanyRecipe(recipeId, {
-    type: "company",
-    name: recipe.name,
-    notes: recipe.notes,
-    companyFilters: payload,
-  });
+  const payload = recipe.companyFilters;
 
   const signature = createCompanySearchSignature(payload);
   const existing = await getLatestSnapshotForSignature(recipeId, signature);

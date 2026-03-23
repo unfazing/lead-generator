@@ -273,6 +273,22 @@ a {
   grid-column: 1 / -1;
 }
 
+.search-filter-summary {
+  align-content: start;
+}
+
+.summary-value {
+  min-height: 52px;
+  border: 1px solid rgba(35, 28, 20, 0.14);
+  background: rgba(255, 253, 248, 0.72);
+  border-radius: 14px;
+  padding: 12px 14px;
+  color: var(--text);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 .recipe-list {
   display: grid;
   gap: 12px;

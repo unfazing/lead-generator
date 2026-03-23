@@ -1,7 +1,6 @@
 import { runCompanySearchAction } from "@/app/recipes/actions";
 import {
   companyFilterDefinitions,
-  employeeRangeOptions,
 } from "@/lib/apollo/company-filter-definitions";
 import type { CompanySnapshotRecord } from "@/lib/db/repositories/company-snapshots";
 import type { CompanyRecipe, PeopleRecipe } from "@/lib/recipes/schema";
@@ -31,8 +30,8 @@ export function CompanySearchPanel({
         <p className="eyebrow">Company search</p>
         <h2>Explicit search, explicit refresh</h2>
         <p>
-          Search runs only on click. Matching snapshots are reused by default,
-          and latest refresh is a separate action.
+          Search runs only from the selected company recipe. Matching snapshots
+          are reused by default, and latest refresh is a separate action.
         </p>
       </div>
 
@@ -62,121 +61,36 @@ export function CompanySearchPanel({
 
         <section className="filter-section">
           <div className="section-heading">
-            <h3>Exact company targeting</h3>
+            <h3>Recipe filters in use</h3>
             <p className="field-hint">
-              Use these when you already know the organization you want.
+              Edit the company recipe on the recipe page if you want to change
+              query parameters. Search here only runs or refreshes snapshots for
+              the selected recipe.
             </p>
           </div>
           <div className="field-grid">
-            {companyFilterDefinitions
-              .filter((definition) =>
-                ["organizationName", "organizationWebsite", "organizationIds"].includes(
-                  String(definition.key),
-                ),
-              )
-              .map((definition) => {
-                const value =
-                  recipe.companyFilters[
-                    definition.key as keyof typeof recipe.companyFilters
-                  ];
-                const stringValue = Array.isArray(value)
-                  ? value.join("\n")
-                  : String(value ?? "");
+            {companyFilterDefinitions.map((definition) => {
+              const value =
+                recipe.companyFilters[
+                  definition.key as keyof typeof recipe.companyFilters
+                ];
+              const displayValue = Array.isArray(value)
+                ? value.length > 0
+                  ? value.join(", ")
+                  : "None"
+                : String(value ?? "").trim() || "None";
 
-                return (
-                  <div
-                    key={definition.key}
-                    className={`field${definition.input === "multi-text" ? " full" : ""}`}
-                  >
-                    <label htmlFor={String(definition.key)}>{definition.label}</label>
-                    {definition.input === "text" ? (
-                      <input
-                        defaultValue={stringValue}
-                        id={String(definition.key)}
-                        name={String(definition.key)}
-                        placeholder={definition.placeholder}
-                      />
-                    ) : (
-                      <textarea
-                        defaultValue={stringValue}
-                        id={String(definition.key)}
-                        name={String(definition.key)}
-                        placeholder={definition.placeholder}
-                      />
-                    )}
-                    <span className="field-hint">{definition.description}</span>
-                  </div>
-                );
-              })}
-          </div>
-        </section>
-
-        <section className="filter-section">
-          <div className="section-heading">
-            <h3>Broader discovery filters</h3>
-            <p className="field-hint">
-              Combine location, size, keywords, and industry to explore while
-              keeping the result set manageable.
-            </p>
-          </div>
-          <div className="field-grid">
-            {companyFilterDefinitions
-              .filter(
-                (definition) =>
-                  !["organizationName", "organizationWebsite", "organizationIds"].includes(
-                    String(definition.key),
-                  ),
-              )
-              .map((definition) => {
-                const value =
-                  recipe.companyFilters[
-                    definition.key as keyof typeof recipe.companyFilters
-                  ];
-
-                if (definition.key === "organizationNumEmployeesRanges") {
-                  const selected = Array.isArray(value) ? value : [];
-
-                  return (
-                    <div key={definition.key} className="field full">
-                      <label>{definition.label}</label>
-                      <div className="option-grid">
-                        {employeeRangeOptions.map((option) => (
-                          <label key={option.value} className="option-pill">
-                            <input
-                              defaultChecked={selected.includes(option.value)}
-                              name={String(definition.key)}
-                              type="checkbox"
-                              value={option.value}
-                            />
-                            <span>{option.label}</span>
-                          </label>
-                        ))}
-                      </div>
-                      <span className="field-hint">{definition.description}</span>
-                    </div>
-                  );
-                }
-
-                const stringValue = Array.isArray(value)
-                  ? value.join("\n")
-                  : String(value ?? "");
-
-                return (
-                  <div
-                    key={definition.key}
-                    className={`field${definition.input === "multi-text" ? " full" : ""}`}
-                  >
-                    <label htmlFor={String(definition.key)}>{definition.label}</label>
-                    <textarea
-                      defaultValue={stringValue}
-                      id={String(definition.key)}
-                      name={String(definition.key)}
-                      placeholder={definition.placeholder}
-                    />
-                    <span className="field-hint">{definition.description}</span>
-                  </div>
-                );
-              })}
+              return (
+                <div
+                  key={definition.key}
+                  className={`field search-filter-summary${definition.input === "multi-text" ? " full" : ""}`}
+                >
+                  <label>{definition.label}</label>
+                  <div className="summary-value">{displayValue}</div>
+                  <span className="field-hint">{definition.description}</span>
+                </div>
+              );
+            })}
           </div>
         </section>
 
