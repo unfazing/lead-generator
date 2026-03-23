@@ -1,5 +1,6 @@
 import { deleteRecipeAction, saveRecipeAction } from "@/app/recipes/actions";
 import { MultiValueInput } from "@/features/recipes/components/multi-value-input";
+import { InfoTip } from "@/features/ui/components/info-tip";
 import { employeeRangeOptions } from "@/lib/apollo/company-filter-definitions";
 import {
   contactEmailStatusFilterOptions,
@@ -47,11 +48,6 @@ export function RecipeEditor(props: RecipeEditorProps) {
       <div className="workspace-header">
         <p className="eyebrow">{type === "company" ? "Company recipe" : "People recipe"}</p>
         <h1>{getTitle(type, recipe)}</h1>
-        <p>
-          {type === "company"
-            ? "Save reusable company filters separately so any people search can be paired with them later."
-            : "Save reusable people filters separately so they can be mixed with any company result set later."}
-        </p>
       </div>
 
       <form action={saveRecipeAction} className="stack">
@@ -67,8 +63,13 @@ export function RecipeEditor(props: RecipeEditorProps) {
 
         <section className="filter-section">
           <div className="section-heading">
-            <h3>Recipe details</h3>
-            <p className="field-hint">Name the saved search and keep a short operating note with it.</p>
+            <h3 className="heading-with-tip">
+              <span>Recipe details</span>
+              <InfoTip
+                content="Name the saved search and keep a short operating note with it."
+                label="Recipe details help"
+              />
+            </h3>
           </div>
           <div className="field-grid">
             <div className="field">
@@ -96,10 +97,13 @@ export function RecipeEditor(props: RecipeEditorProps) {
         {type === "company" ? (
           <section className="filter-section">
             <div className="section-heading">
-              <h3>Company filter defaults</h3>
-              <p className="field-hint">
-                These defaults feed company snapshot searches and can later be paired with any people recipe.
-              </p>
+              <h3 className="heading-with-tip">
+                <span>Company filter defaults</span>
+                <InfoTip
+                  content="These defaults feed company snapshot searches and can later be paired with any people recipe."
+                  label="Company filter defaults help"
+                />
+              </h3>
             </div>
             <div className="field-grid">
               <div className="field">
@@ -163,7 +167,13 @@ export function RecipeEditor(props: RecipeEditorProps) {
                 values={props.draft.companyFilters.organizationJobLocations}
               />
               <div className="field full">
-                <label>Employee ranges</label>
+                <label className="label-with-tip">
+                  <span>Employee ranges</span>
+                  <InfoTip
+                    content="Constrained Apollo employee-band values."
+                    label="Employee ranges help"
+                  />
+                </label>
                 <div className="option-grid">
                   {employeeRangeOptions.map((option) => (
                     <label key={option.value} className="option-pill">
@@ -180,7 +190,6 @@ export function RecipeEditor(props: RecipeEditorProps) {
                     </label>
                   ))}
                 </div>
-                <span className="field-hint">Constrained Apollo employee-band values.</span>
               </div>
               <MultiValueInput
                 hint="Use exact Apollo industry tag IDs when you want precise matching."
@@ -339,10 +348,13 @@ export function RecipeEditor(props: RecipeEditorProps) {
         ) : (
           <section className="filter-section">
             <div className="section-heading">
-              <h3>People filter defaults</h3>
-              <p className="field-hint">
-                These defaults define the people search that can later be mixed with any company snapshot.
-              </p>
+              <h3 className="heading-with-tip">
+                <span>People filter defaults</span>
+                <InfoTip
+                  content="These defaults define the people search that can later be mixed with any company snapshot."
+                  label="People filter defaults help"
+                />
+              </h3>
             </div>
             <div className="field-grid">
               <MultiValueInput
@@ -355,10 +367,13 @@ export function RecipeEditor(props: RecipeEditorProps) {
               <div className="field full">
                 <div className="inline-toggle-card">
                   <div className="inline-toggle-copy">
-                    <strong>Include similar titles</strong>
-                    <span className="field-hint">
-                      Turn this off when you want strict title matching only.
-                    </span>
+                    <strong className="label-with-tip">
+                      <span>Include similar titles</span>
+                      <InfoTip
+                        content="Turn this off when you want strict title matching only."
+                        label="Include similar titles help"
+                      />
+                    </strong>
                   </div>
                   <label className="inline-toggle">
                     <input
@@ -430,7 +445,13 @@ export function RecipeEditor(props: RecipeEditorProps) {
                 </span>
               </div>
               <div className="field full">
-                <label>Email status</label>
+                <label className="label-with-tip">
+                  <span>Email status</span>
+                  <InfoTip
+                    content="Limit preview results to specific Apollo email-status buckets."
+                    label="Email status help"
+                  />
+                </label>
                 <div className="option-grid">
                   {contactEmailStatusFilterOptions.map((option) => (
                     <label key={option.value} className="option-pill">
@@ -447,12 +468,15 @@ export function RecipeEditor(props: RecipeEditorProps) {
                     </label>
                   ))}
                 </div>
-                <span className="field-hint">
-                  Limit preview results to specific Apollo email-status buckets.
-                </span>
               </div>
               <div className="field full">
-                <label>People seniority</label>
+                <label className="label-with-tip">
+                  <span>People seniority</span>
+                  <InfoTip
+                    content="Constrained values for Apollo person_seniorities."
+                    label="People seniority help"
+                  />
+                </label>
                 <div className="option-grid">
                   {peopleSeniorityFilterOptions.map((option) => (
                     <label key={option.value} className="option-pill">
@@ -469,7 +493,6 @@ export function RecipeEditor(props: RecipeEditorProps) {
                     </label>
                   ))}
                 </div>
-                <span className="field-hint">Constrained values for Apollo `person_seniorities`.</span>
               </div>
               <MultiValueInput
                 hint="Employer technologies where all listed values must be present."
