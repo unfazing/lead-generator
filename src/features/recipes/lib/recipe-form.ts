@@ -19,6 +19,13 @@ function splitLines(value: FormDataEntryValue | null) {
     .filter(Boolean);
 }
 
+function getMultiValueEntries(formData: FormData, key: string) {
+  return formData
+    .getAll(key)
+    .flatMap((value) => splitLines(value))
+    .filter(Boolean);
+}
+
 export function getEmptyCompanyRecipeDraft(): CompanyRecipeInput {
   return {
     type: "company",
@@ -104,20 +111,14 @@ export function parseRecipeFormData(formData: FormData, type: RecipeType) {
         perPage: 25,
         organizationName: String(formData.get("organizationName") ?? ""),
         organizationWebsite: String(formData.get("organizationWebsite") ?? ""),
-        organizationLocations: splitLines(formData.get("organizationLocations")),
+        organizationLocations: getMultiValueEntries(formData, "organizationLocations"),
         organizationNumEmployeesRanges: formData
           .getAll("organizationNumEmployeesRanges")
           .map(String),
-        organizationIds: splitLines(formData.get("organizationIds")),
-        qOrganizationKeywordTags: splitLines(
-          formData.get("qOrganizationKeywordTags"),
-        ),
-        organizationNotKeywordTags: splitLines(
-          formData.get("organizationNotKeywordTags"),
-        ),
-        organizationIndustryTagIds: splitLines(
-          formData.get("organizationIndustryTagIds"),
-        ),
+        organizationIds: getMultiValueEntries(formData, "organizationIds"),
+        qOrganizationKeywordTags: getMultiValueEntries(formData, "qOrganizationKeywordTags"),
+        organizationNotKeywordTags: getMultiValueEntries(formData, "organizationNotKeywordTags"),
+        organizationIndustryTagIds: getMultiValueEntries(formData, "organizationIndustryTagIds"),
       },
     });
   }
@@ -129,13 +130,13 @@ export function parseRecipeFormData(formData: FormData, type: RecipeType) {
     peopleFilters: {
       page: 1,
       perPage: 25,
-      personTitles: splitLines(formData.get("personTitles")),
-      personLocations: splitLines(formData.get("personLocations")),
+      personTitles: getMultiValueEntries(formData, "personTitles"),
+      personLocations: getMultiValueEntries(formData, "personLocations"),
       personSeniorities: formData.getAll("personSeniorities").map(String),
       personDepartments: formData.getAll("personDepartments").map(String),
     },
     exportSettings: {
-      columns: splitLines(formData.get("exportColumns")),
+      columns: getMultiValueEntries(formData, "exportColumns"),
     },
   });
 }

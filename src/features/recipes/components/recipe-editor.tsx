@@ -1,4 +1,5 @@
 import { saveRecipeAction } from "@/app/recipes/actions";
+import { MultiValueInput } from "@/features/recipes/components/multi-value-input";
 import { employeeRangeOptions } from "@/lib/apollo/company-filter-definitions";
 import {
   peopleDepartmentFilterOptions,
@@ -25,10 +26,6 @@ type RecipeEditorProps =
       draft: PeopleRecipeInput;
       pairedRecipeId: string | null;
     };
-
-function joinValues(values: string[]) {
-  return values.join("\n");
-}
 
 function hasSelectedValue(values: readonly string[], value: string) {
   return values.includes(value);
@@ -85,15 +82,13 @@ export function RecipeEditor(props: RecipeEditorProps) {
               />
             </div>
             {type === "people" ? (
-              <div className="field">
-                <label htmlFor="exportColumns">Export columns</label>
-                <textarea
-                  defaultValue={joinValues(props.draft.exportSettings.columns)}
-                  id="exportColumns"
-                  name="exportColumns"
-                />
-                <span className="field-hint">Comma or newline separated.</span>
-              </div>
+              <MultiValueInput
+                hint="Choose the CSV columns as individual values so the export shape stays easy to edit."
+                label="Export columns"
+                name="exportColumns"
+                placeholder="email"
+                values={props.draft.exportSettings.columns}
+              />
             ) : null}
             <div className="field full">
               <label htmlFor={`${type}-notes`}>Notes</label>
@@ -134,22 +129,20 @@ export function RecipeEditor(props: RecipeEditorProps) {
                   placeholder="example.com"
                 />
               </div>
-              <div className="field">
-                <label htmlFor="organizationLocations">Company locations</label>
-                <textarea
-                  defaultValue={joinValues(props.draft.companyFilters.organizationLocations)}
-                  id="organizationLocations"
-                  name="organizationLocations"
-                />
-              </div>
-              <div className="field full">
-                <label htmlFor="qOrganizationKeywordTags">Company keywords</label>
-                <textarea
-                  defaultValue={joinValues(props.draft.companyFilters.qOrganizationKeywordTags)}
-                  id="qOrganizationKeywordTags"
-                  name="qOrganizationKeywordTags"
-                />
-              </div>
+              <MultiValueInput
+                hint="Add one location at a time for cleaner geographic targeting."
+                label="Company locations"
+                name="organizationLocations"
+                placeholder="Singapore"
+                values={props.draft.companyFilters.organizationLocations}
+              />
+              <MultiValueInput
+                hint="Add include keywords one by one instead of managing a comma-delimited list."
+                label="Company keywords"
+                name="qOrganizationKeywordTags"
+                placeholder="saas"
+                values={props.draft.companyFilters.qOrganizationKeywordTags}
+              />
               <div className="field full">
                 <label>Employee ranges</label>
                 <div className="option-grid">
@@ -170,30 +163,27 @@ export function RecipeEditor(props: RecipeEditorProps) {
                 </div>
                 <span className="field-hint">Constrained Apollo employee-band values.</span>
               </div>
-              <div className="field">
-                <label htmlFor="organizationIndustryTagIds">Industry tag IDs</label>
-                <textarea
-                  defaultValue={joinValues(props.draft.companyFilters.organizationIndustryTagIds)}
-                  id="organizationIndustryTagIds"
-                  name="organizationIndustryTagIds"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="organizationNotKeywordTags">Excluded keywords</label>
-                <textarea
-                  defaultValue={joinValues(props.draft.companyFilters.organizationNotKeywordTags)}
-                  id="organizationNotKeywordTags"
-                  name="organizationNotKeywordTags"
-                />
-              </div>
-              <div className="field full">
-                <label htmlFor="organizationIds">Organization IDs</label>
-                <textarea
-                  defaultValue={joinValues(props.draft.companyFilters.organizationIds)}
-                  id="organizationIds"
-                  name="organizationIds"
-                />
-              </div>
+              <MultiValueInput
+                hint="Use exact Apollo industry tag IDs when you want precise matching."
+                label="Industry tag IDs"
+                name="organizationIndustryTagIds"
+                placeholder="5567ce5f7369641f6c1eced7"
+                values={props.draft.companyFilters.organizationIndustryTagIds}
+              />
+              <MultiValueInput
+                hint="Excluded keywords are stored individually, so they are easier to review later."
+                label="Excluded keywords"
+                name="organizationNotKeywordTags"
+                placeholder="agency"
+                values={props.draft.companyFilters.organizationNotKeywordTags}
+              />
+              <MultiValueInput
+                hint="Paste or type Apollo organization IDs one by one."
+                label="Organization IDs"
+                name="organizationIds"
+                placeholder="66f6e1f9f3b2b20001c0f001"
+                values={props.draft.companyFilters.organizationIds}
+              />
             </div>
           </section>
         ) : (
@@ -205,26 +195,20 @@ export function RecipeEditor(props: RecipeEditorProps) {
               </p>
             </div>
             <div className="field-grid">
-              <div className="field">
-                <label htmlFor="personTitles">People titles</label>
-                <textarea
-                  defaultValue={joinValues(props.draft.peopleFilters.personTitles)}
-                  id="personTitles"
-                  name="personTitles"
-                  placeholder="sales director"
-                />
-                <span className="field-hint">Maps to Apollo `person_titles` array values.</span>
-              </div>
-              <div className="field">
-                <label htmlFor="personLocations">People locations</label>
-                <textarea
-                  defaultValue={joinValues(props.draft.peopleFilters.personLocations)}
-                  id="personLocations"
-                  name="personLocations"
-                  placeholder="California, US"
-                />
-                <span className="field-hint">Maps to Apollo `person_locations` array values.</span>
-              </div>
+              <MultiValueInput
+                hint="Maps to Apollo `person_titles` array values."
+                label="People titles"
+                name="personTitles"
+                placeholder="sales director"
+                values={props.draft.peopleFilters.personTitles}
+              />
+              <MultiValueInput
+                hint="Maps to Apollo `person_locations` array values."
+                label="People locations"
+                name="personLocations"
+                placeholder="California, US"
+                values={props.draft.peopleFilters.personLocations}
+              />
               <div className="field full">
                 <label>People seniority</label>
                 <div className="option-grid">
