@@ -4,44 +4,17 @@ import { ensureDataDirectory, getRecipeDataFilePath } from "@/lib/db/client";
 import {
   companyRecipeInputSchema,
   companyRecipeSchema,
-  legacyCombinedRecipeSchema,
   peopleRecipeInputSchema,
   peopleRecipeSchema,
   recipeSchema,
   type CompanyRecipe,
   type CompanyRecipeInput,
-  type LegacyCombinedRecipe,
   type PeopleRecipe,
   type PeopleRecipeInput,
   type Recipe,
 } from "@/lib/recipes/schema";
 
 const typedRecipeCollectionSchema = recipeSchema.array();
-const legacyRecipeCollectionSchema = legacyCombinedRecipeSchema.array();
-
-function splitLegacyRecipe(recipe: LegacyCombinedRecipe): Recipe[] {
-  return [
-    companyRecipeSchema.parse({
-      id: `${recipe.id}:company`,
-      type: "company",
-      name: `${recipe.name} Company Search`,
-      notes: recipe.notes,
-      companyFilters: recipe.companyFilters,
-      createdAt: recipe.createdAt,
-      updatedAt: recipe.updatedAt,
-    }),
-    peopleRecipeSchema.parse({
-      id: `${recipe.id}:people`,
-      type: "people",
-      name: `${recipe.name} People Search`,
-      notes: recipe.notes,
-      peopleFilters: recipe.peopleFilters,
-      exportSettings: recipe.exportSettings,
-      createdAt: recipe.createdAt,
-      updatedAt: recipe.updatedAt,
-    }),
-  ];
-}
 
 async function writeRecipes(recipes: Recipe[]) {
   await ensureDataDirectory();
@@ -58,13 +31,6 @@ async function readRecipes() {
     const typed = typedRecipeCollectionSchema.safeParse(parsed);
     if (typed.success) {
       return typed.data;
-    }
-
-    const legacy = legacyRecipeCollectionSchema.safeParse(parsed);
-    if (legacy.success) {
-      const migrated = legacy.data.flatMap(splitLegacyRecipe);
-      await writeRecipes(migrated);
-      return migrated;
     }
 
     throw new Error("Unable to parse recipe data");

@@ -97,17 +97,6 @@ export const recipeInputSchema = z.discriminatedUnion("type", [
   peopleRecipeInputSchema,
 ]);
 
-export const legacyCombinedRecipeSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1).max(120),
-  notes: z.string().max(500).default(""),
-  companyFilters: z.union([companySearchPayloadSchema, legacyCompanyFiltersSchema]),
-  peopleFilters: z.union([peopleSearchPayloadSchema, legacyPeopleFiltersSchema]),
-  exportSettings: exportSettingsSchema,
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-});
-
 export type RecipeType = z.infer<typeof recipeTypeSchema>;
 export type CompanyRecipe = z.infer<typeof companyRecipeSchema>;
 export type PeopleRecipe = z.infer<typeof peopleRecipeSchema>;
@@ -115,4 +104,3 @@ export type Recipe = z.infer<typeof recipeSchema>;
 export type CompanyRecipeInput = z.infer<typeof companyRecipeInputSchema>;
 export type PeopleRecipeInput = z.infer<typeof peopleRecipeInputSchema>;
 export type RecipeInput = z.infer<typeof recipeInputSchema>;
-export type LegacyCombinedRecipe = z.infer<typeof legacyCombinedRecipeSchema>;
