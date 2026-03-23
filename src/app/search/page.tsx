@@ -1,3 +1,4 @@
+import { RetrievalRunStatusCard } from "@/features/retrieval-runs/components/retrieval-run-status-card";
 import Link from "next/link";
 import { WorkspaceEmptyState } from "@/features/search-workspace/components/workspace-empty-state";
 import { WorkspaceStageNav } from "@/features/search-workspace/components/workspace-stage-nav";
@@ -7,6 +8,7 @@ import {
 } from "@/features/search-workspace/lib/workspace-route-state";
 import { UsageSummary } from "@/features/usage/components/usage-summary";
 import { getApolloUsageSummary } from "@/features/usage/lib/apollo-usage";
+import { getLatestRetrievalRunForPeopleSnapshot } from "@/lib/db/repositories/retrieval-runs";
 import { listRecipesByType } from "@/lib/db/repositories/recipes";
 
 type SearchPageProps = {
@@ -17,10 +19,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const params = searchParams ? await searchParams : {};
   const context = parseSearchWorkspaceContext("landing", params);
 
-  const [companyRecipes, peopleRecipes, usageSummary] = await Promise.all([
+  const [companyRecipes, peopleRecipes, usageSummary, retrievalRun] = await Promise.all([
     listRecipesByType("company"),
     listRecipesByType("people"),
     getApolloUsageSummary(),
+    context.peopleSnapshotId
+      ? getLatestRetrievalRunForPeopleSnapshot(context.peopleSnapshotId)
+      : Promise.resolve(null),
   ]);
   const companyHref = `/search/company${
     buildSearchWorkspaceQuery({
@@ -61,6 +66,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       </section>
       <div className="stack search-main">
         <UsageSummary summary={usageSummary} />
+        <RetrievalRunStatusCard run={retrievalRun} />
         <div className="workspace-grid search-entry-grid">
           <section className="card stack">
             <div className="workspace-header">
