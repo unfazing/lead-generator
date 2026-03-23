@@ -1,15 +1,10 @@
-import { CompanyResultsWorkspace } from "@/features/company-search/components/company-results-workspace";
-import { CompanySearchPanel } from "@/features/company-search/components/company-search-panel";
-import { CompanySearchWarning } from "@/features/company-search/components/company-search-warning";
+import Link from "next/link";
 import { RecipeEditor } from "@/features/recipes/components/recipe-editor";
 import { RecipeList } from "@/features/recipes/components/recipe-list";
 import {
   getCompanyRecipeDraft,
   getPeopleRecipeDraft,
 } from "@/features/recipes/lib/recipe-form";
-import { UsageSummary } from "@/features/usage/components/usage-summary";
-import { getApolloUsageSummary } from "@/features/usage/lib/apollo-usage";
-import { listSnapshotsForRecipe } from "@/lib/db/repositories/company-snapshots";
 import {
   getRecipeById,
   listRecipesByType,
@@ -31,7 +26,6 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
   const params = searchParams ? await searchParams : {};
   const companyRecipeId = getSingleParam(params, "companyRecipe");
   const peopleRecipeId = getSingleParam(params, "peopleRecipe");
-  const snapshotId = getSingleParam(params, "snapshot");
   const editorTab = getSingleParam(params, "editorTab") === "people" ? "people" : "company";
   const editorMode = getSingleParam(params, "editorMode") === "new" ? "new" : "edit";
 
@@ -40,14 +34,12 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
     listRecipesByType("people"),
   ]);
 
-  const selectedCompanyRecipe =
-    companyRecipeId
-      ? await getRecipeById(companyRecipeId)
-      : companyRecipes[0] ?? null;
-  const selectedPeopleRecipe =
-    peopleRecipeId
-      ? await getRecipeById(peopleRecipeId)
-      : peopleRecipes[0] ?? null;
+  const selectedCompanyRecipe = companyRecipeId
+    ? await getRecipeById(companyRecipeId)
+    : companyRecipes[0] ?? null;
+  const selectedPeopleRecipe = peopleRecipeId
+    ? await getRecipeById(peopleRecipeId)
+    : peopleRecipes[0] ?? null;
 
   const companyRecipe =
     selectedCompanyRecipe?.type === "company" ? selectedCompanyRecipe : null;
@@ -60,20 +52,11 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
   const peopleDraft = getPeopleRecipeDraft(
     editorTab === "people" && editorMode === "new" ? null : peopleRecipe,
   );
-  const usageSummary = await getApolloUsageSummary();
-  const snapshots = companyRecipe
-    ? await listSnapshotsForRecipe(companyRecipe.id)
-    : [];
-  const activeSnapshot =
-    (snapshotId
-      ? snapshots.find((snapshot) => snapshot.id === snapshotId)
-      : snapshots[0]) ?? null;
   const companyEditorHref = `/recipes?${new URLSearchParams(
     Object.fromEntries(
       [
         companyRecipeId ? ["companyRecipe", companyRecipeId] : null,
         peopleRecipeId ? ["peopleRecipe", peopleRecipeId] : null,
-        snapshotId ? ["snapshot", snapshotId] : null,
         ["editorTab", "company"],
         ["editorMode", editorTab === "company" ? editorMode : "edit"],
       ].filter(Boolean) as string[][],
@@ -84,7 +67,6 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
       [
         companyRecipeId ? ["companyRecipe", companyRecipeId] : null,
         peopleRecipeId ? ["peopleRecipe", peopleRecipeId] : null,
-        snapshotId ? ["snapshot", snapshotId] : null,
         ["editorTab", "people"],
         ["editorMode", editorTab === "people" ? editorMode : "edit"],
       ].filter(Boolean) as string[][],
@@ -95,44 +77,45 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
     <main className="shell workspace-shell">
       <section className="workspace-panel">
         <div className="workspace-header">
-          <p className="eyebrow">Search workspace</p>
-          <h1>Mix a company search with any people search.</h1>
+          <p className="eyebrow">Recipe management</p>
+          <h1>Create and refine company and people recipes.</h1>
           <p>
-            Save company and people recipes independently, then pair them in one
-            workspace before you search or spend.
+            Keep recipe authoring separate from operational search work, then move to the search page when you want to pair recipes and inspect snapshots.
           </p>
+          <div className="tab-bar">
+            <Link className="tab-pill active" href="/recipes">
+              Recipes
+            </Link>
+            <Link className="tab-pill" href="/search">
+              Search
+            </Link>
+          </div>
         </div>
       </section>
       <div className="workspace-grid workspace-grid-wide">
         <div className="stack">
           <RecipeList
             activeRecipeId={companyRecipe?.id ?? null}
+            basePath="/recipes"
             pairedRecipeId={peopleRecipe?.id ?? null}
             recipes={companyRecipes}
             type="company"
           />
           <RecipeList
             activeRecipeId={peopleRecipe?.id ?? null}
+            basePath="/recipes"
             pairedRecipeId={companyRecipe?.id ?? null}
             recipes={peopleRecipes}
             type="people"
           />
         </div>
         <div className="stack">
-          <UsageSummary summary={usageSummary} />
-          <CompanySearchPanel
-            pairedPeopleRecipe={peopleRecipe}
-            recipe={companyRecipe}
-            snapshot={activeSnapshot}
-          />
-          <CompanySearchWarning warnings={activeSnapshot?.result.warnings ?? []} />
-          <CompanyResultsWorkspace snapshot={activeSnapshot} />
           <section className="card stack">
             <div className="workspace-header">
-              <p className="eyebrow">Recipe creation</p>
+              <p className="eyebrow">Recipe editor</p>
               <h2>Save company and people searches separately.</h2>
               <p>
-                Use tabs to switch between recipe types without losing the paired search context.
+                Switch tabs to author either recipe type without mixing editing with snapshot review.
               </p>
             </div>
             <div className="tab-bar">

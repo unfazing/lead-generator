@@ -3,12 +3,14 @@ import type { CompanyRecipe, PeopleRecipe, RecipeType } from "@/lib/recipes/sche
 
 type RecipeListProps =
   | {
+      basePath: string;
       type: "company";
       recipes: CompanyRecipe[];
       activeRecipeId: string | null;
       pairedRecipeId: string | null;
     }
   | {
+      basePath: string;
       type: "people";
       recipes: PeopleRecipe[];
       activeRecipeId: string | null;
@@ -16,6 +18,7 @@ type RecipeListProps =
     };
 
 export function RecipeList({
+  basePath,
   type,
   recipes,
   activeRecipeId,
@@ -24,15 +27,15 @@ export function RecipeList({
   const title = type === "company" ? "Company recipes" : "People recipes";
   const newHref =
     type === "company"
-      ? `/recipes?editorTab=company&editorMode=new${pairedRecipeId ? `&peopleRecipe=${pairedRecipeId}` : ""}${activeRecipeId ? `&companyRecipe=${activeRecipeId}` : ""}`
-      : `/recipes?editorTab=people&editorMode=new${pairedRecipeId ? `&companyRecipe=${pairedRecipeId}` : ""}${activeRecipeId ? `&peopleRecipe=${activeRecipeId}` : ""}`;
+      ? `${basePath}?editorTab=company&editorMode=new${pairedRecipeId ? `&peopleRecipe=${pairedRecipeId}` : ""}${activeRecipeId ? `&companyRecipe=${activeRecipeId}` : ""}`
+      : `${basePath}?editorTab=people&editorMode=new${pairedRecipeId ? `&companyRecipe=${pairedRecipeId}` : ""}${activeRecipeId ? `&peopleRecipe=${activeRecipeId}` : ""}`;
 
   function getRecipeHref(recipeId: string) {
     if (type === "company") {
-      return `/recipes?companyRecipe=${recipeId}${pairedRecipeId ? `&peopleRecipe=${pairedRecipeId}` : ""}&editorTab=company&editorMode=edit`;
+      return `${basePath}?companyRecipe=${recipeId}${pairedRecipeId ? `&peopleRecipe=${pairedRecipeId}` : ""}${basePath === "/recipes" ? "&editorTab=company&editorMode=edit" : ""}`;
     }
 
-    return `/recipes?peopleRecipe=${recipeId}${pairedRecipeId ? `&companyRecipe=${pairedRecipeId}` : ""}&editorTab=people&editorMode=edit`;
+    return `${basePath}?peopleRecipe=${recipeId}${pairedRecipeId ? `&companyRecipe=${pairedRecipeId}` : ""}${basePath === "/recipes" ? "&editorTab=people&editorMode=edit" : ""}`;
   }
 
   return (
