@@ -97,18 +97,10 @@ export const companyFilterDefinitions: FilterDefinition[] = [
 export const defaultCompanyPreviewColumns = [
   "name",
   "website_url",
-  "primary_location",
-  "employee_range",
-  "industry",
+  "primary_domain",
+  "linkedin_url",
+  "founded_year",
   "apollo_id",
 ] as const;
 
-export const defaultOptionalCompanyColumns = [
-  "founded_year",
-  "keywords",
-  "linkedin_url",
-  "estimated_num_employees",
-  "short_description",
-] as const;
-
-export type OptionalCompanyColumn = (typeof defaultOptionalCompanyColumns)[number];
+export type CompanyPreviewColumn = (typeof defaultCompanyPreviewColumns)[number];

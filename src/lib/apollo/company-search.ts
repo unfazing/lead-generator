@@ -9,6 +9,7 @@ export type CompanyPreviewRow = {
   apollo_id: string;
   name: string;
   website_url: string;
+  primary_domain?: string;
   primary_location: string;
   employee_range: string;
   industry: string;
@@ -18,7 +19,7 @@ export type CompanyPreviewRow = {
   linkedin_url?: string;
   estimated_num_employees?: string;
   short_description?: string;
-};
+} & Record<string, string | undefined>;
 
 export type CompanySearchWarning = {
   level: "info" | "warning";
@@ -85,15 +86,74 @@ function createApolloCompanySearchPayload(payload: CompanySearchPayload) {
   return compactPayload({
     q_organization_name: payload.organizationName,
     organization_website: payload.organizationWebsite,
+    q_organization_domains_list: payload.qOrganizationDomainsList,
     organization_locations: payload.organizationLocations,
+    organization_not_locations: payload.organizationNotLocations,
     organization_num_employees_ranges: payload.organizationNumEmployeesRanges,
     organization_ids: payload.organizationIds,
+    currently_using_any_of_technology_uids:
+      payload.currentlyUsingAnyOfTechnologyUids,
     q_organization_keyword_tags: payload.qOrganizationKeywordTags,
+    q_organization_job_titles: payload.qOrganizationJobTitles,
+    organization_job_locations: payload.organizationJobLocations,
     organization_not_keyword_tags: payload.organizationNotKeywordTags,
     organization_industry_tag_ids: payload.organizationIndustryTagIds,
+    "revenue_range[min]": payload.revenueRangeMin,
+    "revenue_range[max]": payload.revenueRangeMax,
+    "latest_funding_amount_range[min]": payload.latestFundingAmountRangeMin,
+    "latest_funding_amount_range[max]": payload.latestFundingAmountRangeMax,
+    "total_funding_range[min]": payload.totalFundingRangeMin,
+    "total_funding_range[max]": payload.totalFundingRangeMax,
+    "organization_num_jobs_range[min]": payload.organizationNumJobsRangeMin,
+    "organization_num_jobs_range[max]": payload.organizationNumJobsRangeMax,
+    "latest_funding_date_range[min]": payload.latestFundingDateRangeMin,
+    "latest_funding_date_range[max]": payload.latestFundingDateRangeMax,
+    "organization_job_posted_at_range[min]":
+      payload.organizationJobPostedAtRangeMin,
+    "organization_job_posted_at_range[max]":
+      payload.organizationJobPostedAtRangeMax,
     page: payload.page,
     per_page: payload.perPage,
   });
+}
+
+function stringifyCompanyField(value: unknown): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (typeof value === "string") {
+    return value.trim() || undefined;
+  }
+
+  if (
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    typeof value === "bigint"
+  ) {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    const simpleValues = value.filter(
+      (entry) =>
+        typeof entry === "string" ||
+        typeof entry === "number" ||
+        typeof entry === "boolean",
+    );
+
+    if (simpleValues.length === value.length) {
+      return simpleValues.map(String).join(", ") || undefined;
+    }
+
+    return JSON.stringify(value);
+  }
+
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
 }
 
 function normalizeCompany(raw: Record<string, unknown>): CompanyPreviewRow {
@@ -104,10 +164,12 @@ function normalizeCompany(raw: Record<string, unknown>): CompanyPreviewRow {
     ? raw.organization_keywords.filter((value) => typeof value === "string")
     : [];
 
-  return {
+  const normalized: CompanyPreviewRow = {
     apollo_id: String(raw.id ?? raw.organization_id ?? "unknown"),
     name: String(raw.name ?? raw.organization_name ?? "Unknown company"),
     website_url: String(raw.website_url ?? raw.organization_website_url ?? ""),
+    primary_domain:
+      raw.primary_domain !== undefined ? String(raw.primary_domain) : undefined,
     primary_location:
       locations.length > 0 ? locations.join(", ") : String(raw.location ?? ""),
     employee_range: String(
@@ -131,6 +193,19 @@ function normalizeCompany(raw: Record<string, unknown>): CompanyPreviewRow {
         ? String(raw.short_description)
         : undefined,
   };
+
+  for (const [key, value] of Object.entries(raw)) {
+    if (normalized[key] !== undefined) {
+      continue;
+    }
+
+    const stringValue = stringifyCompanyField(value);
+    if (stringValue !== undefined) {
+      normalized[key] = stringValue;
+    }
+  }
+
+  return normalized;
 }
 
 function buildWarnings(

@@ -3,16 +3,14 @@
 import { useEffect, useState } from "react";
 import {
   defaultCompanyPreviewColumns,
-  defaultOptionalCompanyColumns,
-  type OptionalCompanyColumn,
 } from "@/lib/apollo/company-filter-definitions";
 import type { CompanySnapshotRecord } from "@/lib/db/repositories/company-snapshots";
 import type { PeopleSnapshotRecord } from "@/lib/db/repositories/people-snapshots";
 import type { PeopleRecipe } from "@/lib/recipes/schema";
-import { CompanyColumnPicker } from "@/features/company-search/components/company-column-picker";
-import { CompanyResultsTable } from "@/features/company-search/components/company-results-table";
 import { PeopleResultsTable } from "@/features/people-search/components/people-results-table";
 import { PeopleSearchPanel } from "@/features/people-search/components/people-search-panel";
+import { SnapshotColumnPicker } from "@/features/snapshots/components/snapshot-column-picker";
+import { SnapshotResultsTable } from "@/features/snapshots/components/snapshot-results-table";
 
 type CompanyResultsWorkspaceProps = {
   companyRecipeId: string | null;
@@ -26,8 +24,11 @@ function getInitialOptionalColumns(snapshot: CompanySnapshotRecord | null) {
     return [];
   }
 
-  return defaultOptionalCompanyColumns.filter((column) =>
-    snapshot.result.availableColumns.includes(column),
+  return snapshot.result.availableColumns.filter(
+    (column) =>
+      !defaultCompanyPreviewColumns.includes(
+        column as (typeof defaultCompanyPreviewColumns)[number],
+      ),
   );
 }
 
@@ -37,16 +38,20 @@ export function CompanyResultsWorkspace({
   peopleRecipe,
   peopleSnapshot,
 }: CompanyResultsWorkspaceProps) {
-  const [selectedOptionalColumns, setSelectedOptionalColumns] = useState(
+  const [selectedOptionalColumns, setSelectedOptionalColumns] = useState<string[]>(
     getInitialOptionalColumns(companySnapshot),
   );
+  const [showColumnControls, setShowColumnControls] = useState(false);
   const [selectedCompanyIds, setSelectedCompanyIds] = useState<string[]>([]);
 
   const availableOptionalColumns = companySnapshot
-    ? defaultOptionalCompanyColumns.filter((column) =>
-        companySnapshot.result.availableColumns.includes(column),
+    ? companySnapshot.result.availableColumns.filter(
+        (column) =>
+          !defaultCompanyPreviewColumns.includes(
+            column as (typeof defaultCompanyPreviewColumns)[number],
+          ),
       )
-    : [...defaultOptionalCompanyColumns];
+    : [];
 
   const selectedColumns = [
     ...defaultCompanyPreviewColumns,
@@ -58,7 +63,7 @@ export function CompanyResultsWorkspace({
     setSelectedCompanyIds([]);
   }, [companySnapshot]);
 
-  function handleToggleColumn(column: OptionalCompanyColumn) {
+  function handleToggleColumn(column: string) {
     setSelectedOptionalColumns((current) =>
       current.includes(column)
         ? current.filter((value) => value !== column)
@@ -76,17 +81,34 @@ export function CompanyResultsWorkspace({
 
   return (
     <section className="stack">
-      <CompanyColumnPicker
-        allColumns={availableOptionalColumns}
-        onToggleColumn={handleToggleColumn}
-        selectedColumns={selectedOptionalColumns}
-      />
-      <CompanyResultsTable
-        onToggleCompany={handleToggleCompany}
-        selectedColumns={selectedColumns}
-        selectedCompanyIds={selectedCompanyIds}
-        snapshot={companySnapshot}
-      />
+      {companySnapshot ? (
+        <SnapshotResultsTable
+          columnPicker={
+            <SnapshotColumnPicker
+              allColumns={availableOptionalColumns}
+              isVisible={showColumnControls}
+              onToggleColumn={handleToggleColumn}
+              onToggleVisibility={() =>
+                setShowColumnControls((current) => !current)
+              }
+              selectedColumns={selectedOptionalColumns}
+            />
+          }
+          emptyMessage="No company snapshot yet. Use the company search panel to create or reuse a snapshot for preview."
+          metaDetail={`${companySnapshot.result.rows.length} row(s) • page ${companySnapshot.result.page}`}
+          metaLabel=""
+          onToggleRow={handleToggleCompany}
+          rows={companySnapshot.result.rows}
+          selectedColumns={selectedColumns}
+          selectedRowIds={selectedCompanyIds}
+          source={companySnapshot.result.source}
+        />
+      ) : (
+        <div className="card empty-message">
+          No company snapshot yet. Use the company search panel to create or reuse
+          a snapshot for preview.
+        </div>
+      )}
       <PeopleSearchPanel
         companyRecipeId={companyRecipeId ?? ""}
         companySnapshot={companySnapshot}

@@ -447,6 +447,21 @@ a {
   -webkit-overflow-scrolling: touch;
 }
 
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.table-toolbar-panel {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 250, 241, 0.55);
+  padding: 14px 16px;
+}
+
 .results-table {
   width: max-content;
   min-width: 100%;
@@ -488,10 +503,9 @@ a {
 
 .table-meta {
   display: flex;
-  justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
   flex-wrap: wrap;
+  align-items: center;
 }
 
 .pairing-summary,
@@ -547,6 +561,37 @@ a {
   font-size: 0.88rem;
 }
 
+.inline-toggle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 250, 241, 0.55);
+  flex-wrap: wrap;
+}
+
+.inline-toggle-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.inline-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fffdf8;
+  padding: 8px 12px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .chip-button {
   cursor: pointer;
   font: inherit;
@@ -561,13 +606,44 @@ a {
   background: rgba(15, 118, 110, 0.08);
 }
 
-.column-picker-summary {
-  cursor: pointer;
-  font-weight: 700;
+.column-picker {
+  display: grid;
+  gap: 10px;
 }
 
-.details-card > *:not(summary) {
-  margin-top: 0;
+.column-picker-header {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.column-picker-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.column-picker-summary-meta {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.column-picker-toggle {
+  padding: 8px 12px;
+  font-size: 0.82rem;
+}
+
+.column-picker-body {
+  justify-content: flex-start;
+}
+
+.column-picker-note {
+  margin: 0;
+  text-align: left;
 }
 
 .subtle-card {
@@ -588,6 +664,11 @@ a {
 
   .search-grid {
     gap: 16px;
+  }
+
+  .table-toolbar,
+  .table-meta {
+    align-items: stretch;
   }
 
   .hero-panel,

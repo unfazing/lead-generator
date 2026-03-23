@@ -84,7 +84,7 @@ function getRecipeMeta(type: RecipeType, recipe: CompanyRecipe | PeopleRecipe) {
   }
 
   if (type === "people" && recipe.type === "people") {
-    return `${recipe.peopleFilters.personTitles.length} people titles • ${recipe.peopleFilters.personDepartments.length} departments`;
+    return `${recipe.peopleFilters.personTitles.length} people titles • ${recipe.peopleFilters.personSeniorities.length} seniority filters`;
   }
 
   return "";

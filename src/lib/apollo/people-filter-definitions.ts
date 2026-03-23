@@ -1,6 +1,6 @@
 import type { PeopleSearchPayload } from "@/lib/people-search/schema";
 import {
-  peopleDepartmentOptions,
+  contactEmailStatusOptions,
   peopleSeniorityOptions,
 } from "@/lib/people-search/schema";
 
@@ -31,8 +31,8 @@ export const peopleSeniorityFilterOptions: FilterOption[] =
     value,
   }));
 
-export const peopleDepartmentFilterOptions: FilterOption[] =
-  peopleDepartmentOptions.map((value) => ({
+export const contactEmailStatusFilterOptions: FilterOption[] =
+  contactEmailStatusOptions.map((value) => ({
     label: labelize(value),
     value,
   }));
@@ -64,14 +64,5 @@ export const peopleFilterDefinitions: FilterDefinition[] = [
     input: "multi-select",
     apiParam: "person_seniorities",
     options: peopleSeniorityFilterOptions,
-  },
-  {
-    key: "personDepartments",
-    label: "Departments",
-    description:
-      "Constrained values for Apollo department-style filtering.",
-    input: "multi-select",
-    apiParam: "person_departments",
-    options: peopleDepartmentFilterOptions,
   },
 ];

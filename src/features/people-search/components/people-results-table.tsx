@@ -1,8 +1,9 @@
-import type { PeopleSnapshotRecord } from "@/lib/db/repositories/people-snapshots";
+"use client";
 
-type PeopleResultsTableProps = {
-  snapshot: PeopleSnapshotRecord | null;
-};
+import { useEffect, useState } from "react";
+import type { PeopleSnapshotRecord } from "@/lib/db/repositories/people-snapshots";
+import { SnapshotColumnPicker } from "@/features/snapshots/components/snapshot-column-picker";
+import { SnapshotResultsTable } from "@/features/snapshots/components/snapshot-results-table";
 
 const defaultColumns = [
   "full_name",
@@ -10,10 +11,35 @@ const defaultColumns = [
   "company_name",
   "location",
   "seniority",
-  "department",
+  "linkedin_url",
+  "email_status",
 ] as const;
 
+type PeopleResultsTableProps = {
+  snapshot: PeopleSnapshotRecord | null;
+};
+
+function getInitialOptionalColumns(snapshot: PeopleSnapshotRecord | null) {
+  if (!snapshot) {
+    return [];
+  }
+
+  return snapshot.result.availableColumns.filter(
+    (column) =>
+      !defaultColumns.includes(column as (typeof defaultColumns)[number]),
+  );
+}
+
 export function PeopleResultsTable({ snapshot }: PeopleResultsTableProps) {
+  const [selectedOptionalColumns, setSelectedOptionalColumns] = useState<string[]>(
+    getInitialOptionalColumns(snapshot),
+  );
+  const [showColumnControls, setShowColumnControls] = useState(false);
+
+  useEffect(() => {
+    setSelectedOptionalColumns(getInitialOptionalColumns(snapshot));
+  }, [snapshot]);
+
   if (!snapshot) {
     return (
       <div className="card empty-message">
@@ -22,38 +48,45 @@ export function PeopleResultsTable({ snapshot }: PeopleResultsTableProps) {
     );
   }
 
+  const availableOptionalColumns = snapshot.result.availableColumns.filter(
+    (column) =>
+      !defaultColumns.includes(column as (typeof defaultColumns)[number]),
+  );
+
+  const selectedColumns = [
+    ...defaultColumns.filter((column) =>
+      snapshot.result.availableColumns.includes(column),
+    ),
+    ...selectedOptionalColumns,
+  ];
+
+  function handleToggleColumn(column: string) {
+    setSelectedOptionalColumns((current) =>
+      current.includes(column)
+        ? current.filter((value) => value !== column)
+        : [...current, column],
+    );
+  }
+
   return (
-    <section className="card stack">
-      <div className="table-meta">
-        <span className="badge">
-          {snapshot.selectionMode === "all" ? "All companies" : "Selected companies"}
-        </span>
-        <span className="meta">
-          {snapshot.result.rows.length} people • source {snapshot.result.source}
-        </span>
-      </div>
-      <div className="table-shell">
-        <table className="results-table">
-          <thead>
-            <tr>
-              {defaultColumns.map((column) => (
-                <th key={column}>{column}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {snapshot.result.rows.map((row) => (
-              <tr key={row.apollo_id}>
-                {defaultColumns.map((column) => (
-                  <td key={`${row.apollo_id}-${column}`}>
-                    {String(row[column as keyof typeof row] ?? "—")}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
+    <SnapshotResultsTable
+      columnPicker={
+        <SnapshotColumnPicker
+          allColumns={availableOptionalColumns}
+          isVisible={showColumnControls}
+          onToggleColumn={handleToggleColumn}
+          onToggleVisibility={() =>
+            setShowColumnControls((current) => !current)
+          }
+          selectedColumns={selectedOptionalColumns}
+        />
+      }
+      emptyMessage="No people snapshot yet. Run people search from the current company and people recipe pairing."
+      metaDetail={`${snapshot.result.rows.length} people • source ${snapshot.result.source}`}
+      metaLabel={snapshot.selectionMode === "all" ? "All companies" : "Selected companies"}
+      rows={snapshot.result.rows}
+      selectedColumns={selectedColumns}
+      source={snapshot.result.source}
+    />
   );
 }

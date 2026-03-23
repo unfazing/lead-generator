@@ -13,10 +13,9 @@ export type PeoplePreviewRow = {
   company_name: string;
   location: string;
   seniority: string;
-  department: string;
   linkedin_url?: string;
   email_status?: string;
-};
+} & Record<string, string | undefined>;
 
 export type PeopleSearchResult = {
   signature: string;
@@ -67,16 +66,52 @@ export function createPeopleSearchSignature(payload: PeopleSearchRequest) {
     .digest("hex");
 }
 
+function stringifyPeopleField(value: unknown): string | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  if (typeof value === "string") {
+    return value.trim() || undefined;
+  }
+
+  if (
+    typeof value === "number" ||
+    typeof value === "boolean" ||
+    typeof value === "bigint"
+  ) {
+    return String(value);
+  }
+
+  if (Array.isArray(value)) {
+    const simpleValues = value.filter(
+      (entry) =>
+        typeof entry === "string" ||
+        typeof entry === "number" ||
+        typeof entry === "boolean",
+    );
+
+    if (simpleValues.length === value.length) {
+      return simpleValues.map(String).join(", ") || undefined;
+    }
+
+    return JSON.stringify(value);
+  }
+
+  if (typeof value === "object") {
+    return JSON.stringify(value);
+  }
+
+  return String(value);
+}
+
 function normalizePerson(raw: Record<string, unknown>): PeoplePreviewRow {
   const organization =
     typeof raw.organization === "object" && raw.organization !== null
       ? (raw.organization as Record<string, unknown>)
       : {};
-  const departments = Array.isArray(raw.departments)
-    ? raw.departments.filter((value) => typeof value === "string")
-    : [];
 
-  return {
+  const normalized: PeoplePreviewRow = {
     apollo_id: String(raw.id ?? raw.contact_id ?? "unknown"),
     full_name: String(raw.name ?? raw.full_name ?? "Unknown person"),
     title: String(raw.title ?? ""),
@@ -85,12 +120,36 @@ function normalizePerson(raw: Record<string, unknown>): PeoplePreviewRow {
     ),
     location: String(raw.city ?? raw.state ?? raw.country ?? raw.location ?? ""),
     seniority: String(raw.seniority ?? ""),
-    department: departments.join(", "),
     linkedin_url:
       raw.linkedin_url !== undefined ? String(raw.linkedin_url) : undefined,
     email_status:
       raw.email_status !== undefined ? String(raw.email_status) : undefined,
   };
+
+  for (const [key, value] of Object.entries(raw)) {
+    if (normalized[key] !== undefined) {
+      continue;
+    }
+
+    const stringValue = stringifyPeopleField(value);
+    if (stringValue !== undefined) {
+      normalized[key] = stringValue;
+    }
+  }
+
+  for (const [key, value] of Object.entries(organization)) {
+    const organizationKey = `organization_${key}`;
+    if (normalized[organizationKey] !== undefined) {
+      continue;
+    }
+
+    const stringValue = stringifyPeopleField(value);
+    if (stringValue !== undefined) {
+      normalized[organizationKey] = stringValue;
+    }
+  }
+
+  return normalized;
 }
 
 function getFixtureResult(request: PeopleSearchRequest): PeopleSearchResult {
@@ -104,7 +163,6 @@ function getFixtureResult(request: PeopleSearchRequest): PeopleSearchResult {
       company_name: normalized.selectedCompanyIds[0] ?? "Acme Analytics",
       location: filters.personLocations[0] ?? "Singapore",
       seniority: filters.personSeniorities[0] ?? "director",
-      department: filters.personDepartments[0] ?? "sales",
       linkedin_url: "https://linkedin.com/in/avery-ng",
       email_status: "unavailable_in_people_preview",
     },
@@ -115,7 +173,6 @@ function getFixtureResult(request: PeopleSearchRequest): PeopleSearchResult {
       company_name: normalized.selectedCompanyIds[1] ?? "Orbit Ledger",
       location: filters.personLocations[1] ?? "Sydney",
       seniority: filters.personSeniorities[1] ?? "founder",
-      department: filters.personDepartments[1] ?? "founder",
       linkedin_url: "https://linkedin.com/in/jordan-lee",
       email_status: "unavailable_in_people_preview",
     },
@@ -144,10 +201,37 @@ export async function searchPeople(request: PeopleSearchRequest) {
 
   const requestPayload = compactPayload({
     person_titles: normalized.personTitles,
+    include_similar_titles: normalized.includeSimilarTitles,
+    q_keywords: normalized.qKeywords,
     person_locations: normalized.personLocations,
     person_seniorities: normalized.personSeniorities,
-    person_departments: normalized.personDepartments,
-    organization_ids: normalized.selectedCompanyIds,
+    organization_locations: normalized.organizationLocations,
+    q_organization_domains_list: normalized.qOrganizationDomainsList,
+    contact_email_status: normalized.contactEmailStatus,
+    organization_ids:
+      normalized.selectedCompanyIds.length > 0
+        ? normalized.selectedCompanyIds
+        : normalized.organizationIds,
+    organization_num_employees_ranges:
+      normalized.organizationNumEmployeesRanges,
+    "revenue_range[min]": normalized.revenueRangeMin,
+    "revenue_range[max]": normalized.revenueRangeMax,
+    currently_using_all_of_technology_uids:
+      normalized.currentlyUsingAllOfTechnologyUids,
+    currently_using_any_of_technology_uids:
+      normalized.currentlyUsingAnyOfTechnologyUids,
+    currently_not_using_any_of_technology_uids:
+      normalized.currentlyNotUsingAnyOfTechnologyUids,
+    q_organization_job_titles: normalized.qOrganizationJobTitles,
+    organization_job_locations: normalized.organizationJobLocations,
+    "organization_num_jobs_range[min]":
+      normalized.organizationNumJobsRangeMin,
+    "organization_num_jobs_range[max]":
+      normalized.organizationNumJobsRangeMax,
+    "organization_job_posted_at_range[min]":
+      normalized.organizationJobPostedAtRangeMin,
+    "organization_job_posted_at_range[max]":
+      normalized.organizationJobPostedAtRangeMax,
     page: normalized.page,
     per_page: normalized.perPage,
   });
