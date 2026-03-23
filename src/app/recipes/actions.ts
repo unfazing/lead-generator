@@ -22,6 +22,7 @@ import { parseRecipeFormData } from "@/features/recipes/lib/recipe-form";
 import { recipeTypeSchema } from "@/lib/recipes/schema";
 import { peopleSearchPayloadSchema, peopleSearchModeSchema } from "@/lib/people-search/schema";
 import { buildRunPlanEstimate } from "@/features/run-planning/lib/run-plan-estimates";
+import { buildSearchWorkspaceQuery } from "@/features/search-workspace/lib/workspace-route-state";
 
 export async function saveRecipeAction(formData: FormData) {
   const recipeId = formData.get("recipeId");
@@ -51,6 +52,8 @@ export async function saveRecipeAction(formData: FormData) {
   revalidatePath("/recipes/company");
   revalidatePath("/recipes/people");
   revalidatePath("/search");
+  revalidatePath("/search/company");
+  revalidatePath("/search/people");
   const companyRecipeId =
     recipe.type === "company"
       ? recipe.id
@@ -97,6 +100,8 @@ export async function deleteRecipeAction(formData: FormData) {
   revalidatePath("/recipes/company");
   revalidatePath("/recipes/people");
   revalidatePath("/search");
+  revalidatePath("/search/company");
+  revalidatePath("/search/people");
 
   const query = new URLSearchParams();
 
@@ -150,14 +155,17 @@ export async function runCompanySearchAction(formData: FormData) {
 
   if (mode === "stored" && existing) {
     revalidatePath("/search");
-    const query = new URLSearchParams({
-      companyRecipe: recipeId,
-      snapshot: existing.id,
+    revalidatePath("/search/company");
+    const query = buildSearchWorkspaceQuery({
+      workflow: "company",
+      companyRecipeId: recipeId,
+      companySnapshotId: existing.id,
+      peopleRecipeId:
+        typeof pairedPeopleRecipeId === "string" && pairedPeopleRecipeId
+          ? pairedPeopleRecipeId
+          : null,
     });
-    if (typeof pairedPeopleRecipeId === "string" && pairedPeopleRecipeId) {
-      query.set("peopleRecipe", pairedPeopleRecipeId);
-    }
-    redirect(`/search?${query.toString()}`);
+    redirect(`/search/company?${query}`);
   }
 
   if (mode === "stored" && !existing) {
@@ -170,14 +178,17 @@ export async function runCompanySearchAction(formData: FormData) {
   const snapshot = await saveCompanySnapshot(recipeId, result);
 
   revalidatePath("/search");
-  const query = new URLSearchParams({
-    companyRecipe: recipeId,
-    snapshot: snapshot.id,
+  revalidatePath("/search/company");
+  const query = buildSearchWorkspaceQuery({
+    workflow: "company",
+    companyRecipeId: recipeId,
+    companySnapshotId: snapshot.id,
+    peopleRecipeId:
+      typeof pairedPeopleRecipeId === "string" && pairedPeopleRecipeId
+        ? pairedPeopleRecipeId
+        : null,
   });
-  if (typeof pairedPeopleRecipeId === "string" && pairedPeopleRecipeId) {
-    query.set("peopleRecipe", pairedPeopleRecipeId);
-  }
-  redirect(`/search?${query.toString()}`);
+  redirect(`/search/company?${query}`);
 }
 
 export async function runPeopleSearchAction(formData: FormData) {
@@ -229,13 +240,15 @@ export async function runPeopleSearchAction(formData: FormData) {
   );
 
   revalidatePath("/search");
-  const query = new URLSearchParams({
-    companyRecipe: companyRecipeId,
-    peopleRecipe: peopleRecipeId,
-    snapshot: companySnapshotId,
-    peopleSnapshot: snapshot.id,
+  revalidatePath("/search/people");
+  const query = buildSearchWorkspaceQuery({
+    workflow: "people",
+    companyRecipeId,
+    peopleRecipeId,
+    peopleSnapshotId: snapshot.id,
+    sourceSnapshotIds: [companySnapshotId],
   });
-  redirect(`/search?${query.toString()}`);
+  redirect(`/search/people?${query}`);
 }
 
 export async function saveRunPlanAction(formData: FormData) {

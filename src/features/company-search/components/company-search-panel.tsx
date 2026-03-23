@@ -1,4 +1,5 @@
 import { runCompanySearchAction } from "@/app/recipes/actions";
+import { InfoTip } from "@/features/ui/components/info-tip";
 import {
   companyFilterDefinitions,
 } from "@/lib/apollo/company-filter-definitions";
@@ -28,12 +29,7 @@ export function CompanySearchPanel({
     <section className="card stack">
       <div className="workspace-header">
         <p className="eyebrow">Company search</p>
-        <h2>Live search with explicit snapshot reuse</h2>
-        <p>
-          Run company search to fetch fresh Apollo data for the selected
-          company recipe. Use the separate stored-snapshot action when you want
-          to reopen the latest matching result already saved in this app.
-        </p>
+        <h2>Run or reopen a company snapshot</h2>
       </div>
 
       <form action={runCompanySearchAction} className="stack">
@@ -43,11 +39,10 @@ export function CompanySearchPanel({
         ) : null}
         <div className="form-intro">
           <span className="badge">Credit-bearing search</span>
-          <p className="meta">
-            Start narrow. The primary action performs a live Apollo search and
-            saves a fresh snapshot; the secondary action only reopens the
-            latest stored snapshot for the same recipe filters.
-          </p>
+          <InfoTip
+            content="Run a fresh Apollo search when filters changed, or reopen the latest saved snapshot for this exact recipe without spending more credits."
+            label="Company search actions help"
+          />
         </div>
 
         <div className="pairing-summary">
@@ -63,12 +58,13 @@ export function CompanySearchPanel({
 
         <section className="filter-section">
           <div className="section-heading">
-            <h3>Recipe filters in use</h3>
-            <p className="field-hint">
-              Edit the company recipe on the recipe page if you want to change
-              query parameters. Search here only runs live Apollo fetches or reopens stored snapshots for
-              the selected recipe.
-            </p>
+            <h3 className="heading-with-tip">
+              <span>Recipe filters in use</span>
+              <InfoTip
+                content="Edit the company recipe on the recipe page if you want to change query parameters. Search here only runs live Apollo fetches or reopens stored snapshots for the selected recipe."
+                label="Recipe filters in use help"
+              />
+            </h3>
           </div>
           <details className="filter-details">
             <summary className="filter-details-summary">
@@ -93,7 +89,6 @@ export function CompanySearchPanel({
                   >
                     <label>{definition.label}</label>
                     <div className="summary-value">{displayValue}</div>
-                    <span className="field-hint">{definition.description}</span>
                   </div>
                 );
               })}
@@ -116,10 +111,6 @@ export function CompanySearchPanel({
           {snapshot
             ? `Current snapshot fetched ${new Date(snapshot.updatedAt).toLocaleString()}`
             : "No saved company snapshot yet for this recipe."}
-        </p>
-        <p className="field-hint">
-          Live company search consumes credits. Stored snapshots let you review
-          existing results without spending more Apollo usage.
         </p>
       </div>
     </section>
