@@ -27,15 +27,15 @@ export function RecipeList({
   const title = type === "company" ? "Company recipes" : "People recipes";
   const newHref =
     type === "company"
-      ? `${basePath}?editorTab=company&editorMode=new${pairedRecipeId ? `&peopleRecipe=${pairedRecipeId}` : ""}${activeRecipeId ? `&companyRecipe=${activeRecipeId}` : ""}`
-      : `${basePath}?editorTab=people&editorMode=new${pairedRecipeId ? `&companyRecipe=${pairedRecipeId}` : ""}${activeRecipeId ? `&peopleRecipe=${activeRecipeId}` : ""}`;
+      ? `${basePath}?editorMode=new${pairedRecipeId ? `&peopleRecipe=${pairedRecipeId}` : ""}${activeRecipeId ? `&companyRecipe=${activeRecipeId}` : ""}`
+      : `${basePath}?editorMode=new${pairedRecipeId ? `&companyRecipe=${pairedRecipeId}` : ""}${activeRecipeId ? `&peopleRecipe=${activeRecipeId}` : ""}`;
 
   function getRecipeHref(recipeId: string) {
     if (type === "company") {
-      return `${basePath}?companyRecipe=${recipeId}${pairedRecipeId ? `&peopleRecipe=${pairedRecipeId}` : ""}${basePath === "/recipes" ? "&editorTab=company&editorMode=edit" : ""}`;
+      return `${basePath}?companyRecipe=${recipeId}${pairedRecipeId ? `&peopleRecipe=${pairedRecipeId}` : ""}${basePath.startsWith("/recipes") ? "&editorMode=edit" : ""}`;
     }
 
-    return `${basePath}?peopleRecipe=${recipeId}${pairedRecipeId ? `&companyRecipe=${pairedRecipeId}` : ""}${basePath === "/recipes" ? "&editorTab=people&editorMode=edit" : ""}`;
+    return `${basePath}?peopleRecipe=${recipeId}${pairedRecipeId ? `&companyRecipe=${pairedRecipeId}` : ""}${basePath.startsWith("/recipes") ? "&editorMode=edit" : ""}`;
   }
 
   return (

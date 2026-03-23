@@ -40,7 +40,9 @@ export async function saveRecipeAction(formData: FormData) {
         : await createPeopleRecipe(recipeInput);
   }
 
-  revalidatePath("/recipes");
+  revalidatePath("/recipes/company");
+  revalidatePath("/recipes/people");
+  revalidatePath("/search");
   const companyRecipeId =
     recipe.type === "company"
       ? recipe.id
@@ -63,10 +65,13 @@ export async function saveRecipeAction(formData: FormData) {
     query.set("peopleRecipe", peopleRecipeId);
   }
 
-  query.set("editorTab", recipe.type);
   query.set("editorMode", "edit");
 
-  redirect(`/recipes${query.size > 0 ? `?${query.toString()}` : ""}`);
+  redirect(
+    `${recipe.type === "company" ? "/recipes/company" : "/recipes/people"}${
+      query.size > 0 ? `?${query.toString()}` : ""
+    }`,
+  );
 }
 
 function splitLines(value: FormDataEntryValue | null) {
@@ -131,7 +136,7 @@ export async function runCompanySearchAction(formData: FormData) {
   const existing = await getLatestSnapshotForSignature(recipeId, signature);
 
   if (mode === "reuse" && existing) {
-    revalidatePath("/recipes");
+    revalidatePath("/search");
     const query = new URLSearchParams({
       companyRecipe: recipeId,
       snapshot: existing.id,
@@ -139,13 +144,13 @@ export async function runCompanySearchAction(formData: FormData) {
     if (typeof pairedPeopleRecipeId === "string" && pairedPeopleRecipeId) {
       query.set("peopleRecipe", pairedPeopleRecipeId);
     }
-    redirect(`/recipes?${query.toString()}`);
+    redirect(`/search?${query.toString()}`);
   }
 
   const result = await searchCompanies(payload);
   const snapshot = await saveCompanySnapshot(recipeId, result);
 
-  revalidatePath("/recipes");
+  revalidatePath("/search");
   const query = new URLSearchParams({
     companyRecipe: recipeId,
     snapshot: snapshot.id,
@@ -153,5 +158,5 @@ export async function runCompanySearchAction(formData: FormData) {
   if (typeof pairedPeopleRecipeId === "string" && pairedPeopleRecipeId) {
     query.set("peopleRecipe", pairedPeopleRecipeId);
   }
-  redirect(`/recipes?${query.toString()}`);
+  redirect(`/search?${query.toString()}`);
 }
