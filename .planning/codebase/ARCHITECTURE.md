@@ -7,7 +7,7 @@
 **Overall:** Next.js App Router monolith with server-rendered pages, server actions for primary mutations, thin API route wrappers, feature-organized UI, and file-backed repositories.
 
 **Key Characteristics:**
-- `src/app/search/page.tsx`, `src/app/recipes/company/page.tsx`, and `src/app/recipes/people/page.tsx` are async server components that load all page state directly from repositories and feature libs before rendering.
+- `src/app/search/page.tsx`, `src/app/search/company/page.tsx`, and `src/app/search/people/page.tsx` are async server components that load all page state directly from repositories and feature libs before rendering.
 - Mutating user actions are centralized in `src/app/recipes/actions.ts`; forms in feature components post to these server actions instead of calling client-side fetch helpers.
 - Shared business logic and integrations live under `src/lib/*`, while `src/features/*` contains UI assemblies and presentation helpers.
 
@@ -25,7 +25,7 @@
 - Location: `src/features`
 - Contains: Presentational and small stateful React components, plus feature-local helpers like `src/features/recipes/lib/recipe-form.ts` and `src/features/run-planning/lib/run-plan-estimates.ts`
 - Depends on: Server actions in `src/app/recipes/actions.ts`, domain types from `src/lib/*`, and feature-local helpers
-- Used by: Route pages such as `src/app/search/page.tsx` and `src/app/recipes/company/page.tsx`
+- Used by: Route pages such as `src/app/search/page.tsx`, `src/app/search/company/page.tsx`, and `src/app/search/people/page.tsx`
 
 **Domain / Integration Layer:**
 - Purpose: Define schemas, Apollo request/response normalization, environment parsing, and reusable search metadata.
@@ -52,23 +52,23 @@
 
 **Recipe Authoring Flow:**
 
-1. `src/app/recipes/company/page.tsx` and `src/app/recipes/people/page.tsx` load recipe lists via `listRecipesByType()` from `src/lib/db/repositories/recipes.ts`.
-2. `src/features/recipes/components/recipe-editor.tsx` posts form submissions to `saveRecipeAction` in `src/app/recipes/actions.ts`.
-3. `saveRecipeAction` parses form data through `parseRecipeFormData()` in `src/features/recipes/lib/recipe-form.ts`, validates with Zod schemas from `src/lib/recipes/schema.ts`, writes through repository functions, then `revalidatePath()` plus `redirect()` back to the relevant recipe page.
+1. `src/app/search/company/page.tsx` and `src/app/search/people/page.tsx` load recipe lists via `listRecipesByType()` from `src/lib/db/repositories/recipes.ts`.
+2. `src/features/recipes/components/recipe-list.tsx` opens inline editor mode on the search routes, and `src/features/recipes/components/recipe-editor.tsx` renders in the right pane.
+3. `saveRecipeAction` parses form data through `parseRecipeFormData()` in `src/features/recipes/lib/recipe-form.ts`, validates with Zod schemas from `src/lib/recipes/schema.ts`, writes through repository functions, then `revalidatePath()` plus `redirect()` back to the relevant search workflow route.
 
 **Company Search Flow:**
 
-1. `src/app/search/page.tsx` loads the selected company recipe, existing company snapshots, usage summary, and the currently active snapshot.
+1. `src/app/search/company/page.tsx` loads the selected company recipe, existing company snapshots, and the currently active snapshot.
 2. `src/features/company-search/components/company-search-panel.tsx` submits to `runCompanySearchAction` in `src/app/recipes/actions.ts`.
 3. `runCompanySearchAction` reads the selected recipe, builds a signature with `createCompanySearchSignature()` from `src/lib/apollo/company-search.ts`, reuses an existing snapshot when allowed, otherwise calls `searchCompanies()` and persists via `saveCompanySnapshot()` in `src/lib/db/repositories/company-snapshots.ts`.
-4. The page re-renders with `CompanySearchWarning`, `CompanyResultsWorkspace`, and `CompanyResultsTable` bound to the saved snapshot.
+4. The company workflow re-renders with inline editor state, `CompanySearchWarning`, and direct links into saved company snapshot review routes.
 
 **People Search Flow:**
 
-1. `src/features/company-search/components/company-results-workspace.tsx` keeps client-side state for selected company IDs and selected optional preview columns.
-2. `src/features/people-search/components/people-search-panel.tsx` submits the current company snapshot, people recipe, mode, and selected company IDs to `runPeopleSearchAction`.
+1. `src/app/search/people/page.tsx` loads the selected people recipe, available company snapshot sources, and saved people snapshots for the active recipe.
+2. `src/features/people-search/components/people-search-panel.tsx` manages company snapshot import state and submits the selected people recipe to `runPeopleSearchAction`.
 3. `runPeopleSearchAction` validates the paired people recipe, normalizes payload using `peopleSearchPayloadSchema` and `peopleSearchRequestSchema` from `src/lib/people-search/schema.ts`, calls `searchPeople()` in `src/lib/apollo/people-search.ts`, then writes the result with `savePeopleSnapshot()` in `src/lib/db/repositories/people-snapshots.ts`.
-4. `src/app/search/page.tsx` reloads the latest people snapshot for the same context and renders `src/features/people-search/components/people-results-table.tsx`.
+4. The workflow redirects into `src/app/search/people/[peopleSnapshotId]/page.tsx`, which renders `src/features/people-search/components/people-results-table.tsx`.
 
 **Run Planning Flow:**
 
@@ -80,7 +80,7 @@
 **State Management:**
 - Server state is the source of truth and is loaded directly in server components from JSON-backed repositories.
 - Client state is local and short-lived, used only for interactive search workspace concerns in `src/features/company-search/components/company-results-workspace.tsx` and `src/features/people-search/components/people-search-panel.tsx`.
-- Navigation state is encoded in query parameters such as `companyRecipe`, `peopleRecipe`, `snapshot`, `peopleSnapshot`, and `editorMode` across `src/app/search/page.tsx`, `src/app/recipes/company/page.tsx`, and `src/app/recipes/people/page.tsx`.
+- Navigation state is encoded in query parameters such as `companyRecipe`, `peopleRecipe`, `snapshot`, `peopleSnapshot`, `sourceSnapshot`, and `editorMode` across the search routes under `src/app/search/*`.
 
 ## Key Abstractions
 
@@ -116,10 +116,15 @@
 - Triggers: Requests to `/search`
 - Responsibilities: Load paired recipes, usage telemetry, snapshots, and run-plan state; compose the operational workflow UI
 
-**Recipe Pages:**
+**Workflow Pages:**
+- Location: `src/app/search/company/page.tsx`, `src/app/search/people/page.tsx`
+- Triggers: Requests to `/search/company` and `/search/people`
+- Responsibilities: Load recipe lists, determine active recipe from query params, optionally render inline editing, and compose the workflow UI
+
+**Recipe Redirects:**
 - Location: `src/app/recipes/company/page.tsx`, `src/app/recipes/people/page.tsx`
 - Triggers: Requests to `/recipes/company` and `/recipes/people`
-- Responsibilities: Load recipe lists, determine active recipe from query params, build draft state, and render the authoring UI
+- Responsibilities: Redirect legacy recipe routes into the search workflows
 
 **Server Actions:**
 - Location: `src/app/recipes/actions.ts`

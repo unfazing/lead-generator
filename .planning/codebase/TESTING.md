@@ -108,13 +108,13 @@ Not available; no coverage tooling is configured.
 
 **E2E Tests:**
 - Not used.
-- If added later, the primary user journey is recipe creation in `src/features/recipes/components/recipe-editor.tsx`, company search in `src/features/company-search/components/company-search-panel.tsx`, people search from `src/app/recipes/actions.ts`, and workspace review in `src/app/search/page.tsx`.
+- If added later, the primary user journey is inline recipe creation/editing inside `src/app/search/company/page.tsx` and `src/app/search/people/page.tsx`, company search in `src/features/company-search/components/company-search-panel.tsx`, people search from `src/app/recipes/actions.ts`, and reviewed snapshot pages under `src/app/search/people/[peopleSnapshotId]/page.tsx`.
 
 ## Current Verification Baseline
 
 - `package.json` defines `npm run lint` and `npm run typecheck` as the only automated checks.
 - Several modules already contain credit-safe fallback behavior that should be preserved in tests, especially `getFixtureResult` in `src/lib/apollo/company-search.ts` and the missing-key branch in `src/features/usage/lib/apollo-usage.ts`.
-- UI and orchestration flows currently depend on manual verification through the Next.js app pages in `src/app/page.tsx`, `src/app/search/page.tsx`, `src/app/recipes/company/page.tsx`, and `src/app/recipes/people/page.tsx`.
+- UI and orchestration flows currently depend on manual verification through the Next.js app pages in `src/app/page.tsx`, `src/app/search/page.tsx`, `src/app/search/company/page.tsx`, `src/app/search/people/page.tsx`, and `src/app/search/people/[peopleSnapshotId]/page.tsx`.
 
 ## Common Patterns
 

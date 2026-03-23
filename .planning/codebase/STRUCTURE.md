@@ -21,7 +21,7 @@ apollo/
 
 **`src/app`:**
 - Purpose: Hold route entry points and framework-owned files.
-- Contains: `src/app/layout.tsx`, `src/app/page.tsx`, page routes under `src/app/recipes/*` and `src/app/search`, API routes under `src/app/api/*`, and server actions in `src/app/recipes/actions.ts`
+- Contains: `src/app/layout.tsx`, `src/app/page.tsx`, search workflow routes under `src/app/search`, compatibility redirects under `src/app/recipes/*`, API routes under `src/app/api/*`, and server actions in `src/app/recipes/actions.ts`
 - Key files: `src/app/search/page.tsx`, `src/app/recipes/actions.ts`, `src/app/api/company-search/route.ts`
 
 **`src/features`:**
@@ -60,8 +60,10 @@ apollo/
 - `src/app/page.tsx`: Redirects `/` to `/search`
 - `src/app/layout.tsx`: Defines the root HTML shell and global stylesheet import
 - `src/app/search/page.tsx`: Main operational workspace
-- `src/app/recipes/company/page.tsx`: Company recipe authoring screen
-- `src/app/recipes/people/page.tsx`: People recipe authoring screen
+- `src/app/search/company/page.tsx`: Company workflow with inline recipe editing and snapshot operations
+- `src/app/search/people/page.tsx`: People workflow with inline recipe editing, imports, and saved people snapshots
+- `src/app/recipes/company/page.tsx`: Compatibility redirect into `/search/company`
+- `src/app/recipes/people/page.tsx`: Compatibility redirect into `/search/people`
 
 **Configuration:**
 - `package.json`: Runtime and lint/typecheck scripts
@@ -91,6 +93,7 @@ apollo/
 
 **Directories:**
 - App routes mirror URL structure under `src/app`, for example `src/app/recipes/company`
+- Primary user-facing workflow routes now live under `src/app/search/*`; `src/app/recipes/*` remains only as redirect compatibility shims
 - Feature directories are domain-oriented under `src/features/<feature-name>`
 - Shared code directories are capability-oriented under `src/lib/<capability>`
 
