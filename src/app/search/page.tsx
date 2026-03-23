@@ -69,7 +69,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
 
   return (
     <main className="shell workspace-shell">
-      <section className="workspace-panel">
+      <section className="workspace-panel search-hero">
         <div className="workspace-header">
           <p className="eyebrow">Search workspace</p>
           <h1>Pair recipes, run company search, and inspect snapshots.</h1>
@@ -89,8 +89,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           </div>
         </div>
       </section>
-      <div className="workspace-grid workspace-grid-wide">
-        <div className="stack">
+      <div className="workspace-grid workspace-grid-wide search-grid">
+        <div className="stack search-sidebar">
           <RecipeList
             activeRecipeId={companyRecipe?.id ?? null}
             basePath="/search"
@@ -106,7 +106,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             type="people"
           />
         </div>
-        <div className="stack">
+        <div className="stack search-main">
           <UsageSummary summary={usageSummary} />
           <CompanySearchPanel
             pairedPeopleRecipe={peopleRecipe}

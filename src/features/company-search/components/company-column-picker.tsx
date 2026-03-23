@@ -18,7 +18,7 @@ export function CompanyColumnPicker({
   }
 
   return (
-    <details className="card">
+    <details className="card stack details-card">
       <summary className="column-picker-summary">Optional company columns</summary>
       <div className="chip-grid">
         {allColumns.map((column) => {

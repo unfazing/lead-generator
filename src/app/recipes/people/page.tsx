@@ -62,11 +62,6 @@ export default async function PeopleRecipesPage({
           <p>
             Keep people recipe authoring separate from company recipe setup and operational search work.
           </p>
-          <div className="workspace-actions">
-            <Link className="primary-button" href={newPeopleRecipeHref}>
-              New people recipe
-            </Link>
-          </div>
           <div className="tab-bar">
             <Link className="tab-pill" href="/recipes/company">
               Company recipes
@@ -85,6 +80,7 @@ export default async function PeopleRecipesPage({
           <RecipeList
             activeRecipeId={peopleRecipe?.id ?? null}
             basePath="/recipes/people"
+            createHref={newPeopleRecipeHref}
             pairedRecipeId={companyRecipe?.id ?? null}
             recipes={peopleRecipes}
             type="people"

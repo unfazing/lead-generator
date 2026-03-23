@@ -10,7 +10,7 @@ export function RetrievalReadinessGate({
 }: RetrievalReadinessGateProps) {
   if (plan.status === "ready") {
     return (
-      <div className="subtle-card card">
+      <div className="subtle-card card stack">
         <p className="meta">
           Retrieval readiness confirmed {plan.confirmedAt ? new Date(plan.confirmedAt).toLocaleString() : ""}.
         </p>
@@ -24,7 +24,7 @@ export function RetrievalReadinessGate({
   return (
     <form action={confirmRunPlanAction} className="stack">
       <input type="hidden" name="runPlanId" value={plan.id} />
-      <div className="subtle-card card">
+      <div className="subtle-card card stack">
         <p className="meta">
           Review the estimate and stop conditions, then explicitly mark this plan ready for later retrieval.
         </p>

@@ -7,6 +7,62 @@ export type ApolloUsageSummary = {
   stats: Array<{ label: string; value: string }>;
 };
 
+type UsageWindow = {
+  limit?: unknown;
+  consumed?: unknown;
+  left_over?: unknown;
+};
+
+type UsageEntry = {
+  day?: UsageWindow;
+  hour?: UsageWindow;
+  minute?: UsageWindow;
+};
+
+function formatUsageValue(label: string, entry: UsageEntry | undefined) {
+  const window = entry?.[label as keyof UsageEntry];
+
+  if (!window || typeof window !== "object") {
+    return null;
+  }
+
+  const consumed = typeof window.consumed === "number" ? window.consumed : null;
+  const limit = typeof window.limit === "number" ? window.limit : null;
+  const leftOver =
+    typeof window.left_over === "number" ? window.left_over : null;
+
+  if (consumed === null && limit === null && leftOver === null) {
+    return null;
+  }
+
+  const segments = [
+    consumed !== null ? `${consumed} used` : null,
+    limit !== null ? `${limit} limit` : null,
+    leftOver !== null ? `${leftOver} left` : null,
+  ].filter((segment): segment is string => segment !== null);
+
+  return segments.join(" • ");
+}
+
+function extractUsageEntry(
+  payload: Record<string, unknown>,
+  endpoint: string,
+  action = "search",
+) {
+  const candidates = [
+    JSON.stringify([endpoint, action]),
+    `["${endpoint}", "${action}"]`,
+  ];
+  const matchingKey = candidates.find((candidate) => candidate in payload);
+  const value = matchingKey ? payload[matchingKey] : undefined;
+
+  if (typeof value !== "object" || value === null) {
+    return undefined;
+  }
+
+  return value as UsageEntry;
+}
+
 function fallbackSummary(
   status: ApolloUsageSummary["status"],
   detail: string,
@@ -28,14 +84,19 @@ export async function getApolloUsageSummary(): Promise<ApolloUsageSummary> {
   }
 
   try {
-    const response = await fetch("https://api.apollo.io/api/v1/usage_stats", {
-      method: "GET",
-      headers: {
-        "Cache-Control": "no-store",
-        "X-Api-Key": env.APOLLO_API_KEY,
+    const response = await fetch(
+      "https://api.apollo.io/api/v1/usage_stats/api_usage_stats",
+      {
+        method: "POST",
+        headers: {
+          "Cache-Control": "no-store",
+          "Content-Type": "application/json",
+          "X-Api-Key": env.APOLLO_API_KEY,
+        },
+        body: JSON.stringify({}),
+        cache: "no-store",
       },
-      cache: "no-store",
-    });
+    );
 
     if (!response.ok) {
       return fallbackSummary(
@@ -45,26 +106,30 @@ export async function getApolloUsageSummary(): Promise<ApolloUsageSummary> {
     }
 
     const payload = (await response.json()) as Record<string, unknown>;
-    const stats = [
-      ["Daily", payload.daily_requests],
-      ["Hourly", payload.hourly_requests],
-      ["Minute", payload.minute_requests],
-    ] as const;
-
-    const normalizedStats = stats
-      .filter(([, value]) => value !== undefined && value !== null)
-      .map(([label, value]) => ({
-        label,
-        value: String(value),
-      }));
+    const peopleSearch = extractUsageEntry(
+      payload,
+      "api/v1/mixed_people",
+      "api_search",
+    );
+    const companySearch = extractUsageEntry(
+      payload,
+      "api/v1/mixed_companies",
+    );
+    const normalizedStats = [
+      { label: "People search / min", value: formatUsageValue("minute", peopleSearch) },
+      { label: "People search / hour", value: formatUsageValue("hour", peopleSearch) },
+      { label: "Company search / day", value: formatUsageValue("day", companySearch) },
+    ].filter(
+      (stat): stat is { label: string; value: string } => stat.value !== null,
+    );
 
     return {
       status: "configured",
       heading: "Apollo usage visibility",
       detail:
         normalizedStats.length > 0
-          ? "Live usage telemetry is available before any search execution."
-          : "Apollo responded, but the payload did not include the expected usage counters.",
+          ? "Live Apollo rate-limit telemetry is available before any search execution."
+          : "Apollo responded, but the expected search rate-limit entries were not present in the usage payload.",
       stats: normalizedStats,
     };
   } catch (error) {

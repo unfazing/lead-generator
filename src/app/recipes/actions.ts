@@ -83,7 +83,7 @@ export async function saveRecipeAction(formData: FormData) {
 
 export async function runCompanySearchAction(formData: FormData) {
   const recipeId = formData.get("companyRecipeId");
-  const mode = formData.get("mode") === "latest" ? "latest" : "reuse";
+  const mode = formData.get("mode") === "stored" ? "stored" : "live";
   const pairedPeopleRecipeId = formData.get("peopleRecipeId");
 
   if (typeof recipeId !== "string" || !recipeId) {
@@ -104,7 +104,7 @@ export async function runCompanySearchAction(formData: FormData) {
   const signature = createCompanySearchSignature(payload);
   const existing = await getLatestSnapshotForSignature(recipeId, signature);
 
-  if (mode === "reuse" && existing) {
+  if (mode === "stored" && existing) {
     revalidatePath("/search");
     const query = new URLSearchParams({
       companyRecipe: recipeId,
@@ -114,6 +114,12 @@ export async function runCompanySearchAction(formData: FormData) {
       query.set("peopleRecipe", pairedPeopleRecipeId);
     }
     redirect(`/search?${query.toString()}`);
+  }
+
+  if (mode === "stored" && !existing) {
+    throw new Error(
+      "No stored company snapshot exists for this recipe yet. Run a live company search first.",
+    );
   }
 
   const result = await searchCompanies(payload);

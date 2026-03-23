@@ -15,7 +15,7 @@ export const companySearchPayloadSchema = z.object({
 
 export const companySearchRequestSchema = companySearchPayloadSchema.extend({
   recipeId: z.string().min(1),
-  mode: z.enum(["reuse", "latest"]).default("reuse"),
+  mode: z.enum(["stored", "live"]).default("live"),
 });
 
 export type CompanySearchPayload = z.infer<typeof companySearchPayloadSchema>;

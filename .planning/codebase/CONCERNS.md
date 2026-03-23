@@ -133,6 +133,12 @@
 - Risk: External API shape changes can silently break search workflows or usage telemetry.
 - Priority: High
 
+**Apollo auth and usage-payload assumptions changed during live verification:**
+- Issue: Apollo's tutorial/reference mix is inconsistent about auth style, and the previous implementation in `src/features/usage/lib/apollo-usage.ts` assumed bearer auth plus top-level `daily_requests` counters.
+- Files: `src/features/usage/lib/apollo-usage.ts`
+- Impact: The workspace would silently show degraded usage visibility even though the live endpoint was healthy, because this account accepts `X-Api-Key` and returns endpoint-keyed rate-limit objects instead.
+- Fix approach: Keep Apollo integrations aligned to live contract checks, prefer fixture-backed or recorded response tests for endpoint parsers, and re-verify auth/header expectations before broadening endpoint coverage.
+
 **Workflow guards are untested:**
 - What's not tested: Invalid recipe pairings, forged snapshot context, selected-company mode invariants, and run-plan confirmation flows.
 - Files: `src/app/recipes/actions.ts`, `src/app/api/company-search/route.ts`, `src/app/api/people-search/route.ts`, `src/features/run-planning/lib/run-plan-estimates.ts`

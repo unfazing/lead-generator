@@ -32,7 +32,7 @@ export function PeopleSearchPanel({
   const canRunSelected = selectedCount > 0;
 
   return (
-    <section className="card">
+    <section className="card stack">
       <div className="workspace-header">
         <p className="eyebrow">People search</p>
         <h2>Run people preview from the current company snapshot</h2>

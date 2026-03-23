@@ -7,15 +7,15 @@
 **Sales Data API:**
 - Apollo.io - Company discovery for preview snapshots
   - SDK/Client: native `fetch` in `src/lib/apollo/company-search.ts`
-  - Auth: `APOLLO_API_KEY`
+  - Auth: `X-Api-Key: ${APOLLO_API_KEY}` header
   - Endpoint: `https://api.apollo.io/api/v1/mixed_companies/search`
 - Apollo.io - People discovery scoped to selected company IDs
   - SDK/Client: native `fetch` in `src/lib/apollo/people-search.ts`
-  - Auth: `APOLLO_API_KEY`
+  - Auth: `X-Api-Key: ${APOLLO_API_KEY}` header
   - Endpoint: `https://api.apollo.io/api/v1/mixed_people/api_search`
 - Apollo.io - Usage telemetry before search execution
   - SDK/Client: native `fetch` in `src/features/usage/lib/apollo-usage.ts`
-  - Auth: `APOLLO_API_KEY`
+  - Auth: `X-Api-Key: ${APOLLO_API_KEY}` header
   - Endpoint: `https://api.apollo.io/api/v1/usage_stats/api_usage_stats`
 
 ## Data Storage
@@ -95,6 +95,12 @@
   - Company fixtures are returned by `getFixtureResult` in `src/lib/apollo/company-search.ts`
   - People fixtures are returned by `getFixtureResult` in `src/lib/apollo/people-search.ts`
   - Usage telemetry returns a `missing_key` summary in `src/features/usage/lib/apollo-usage.ts`
+
+**Verified live contract notes:**
+- Live verification on 2026-03-23 confirmed that this Apollo account accepts `X-Api-Key` for `mixed_companies/search`, `mixed_people/api_search`, and `usage_stats/api_usage_stats`; bearer-token auth returned `401` for all three.
+- Company search responses include `pagination` plus `organizations` and `accounts` arrays, which matches the normalization logic in `src/lib/apollo/company-search.ts`.
+- People search responses include top-level `total_entries` and `people`, which matches the normalization logic in `src/lib/apollo/people-search.ts`.
+- Usage stats responses are keyed by endpoint/action pairs such as `["api/v1/mixed_people", "api_search"]`; each entry contains `day`, `hour`, and `minute` buckets with `limit`, `consumed`, and `left_over`.
 
 **Internal integration boundaries:**
 - Browser code does not call Apollo directly

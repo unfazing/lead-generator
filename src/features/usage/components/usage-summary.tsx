@@ -6,7 +6,7 @@ type UsageSummaryProps = {
 
 export function UsageSummary({ summary }: UsageSummaryProps) {
   return (
-    <section className="card">
+    <section className="card stack">
       <div className="workspace-actions">
         <span className="badge">{summary.heading}</span>
       </div>

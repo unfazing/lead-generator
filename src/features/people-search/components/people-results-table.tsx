@@ -23,7 +23,7 @@ export function PeopleResultsTable({ snapshot }: PeopleResultsTableProps) {
   }
 
   return (
-    <section className="card">
+    <section className="card stack">
       <div className="table-meta">
         <span className="badge">
           {snapshot.selectionMode === "all" ? "All companies" : "Selected companies"}

@@ -25,13 +25,14 @@ export function CompanySearchPanel({
   }
 
   return (
-    <section className="card">
+    <section className="card stack">
       <div className="workspace-header">
         <p className="eyebrow">Company search</p>
-        <h2>Explicit search, explicit refresh</h2>
+        <h2>Live search with explicit snapshot reuse</h2>
         <p>
-          Search runs only from the selected company recipe. Matching snapshots
-          are reused by default, and latest refresh is a separate action.
+          Run company search to fetch fresh Apollo data for the selected
+          company recipe. Use the separate stored-snapshot action when you want
+          to reopen the latest matching result already saved in this app.
         </p>
       </div>
 
@@ -43,8 +44,9 @@ export function CompanySearchPanel({
         <div className="form-intro">
           <span className="badge">Credit-bearing search</span>
           <p className="meta">
-            Start narrow, reuse snapshots when possible, and only refresh when
-            you intentionally want fresh Apollo data.
+            Start narrow. The primary action performs a live Apollo search and
+            saves a fresh snapshot; the secondary action only reopens the
+            latest stored snapshot for the same recipe filters.
           </p>
         </div>
 
@@ -64,42 +66,47 @@ export function CompanySearchPanel({
             <h3>Recipe filters in use</h3>
             <p className="field-hint">
               Edit the company recipe on the recipe page if you want to change
-              query parameters. Search here only runs or refreshes snapshots for
+              query parameters. Search here only runs live Apollo fetches or reopens stored snapshots for
               the selected recipe.
             </p>
           </div>
-          <div className="field-grid">
-            {companyFilterDefinitions.map((definition) => {
-              const value =
-                recipe.companyFilters[
-                  definition.key as keyof typeof recipe.companyFilters
-                ];
-              const displayValue = Array.isArray(value)
-                ? value.length > 0
-                  ? value.join(", ")
-                  : "None"
-                : String(value ?? "").trim() || "None";
+          <details className="filter-details">
+            <summary className="filter-details-summary">
+              View saved company-search filters
+            </summary>
+            <div className="field-grid filter-details-body">
+              {companyFilterDefinitions.map((definition) => {
+                const value =
+                  recipe.companyFilters[
+                    definition.key as keyof typeof recipe.companyFilters
+                  ];
+                const displayValue = Array.isArray(value)
+                  ? value.length > 0
+                    ? value.join(", ")
+                    : "None"
+                  : String(value ?? "").trim() || "None";
 
-              return (
-                <div
-                  key={definition.key}
-                  className={`field search-filter-summary${definition.input === "multi-text" ? " full" : ""}`}
-                >
-                  <label>{definition.label}</label>
-                  <div className="summary-value">{displayValue}</div>
-                  <span className="field-hint">{definition.description}</span>
-                </div>
-              );
-            })}
-          </div>
+                return (
+                  <div
+                    key={definition.key}
+                    className={`field search-filter-summary${definition.input === "multi-text" ? " full" : ""}`}
+                  >
+                    <label>{definition.label}</label>
+                    <div className="summary-value">{displayValue}</div>
+                    <span className="field-hint">{definition.description}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </details>
         </section>
 
         <div className="workspace-actions">
-          <button className="primary-button" name="mode" type="submit" value="reuse">
+          <button className="primary-button" name="mode" type="submit" value="live">
             Run company search
           </button>
-          <button className="secondary-button" name="mode" type="submit" value="latest">
-            Get latest snapshot
+          <button className="secondary-button" name="mode" type="submit" value="stored">
+            Open stored snapshot
           </button>
         </div>
       </form>
@@ -111,8 +118,8 @@ export function CompanySearchPanel({
             : "No saved company snapshot yet for this recipe."}
         </p>
         <p className="field-hint">
-          Live company search consumes credits. Verification should reuse stored
-          snapshots or the fixture path whenever possible.
+          Live company search consumes credits. Stored snapshots let you review
+          existing results without spending more Apollo usage.
         </p>
       </div>
     </section>

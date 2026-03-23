@@ -4,6 +4,7 @@ import type { CompanyRecipe, PeopleRecipe, RecipeType } from "@/lib/recipes/sche
 type RecipeListProps =
   | {
       basePath: string;
+      createHref?: string | null;
       type: "company";
       recipes: CompanyRecipe[];
       activeRecipeId: string | null;
@@ -11,6 +12,7 @@ type RecipeListProps =
     }
   | {
       basePath: string;
+      createHref?: string | null;
       type: "people";
       recipes: PeopleRecipe[];
       activeRecipeId: string | null;
@@ -19,6 +21,7 @@ type RecipeListProps =
 
 export function RecipeList({
   basePath,
+  createHref,
   type,
   recipes,
   activeRecipeId,
@@ -42,6 +45,11 @@ export function RecipeList({
         </div>
         <span className="badge">{recipes.length} saved</span>
       </div>
+      {createHref ? (
+        <Link className="primary-button recipe-rail-action" href={createHref}>
+          {type === "company" ? "New company recipe" : "New people recipe"}
+        </Link>
+      ) : null}
       <div className="recipe-list">
         {recipes.length === 0 ? (
           <div className="empty-message recipe-empty-state">

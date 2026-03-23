@@ -65,7 +65,7 @@ export function createCompanySearchSignature(payload: CompanySearchPayload) {
     .digest("hex");
 }
 
-function compactPayload(payload: CompanySearchPayload) {
+function compactPayload(payload: Record<string, unknown>) {
   return Object.fromEntries(
     Object.entries(payload).filter(([, value]) => {
       if (Array.isArray(value)) {
@@ -79,6 +79,21 @@ function compactPayload(payload: CompanySearchPayload) {
       return true;
     }),
   );
+}
+
+function createApolloCompanySearchPayload(payload: CompanySearchPayload) {
+  return compactPayload({
+    q_organization_name: payload.organizationName,
+    organization_website: payload.organizationWebsite,
+    organization_locations: payload.organizationLocations,
+    organization_num_employees_ranges: payload.organizationNumEmployeesRanges,
+    organization_ids: payload.organizationIds,
+    q_organization_keyword_tags: payload.qOrganizationKeywordTags,
+    organization_not_keyword_tags: payload.organizationNotKeywordTags,
+    organization_industry_tag_ids: payload.organizationIndustryTagIds,
+    page: payload.page,
+    per_page: payload.perPage,
+  });
 }
 
 function normalizeCompany(raw: Record<string, unknown>): CompanyPreviewRow {
@@ -205,11 +220,7 @@ export async function searchCompanies(payload: CompanySearchPayload) {
     return getFixtureResult(normalized);
   }
 
-  const requestPayload = {
-    ...compactPayload(normalized),
-    page: normalized.page,
-    per_page: normalized.perPage,
-  };
+  const requestPayload = createApolloCompanySearchPayload(normalized);
 
   const response = await fetch("https://api.apollo.io/api/v1/mixed_companies/search", {
     method: "POST",
@@ -226,13 +237,13 @@ export async function searchCompanies(payload: CompanySearchPayload) {
   }
 
   const payloadJson = (await response.json()) as Record<string, unknown>;
-  const accounts = Array.isArray(payloadJson.accounts)
-    ? payloadJson.accounts
-    : Array.isArray(payloadJson.organizations)
-      ? payloadJson.organizations
-      : [];
+  const organizations = Array.isArray(payloadJson.organizations)
+    ? payloadJson.organizations
+    : [];
+  const accounts = Array.isArray(payloadJson.accounts) ? payloadJson.accounts : [];
+  const sourceRows = organizations.length > 0 ? organizations : accounts;
   const pagination = getPagination(payloadJson.pagination);
-  const rows = accounts
+  const rows = sourceRows
     .filter(
       (value): value is Record<string, unknown> =>
         typeof value === "object" && value !== null,
