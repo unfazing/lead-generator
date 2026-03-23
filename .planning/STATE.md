@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: ready_to_plan
-stopped_at: Phase 2 complete; next step is discuss/plan Phase 3
-last_updated: "2026-03-23T10:37:00.000Z"
+stopped_at: Phase 3 complete; next step is discuss/plan Phase 4
+last_updated: "2026-03-23T11:35:00.000Z"
 last_activity: 2026-03-23
 progress:
   total_phases: 5
-  completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
-  percent: 40
+  completed_phases: 3
+  total_plans: 9
+  completed_plans: 9
+  percent: 60
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-03-23)
 
 **Core value:** Turn precise Apollo filters into verified-email exports quickly without wasting API credits.
-**Current focus:** People Discovery and Run Planning
+**Current focus:** Retrieval Execution and Run Safety
 
 ## Current Position
 
-Phase: 3 of 5 (people discovery and run planning)
+Phase: 4 of 5 (retrieval execution and run safety)
 Plan: 0 of 0 in current phase
 Status: Ready to discuss and plan
-Last activity: 2026-03-23 — Completed Phase 2 company search and snapshot work
+Last activity: 2026-03-23 — Completed Phase 3 people discovery and run planning
 
-Progress: [████░░░░░░] 40%
+Progress: [██████░░░░] 60%
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ Progress: [████░░░░░░] 40%
 |-------|-------|-------|----------|
 | 1 | 3 | - | - |
 | 2 | 3 | - | - |
+| 3 | 3 | - | - |
 
 **Recent Trend:**
 
@@ -63,6 +64,8 @@ Recent decisions affecting current work:
 - Phase 1: Optimize v1 around verified business-email export and Apollo credit preservation rather than broader GTM scope.
 - Phase 2: Company-search inputs should mirror Apollo request semantics, with constrained controls where Apollo constrains values.
 - Phase 2: Reuse matching company snapshots by default and require an explicit action for fresh company search.
+- Phase 3: People search runs from a reviewed company snapshot in either selected-company or all-company mode, never as an automatic follow-on.
+- Phase 3: Verified-email retrieval readiness requires a persisted people snapshot, a saved run plan, and explicit confirmation.
 
 ### Pending Todos
 
@@ -71,10 +74,10 @@ None yet.
 ### Blockers/Concerns
 
 - Resolve the deployment path before implementation starts: local-first SQLite is viable, but research recommends Postgres if remote deployment is expected.
-- Decide whether Apollo waterfall webhook handling is in v1 scope before planning Phase 4 in detail.
+- Decide whether Apollo waterfall webhook handling is in v1 scope before planning Phase 4 execution details.
 
 ## Session Continuity
 
-Last session: 2026-03-23 18:37
-Stopped at: Phase 2 execution complete; next step is discuss/plan Phase 3
+Last session: 2026-03-23 19:35
+Stopped at: Phase 3 execution complete; next step is discuss/plan Phase 4
 Resume file: None

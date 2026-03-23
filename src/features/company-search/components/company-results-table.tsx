@@ -3,11 +3,15 @@ import type { CompanySnapshotRecord } from "@/lib/db/repositories/company-snapsh
 type CompanyResultsTableProps = {
   snapshot: CompanySnapshotRecord | null;
   selectedColumns: string[];
+  selectedCompanyIds?: string[];
+  onToggleCompany?: (companyId: string) => void;
 };
 
 export function CompanyResultsTable({
   snapshot,
   selectedColumns,
+  selectedCompanyIds = [],
+  onToggleCompany,
 }: CompanyResultsTableProps) {
   if (!snapshot) {
     return (
@@ -32,6 +36,7 @@ export function CompanyResultsTable({
         <table className="results-table">
           <thead>
             <tr>
+              {onToggleCompany ? <th>Select</th> : null}
               {selectedColumns.map((column) => (
                 <th key={column}>{column}</th>
               ))}
@@ -40,6 +45,15 @@ export function CompanyResultsTable({
           <tbody>
             {snapshot.result.rows.map((row) => (
               <tr key={row.apollo_id}>
+                {onToggleCompany ? (
+                  <td>
+                    <input
+                      checked={selectedCompanyIds.includes(row.apollo_id)}
+                      onChange={() => onToggleCompany(row.apollo_id)}
+                      type="checkbox"
+                    />
+                  </td>
+                ) : null}
                 {selectedColumns.map((column) => (
                   <td key={`${row.apollo_id}-${column}`}>
                     {String(row[column as keyof typeof row] ?? "—")}

@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Recipe and Usage Foundation** - Define reusable recipe state and expose baseline Apollo usage visibility. Completed 2026-03-23.
 - [x] **Phase 2: Company Search and Snapshot Preview** - Let the user search Apollo companies, inspect results, and persist company snapshots safely. Completed 2026-03-23.
-- [ ] **Phase 3: People Discovery and Run Planning** - Turn reviewed companies into people previews and gated retrieval plans with estimated cost.
+- [x] **Phase 3: People Discovery and Run Planning** - Turn reviewed companies into people previews and gated retrieval plans with estimated cost. Completed 2026-03-23.
 - [ ] **Phase 4: Retrieval Execution and Run Safety** - Execute verified-email retrieval with monitoring, resumability, and spend protection.
 - [ ] **Phase 5: Verified Export and Repeatable Reruns** - Export trusted CSVs with provenance, dedupe, and recipe-driven replay.
 
@@ -62,9 +62,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: Implement company-selection modes and people preview storage
-- [ ] 03-02: Build run planner with estimate calculation and stop-condition inputs
-- [ ] 03-03: Add reviewed-plan confirmation before retrieval kickoff
+- [x] 03-01: Implement company-selection modes and people preview storage
+- [x] 03-02: Build run planner with estimate calculation and stop-condition inputs
+- [x] 03-03: Add reviewed-plan confirmation before retrieval kickoff
 
 ### Phase 4: Retrieval Execution and Run Safety
 **Goal**: Users can run verified-email retrieval safely, monitor progress live, and recover from interruptions without losing trustworthy cost and quality state.
@@ -106,6 +106,6 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 2.2 -> 3 -> 3.1 -> 4 -> 5
 |-------|----------------|--------|-----------|
 | 1. Recipe and Usage Foundation | 3/3 | Complete | 2026-03-23 |
 | 2. Company Search and Snapshot Preview | 3/3 | Complete | 2026-03-23 |
-| 3. People Discovery and Run Planning | 0/3 | Not started | - |
+| 3. People Discovery and Run Planning | 3/3 | Complete | 2026-03-23 |
 | 4. Retrieval Execution and Run Safety | 0/3 | Not started | - |
 | 5. Verified Export and Repeatable Reruns | 0/2 | Not started | - |

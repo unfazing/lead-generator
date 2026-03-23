@@ -3,9 +3,12 @@ import { CompanyResultsWorkspace } from "@/features/company-search/components/co
 import { CompanySearchPanel } from "@/features/company-search/components/company-search-panel";
 import { CompanySearchWarning } from "@/features/company-search/components/company-search-warning";
 import { RecipeList } from "@/features/recipes/components/recipe-list";
+import { RunPlanPanel } from "@/features/run-planning/components/run-plan-panel";
 import { UsageSummary } from "@/features/usage/components/usage-summary";
 import { getApolloUsageSummary } from "@/features/usage/lib/apollo-usage";
 import { listSnapshotsForRecipe } from "@/lib/db/repositories/company-snapshots";
+import { listPeopleSnapshotsForContext } from "@/lib/db/repositories/people-snapshots";
+import { getLatestRunPlanForPeopleSnapshot } from "@/lib/db/repositories/run-plans";
 import { getRecipeById, listRecipesByType } from "@/lib/db/repositories/recipes";
 
 type SearchPageProps = {
@@ -25,6 +28,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
   const companyRecipeId = getSingleParam(params, "companyRecipe");
   const peopleRecipeId = getSingleParam(params, "peopleRecipe");
   const snapshotId = getSingleParam(params, "snapshot");
+  const peopleSnapshotId = getSingleParam(params, "peopleSnapshot");
 
   const [companyRecipes, peopleRecipes] = await Promise.all([
     listRecipesByType("company"),
@@ -51,6 +55,17 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
     (snapshotId
       ? snapshots.find((snapshot) => snapshot.id === snapshotId)
       : snapshots[0]) ?? null;
+  const peopleSnapshots =
+    peopleRecipe && activeSnapshot
+      ? await listPeopleSnapshotsForContext(peopleRecipe.id, activeSnapshot.id)
+      : [];
+  const activePeopleSnapshot =
+    (peopleSnapshotId
+      ? peopleSnapshots.find((snapshot) => snapshot.id === peopleSnapshotId)
+      : peopleSnapshots[0]) ?? null;
+  const activeRunPlan = activePeopleSnapshot
+    ? await getLatestRunPlanForPeopleSnapshot(activePeopleSnapshot.id)
+    : null;
 
   return (
     <main className="shell workspace-shell">
@@ -99,7 +114,18 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             snapshot={activeSnapshot}
           />
           <CompanySearchWarning warnings={activeSnapshot?.result.warnings ?? []} />
-          <CompanyResultsWorkspace snapshot={activeSnapshot} />
+          <CompanyResultsWorkspace
+            companyRecipeId={companyRecipe?.id ?? null}
+            companySnapshot={activeSnapshot}
+            peopleRecipe={peopleRecipe}
+            peopleSnapshot={activePeopleSnapshot}
+          />
+          <RunPlanPanel
+            companyRecipeId={companyRecipe?.id ?? null}
+            peopleRecipe={peopleRecipe}
+            peopleSnapshot={activePeopleSnapshot}
+            runPlan={activeRunPlan}
+          />
         </div>
       </div>
     </main>

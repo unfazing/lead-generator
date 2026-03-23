@@ -3,8 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { searchCompanies, createCompanySearchSignature } from "@/lib/apollo/company-search";
+import { searchPeople } from "@/lib/apollo/people-search";
 import { companySearchPayloadSchema } from "@/lib/company-search/schema";
 import { getLatestSnapshotForSignature, saveCompanySnapshot } from "@/lib/db/repositories/company-snapshots";
+import { savePeopleSnapshot } from "@/lib/db/repositories/people-snapshots";
+import {
+  markRunPlanReady,
+  saveRunPlan,
+} from "@/lib/db/repositories/run-plans";
 import {
   createCompanyRecipe,
   createPeopleRecipe,
@@ -14,6 +20,8 @@ import {
 } from "@/lib/db/repositories/recipes";
 import { parseRecipeFormData } from "@/features/recipes/lib/recipe-form";
 import { recipeTypeSchema } from "@/lib/recipes/schema";
+import { peopleSearchPayloadSchema, peopleSearchModeSchema } from "@/lib/people-search/schema";
+import { buildRunPlanEstimate } from "@/features/run-planning/lib/run-plan-estimates";
 
 export async function saveRecipeAction(formData: FormData) {
   const recipeId = formData.get("recipeId");
@@ -159,4 +167,131 @@ export async function runCompanySearchAction(formData: FormData) {
     query.set("peopleRecipe", pairedPeopleRecipeId);
   }
   redirect(`/search?${query.toString()}`);
+}
+
+export async function runPeopleSearchAction(formData: FormData) {
+  const companyRecipeId = formData.get("companyRecipeId");
+  const peopleRecipeId = formData.get("peopleRecipeId");
+  const companySnapshotId = formData.get("companySnapshotId");
+
+  if (
+    typeof companyRecipeId !== "string" ||
+    !companyRecipeId ||
+    typeof peopleRecipeId !== "string" ||
+    !peopleRecipeId ||
+    typeof companySnapshotId !== "string" ||
+    !companySnapshotId
+  ) {
+    throw new Error("Company recipe, people recipe, and company snapshot are required");
+  }
+
+  const mode = peopleSearchModeSchema.parse(formData.get("mode"));
+  const selectedCompanyIds = formData.getAll("selectedCompanyIds").map(String);
+
+  const peopleRecipe = await getRecipeById(peopleRecipeId);
+  if (!peopleRecipe || peopleRecipe.type !== "people") {
+    throw new Error("Selected recipe is not a people recipe");
+  }
+
+  const payload = peopleSearchPayloadSchema.parse(peopleRecipe.peopleFilters);
+
+  const request = {
+    ...payload,
+    companyRecipeId,
+    companySnapshotId,
+    peopleRecipeId,
+    mode,
+    selectedCompanyIds,
+  };
+
+  const result = await searchPeople(request);
+  const snapshot = await savePeopleSnapshot(
+    {
+      companyRecipeId,
+      companySnapshotId,
+      peopleRecipeId,
+      selectionMode: mode,
+      selectedCompanyIds,
+    },
+    result,
+  );
+
+  revalidatePath("/search");
+  const query = new URLSearchParams({
+    companyRecipe: companyRecipeId,
+    peopleRecipe: peopleRecipeId,
+    snapshot: companySnapshotId,
+    peopleSnapshot: snapshot.id,
+  });
+  redirect(`/search?${query.toString()}`);
+}
+
+export async function saveRunPlanAction(formData: FormData) {
+  const companyRecipeId = String(formData.get("companyRecipeId") ?? "");
+  const companySnapshotId = String(formData.get("companySnapshotId") ?? "");
+  const peopleRecipeId = String(formData.get("peopleRecipeId") ?? "");
+  const peopleSnapshotId = String(formData.get("peopleSnapshotId") ?? "");
+  const maxContacts = Number(formData.get("maxContacts") ?? 0);
+
+  if (
+    !companyRecipeId ||
+    !companySnapshotId ||
+    !peopleRecipeId ||
+    !peopleSnapshotId ||
+    Number.isNaN(maxContacts) ||
+    maxContacts < 1
+  ) {
+    throw new Error("Run plan requires snapshot context and a positive max contacts cap");
+  }
+
+  const peopleSnapshots = await import("@/lib/db/repositories/people-snapshots");
+  const snapshotList = await peopleSnapshots.listPeopleSnapshotsForContext(
+    peopleRecipeId,
+    companySnapshotId,
+  );
+  const snapshot = snapshotList.find((record) => record.id === peopleSnapshotId);
+
+  if (!snapshot) {
+    throw new Error("People snapshot not found");
+  }
+
+  const estimate = buildRunPlanEstimate(snapshot, maxContacts);
+  await saveRunPlan({
+    companyRecipeId,
+    peopleRecipeId,
+    companySnapshotId,
+    peopleSnapshotId,
+    maxContacts,
+    estimatedContacts: estimate.estimatedContacts,
+    estimateSummary: estimate.estimateSummary,
+    estimateNote: estimate.estimateNote,
+  });
+
+  revalidatePath("/search");
+  redirect(
+    `/search?${new URLSearchParams({
+      companyRecipe: companyRecipeId,
+      peopleRecipe: peopleRecipeId,
+      snapshot: companySnapshotId,
+      peopleSnapshot: peopleSnapshotId,
+    }).toString()}`,
+  );
+}
+
+export async function confirmRunPlanAction(formData: FormData) {
+  const runPlanId = String(formData.get("runPlanId") ?? "");
+  if (!runPlanId) {
+    throw new Error("Run plan is required");
+  }
+
+  const plan = await markRunPlanReady(runPlanId);
+  revalidatePath("/search");
+  redirect(
+    `/search?${new URLSearchParams({
+      companyRecipe: plan.companyRecipeId,
+      peopleRecipe: plan.peopleRecipeId,
+      snapshot: plan.companySnapshotId,
+      peopleSnapshot: plan.peopleSnapshotId,
+    }).toString()}`,
+  );
 }

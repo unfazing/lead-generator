@@ -37,4 +37,16 @@ export const peopleSearchPayloadSchema = z.object({
   personDepartments: z.array(z.enum(peopleDepartmentOptions)).max(10).default([]),
 });
 
+export const peopleSearchModeSchema = z.enum(["selected", "all"]);
+
+export const peopleSearchRequestSchema = peopleSearchPayloadSchema.extend({
+  companyRecipeId: z.string().min(1),
+  companySnapshotId: z.string().min(1),
+  peopleRecipeId: z.string().min(1),
+  mode: peopleSearchModeSchema,
+  selectedCompanyIds: z.array(z.string().min(1)).default([]),
+});
+
 export type PeopleSearchPayload = z.infer<typeof peopleSearchPayloadSchema>;
+export type PeopleSearchMode = z.infer<typeof peopleSearchModeSchema>;
+export type PeopleSearchRequest = z.infer<typeof peopleSearchRequestSchema>;

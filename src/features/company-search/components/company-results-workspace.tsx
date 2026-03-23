@@ -7,11 +7,18 @@ import {
   type OptionalCompanyColumn,
 } from "@/lib/apollo/company-filter-definitions";
 import type { CompanySnapshotRecord } from "@/lib/db/repositories/company-snapshots";
+import type { PeopleSnapshotRecord } from "@/lib/db/repositories/people-snapshots";
+import type { PeopleRecipe } from "@/lib/recipes/schema";
 import { CompanyColumnPicker } from "@/features/company-search/components/company-column-picker";
 import { CompanyResultsTable } from "@/features/company-search/components/company-results-table";
+import { PeopleResultsTable } from "@/features/people-search/components/people-results-table";
+import { PeopleSearchPanel } from "@/features/people-search/components/people-search-panel";
 
 type CompanyResultsWorkspaceProps = {
-  snapshot: CompanySnapshotRecord | null;
+  companyRecipeId: string | null;
+  companySnapshot: CompanySnapshotRecord | null;
+  peopleRecipe: PeopleRecipe | null;
+  peopleSnapshot: PeopleSnapshotRecord | null;
 };
 
 function getInitialOptionalColumns(snapshot: CompanySnapshotRecord | null) {
@@ -25,15 +32,19 @@ function getInitialOptionalColumns(snapshot: CompanySnapshotRecord | null) {
 }
 
 export function CompanyResultsWorkspace({
-  snapshot,
+  companyRecipeId,
+  companySnapshot,
+  peopleRecipe,
+  peopleSnapshot,
 }: CompanyResultsWorkspaceProps) {
   const [selectedOptionalColumns, setSelectedOptionalColumns] = useState(
-    getInitialOptionalColumns(snapshot),
+    getInitialOptionalColumns(companySnapshot),
   );
+  const [selectedCompanyIds, setSelectedCompanyIds] = useState<string[]>([]);
 
-  const availableOptionalColumns = snapshot
+  const availableOptionalColumns = companySnapshot
     ? defaultOptionalCompanyColumns.filter((column) =>
-        snapshot.result.availableColumns.includes(column),
+        companySnapshot.result.availableColumns.includes(column),
       )
     : [...defaultOptionalCompanyColumns];
 
@@ -43,14 +54,23 @@ export function CompanyResultsWorkspace({
   ];
 
   useEffect(() => {
-    setSelectedOptionalColumns(getInitialOptionalColumns(snapshot));
-  }, [snapshot]);
+    setSelectedOptionalColumns(getInitialOptionalColumns(companySnapshot));
+    setSelectedCompanyIds([]);
+  }, [companySnapshot]);
 
   function handleToggleColumn(column: OptionalCompanyColumn) {
     setSelectedOptionalColumns((current) =>
       current.includes(column)
         ? current.filter((value) => value !== column)
         : [...current, column],
+    );
+  }
+
+  function handleToggleCompany(companyId: string) {
+    setSelectedCompanyIds((current) =>
+      current.includes(companyId)
+        ? current.filter((value) => value !== companyId)
+        : [...current, companyId],
     );
   }
 
@@ -62,9 +82,18 @@ export function CompanyResultsWorkspace({
         selectedColumns={selectedOptionalColumns}
       />
       <CompanyResultsTable
+        onToggleCompany={handleToggleCompany}
         selectedColumns={selectedColumns}
-        snapshot={snapshot}
+        selectedCompanyIds={selectedCompanyIds}
+        snapshot={companySnapshot}
       />
+      <PeopleSearchPanel
+        companyRecipeId={companyRecipeId ?? ""}
+        companySnapshot={companySnapshot}
+        peopleRecipe={peopleRecipe}
+        selectedCompanyIds={selectedCompanyIds}
+      />
+      <PeopleResultsTable snapshot={peopleSnapshot} />
     </section>
   );
 }

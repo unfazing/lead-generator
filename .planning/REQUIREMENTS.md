@@ -23,22 +23,22 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### People Search
 
-- [ ] **PEOP-01**: User can run people search against manually selected companies from a company result set
-- [ ] **PEOP-02**: User can run people search against all companies in a qualified company result set
-- [ ] **PEOP-03**: User can preview matched people before retrieving verified emails
-- [ ] **PEOP-04**: User can persist people-search results as a local snapshot tied to the source company selection
+- [x] **PEOP-01**: User can run people search against manually selected companies from a company result set
+- [x] **PEOP-02**: User can run people search against all companies in a qualified company result set
+- [x] **PEOP-03**: User can preview matched people before retrieving verified emails
+- [x] **PEOP-04**: User can persist people-search results as a local snapshot tied to the source company selection
 
 ### Credit Controls
 
 - [x] **COST-01**: User can see current Apollo API or credit usage data in the frontend
-- [ ] **COST-02**: User can see an estimated credit cost before starting verified-email retrieval
-- [ ] **COST-03**: User can configure run limits or stop conditions that cap how many contacts are processed
+- [x] **COST-02**: User can see an estimated credit cost before starting verified-email retrieval
+- [x] **COST-03**: User can configure run limits or stop conditions that cap how many contacts are processed
 - [ ] **COST-04**: User can compare estimated usage with actual usage after a run completes
 - [ ] **COST-05**: User can avoid unnecessary repeat processing through dedupe or reuse checks before enrichment starts
 
 ### Email Retrieval
 
-- [ ] **EMAI-01**: User can start verified-email retrieval only from a reviewed people result set
+- [x] **EMAI-01**: User can start verified-email retrieval only from a reviewed people result set
 - [ ] **EMAI-02**: User can monitor retrieval progress and status from the frontend while a run is in progress
 - [ ] **EMAI-03**: User can resume or safely inspect an interrupted retrieval run without losing run state
 - [ ] **EMAI-04**: User can distinguish verified business-email results from non-verified or unusable results
@@ -87,16 +87,16 @@ Requirements for initial release. Each maps to roadmap phases.
 | COMP-02 | Phase 2 | Complete |
 | COMP-03 | Phase 2 | Complete |
 | COMP-04 | Phase 2 | Complete |
-| PEOP-01 | Phase 3 | Pending |
-| PEOP-02 | Phase 3 | Pending |
-| PEOP-03 | Phase 3 | Pending |
-| PEOP-04 | Phase 3 | Pending |
+| PEOP-01 | Phase 3 | Complete |
+| PEOP-02 | Phase 3 | Complete |
+| PEOP-03 | Phase 3 | Complete |
+| PEOP-04 | Phase 3 | Complete |
 | COST-01 | Phase 1 | Complete |
-| COST-02 | Phase 3 | Pending |
-| COST-03 | Phase 3 | Pending |
+| COST-02 | Phase 3 | Complete |
+| COST-03 | Phase 3 | Complete |
 | COST-04 | Phase 4 | Pending |
 | COST-05 | Phase 4 | Pending |
-| EMAI-01 | Phase 3 | Pending |
+| EMAI-01 | Phase 3 | Complete |
 | EMAI-02 | Phase 4 | Pending |
 | EMAI-03 | Phase 4 | Pending |
 | EMAI-04 | Phase 4 | Pending |
@@ -112,4 +112,4 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ---
 *Requirements defined: 2026-03-23*
-*Last updated: 2026-03-23 after Phase 2 execution*
+*Last updated: 2026-03-23 after Phase 3 execution*

@@ -44,6 +44,11 @@ export async function listSnapshotsForRecipe(recipeId: string) {
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
+export async function getCompanySnapshotById(snapshotId: string) {
+  const records = await readSnapshots();
+  return records.find((record) => record.id === snapshotId) ?? null;
+}
+
 export async function getLatestSnapshotForSignature(
   recipeId: string,
   signature: string,
