@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 03.1-01-PLAN.md
-last_updated: "2026-03-23T15:18:33.111Z"
+stopped_at: Completed 03.1-02-PLAN.md
+last_updated: "2026-03-23T15:33:35.297Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 12
-  completed_plans: 10
+  completed_plans: 11
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: `.planning/PROJECT.md` (updated 2026-03-23)
 ## Current Position
 
 Phase: 03.1 (rework-the-search-flow) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Plan: 2 of 3
 - Trend: Improving
 
 | Phase 03.1 P01 | 12min | 2 tasks | 9 files |
+| Phase 03.1 P02 | 14min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -64,6 +65,9 @@ Recent decisions affecting current work:
 - Phase 3: Verified-email retrieval readiness requires a persisted people snapshot, a saved run plan, and explicit confirmation.
 - [Phase 03.1]: Search workspace routes now read only explicit recipe and snapshot IDs from the URL; they never auto-select the first saved record.
 - [Phase 03.1]: Company and people search now enter through separate routes so server actions can redirect back into the correct workflow context.
+- [Phase 03.1]: Company snapshot review now lives on /search/company/[snapshotId] and no longer embeds downstream people-search stages.
+- [Phase 03.1]: People search runs from the saved people recipe state only after an explicit snapshot-import apply step.
+- [Phase 03.1]: Imported organization provenance is persisted per source snapshot with mode, selected IDs, and timestamp metadata.
 
 ### Pending Todos
 
@@ -80,6 +84,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23T15:18:33.107Z
-Stopped at: Completed 03.1-01-PLAN.md
+Last session: 2026-03-23T15:33:35.290Z
+Stopped at: Completed 03.1-02-PLAN.md
 Resume file: None
