@@ -26,6 +26,13 @@ type PeopleSearchPanelProps = {
 
 type ImportMode = "selected" | "all";
 
+function areStringArraysEqual(left: string[], right: string[]) {
+  return (
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
+}
+
 function getInitialSelectionState(
   snapshotOptions: SnapshotOption[],
   activeSourceSnapshotIds: string[],
@@ -114,16 +121,30 @@ export function PeopleSearchPanel({
       selectedCompanyIds: string[];
     },
   ) {
-    setSelectionState((current) => ({
-      ...current,
-      [snapshotId]: updater(
-        current[snapshotId] ?? {
-          enabled: false,
-          importMode: "all",
-          selectedCompanyIds: [],
-        },
-      ),
-    }));
+    setSelectionState((current) => {
+      const previousState = current[snapshotId] ?? {
+        enabled: false,
+        importMode: "all" as const,
+        selectedCompanyIds: [],
+      };
+      const nextState = updater(previousState);
+
+      if (
+        previousState.enabled === nextState.enabled &&
+        previousState.importMode === nextState.importMode &&
+        areStringArraysEqual(
+          previousState.selectedCompanyIds,
+          nextState.selectedCompanyIds,
+        )
+      ) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [snapshotId]: nextState,
+      };
+    });
   }
 
   return (

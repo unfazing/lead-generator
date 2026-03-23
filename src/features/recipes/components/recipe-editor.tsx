@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { deleteRecipeAction, saveRecipeAction } from "@/app/recipes/actions";
 import { MultiValueInput } from "@/features/recipes/components/multi-value-input";
 import { InfoTip } from "@/features/ui/components/info-tip";
@@ -20,12 +21,18 @@ type RecipeEditorProps =
       recipe: CompanyRecipe | null;
       draft: CompanyRecipeInput;
       pairedRecipeId: string | null;
+      closeHref?: string | null;
+      returnBasePath?: string | null;
+      returnSourceSnapshotIds?: string[];
     }
   | {
       type: "people";
       recipe: PeopleRecipe | null;
       draft: PeopleRecipeInput;
       pairedRecipeId: string | null;
+      closeHref?: string | null;
+      returnBasePath?: string | null;
+      returnSourceSnapshotIds?: string[];
     };
 
 function hasSelectedValue(values: readonly string[], value: string) {
@@ -41,7 +48,14 @@ function getTitle(type: RecipeType, recipe: CompanyRecipe | PeopleRecipe | null)
 }
 
 export function RecipeEditor(props: RecipeEditorProps) {
-  const { type, recipe, pairedRecipeId } = props;
+  const {
+    type,
+    recipe,
+    pairedRecipeId,
+    closeHref,
+    returnBasePath,
+    returnSourceSnapshotIds = [],
+  } = props;
 
   return (
     <section className="card">
@@ -53,6 +67,17 @@ export function RecipeEditor(props: RecipeEditorProps) {
       <form action={saveRecipeAction} className="stack">
         <input type="hidden" name="recipeType" value={type} />
         {recipe ? <input type="hidden" name="recipeId" value={recipe.id} /> : null}
+        {returnBasePath ? (
+          <input type="hidden" name="returnBasePath" value={returnBasePath} />
+        ) : null}
+        {returnSourceSnapshotIds.map((snapshotId) => (
+          <input
+            key={snapshotId}
+            type="hidden"
+            name="returnSourceSnapshot"
+            value={snapshotId}
+          />
+        ))}
         {pairedRecipeId ? (
           <input
             type="hidden"
@@ -599,6 +624,11 @@ export function RecipeEditor(props: RecipeEditorProps) {
           <button className="primary-button" type="submit">
             {recipe ? "Update recipe" : "Save recipe"}
           </button>
+          {closeHref ? (
+            <Link className="secondary-button" href={closeHref}>
+              Close editor
+            </Link>
+          ) : null}
           {recipe ? (
             <button className="secondary-button destructive-button" formAction={deleteRecipeAction}>
               Delete recipe

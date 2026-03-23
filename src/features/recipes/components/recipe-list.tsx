@@ -1,11 +1,14 @@
-import Link from "next/link";
 import { deleteRecipeAction } from "@/app/recipes/actions";
+import { PreservedScrollLink } from "@/features/ui/components/preserved-scroll-link";
 import type { CompanyRecipe, PeopleRecipe, RecipeType } from "@/lib/recipes/schema";
 
 type RecipeListProps =
   | {
       basePath: string;
       createHref?: string | null;
+      editorBasePath?: string | null;
+      editorMode?: "view" | "edit" | "new";
+      extraQuery?: Record<string, string | string[] | null | undefined>;
       type: "company";
       recipes: CompanyRecipe[];
       activeRecipeId: string | null;
@@ -14,6 +17,9 @@ type RecipeListProps =
   | {
       basePath: string;
       createHref?: string | null;
+      editorBasePath?: string | null;
+      editorMode?: "view" | "edit" | "new";
+      extraQuery?: Record<string, string | string[] | null | undefined>;
       type: "people";
       recipes: PeopleRecipe[];
       activeRecipeId: string | null;
@@ -23,6 +29,9 @@ type RecipeListProps =
 export function RecipeList({
   basePath,
   createHref,
+  editorBasePath,
+  editorMode = "view",
+  extraQuery,
   type,
   recipes,
   activeRecipeId,
@@ -30,12 +39,89 @@ export function RecipeList({
 }: RecipeListProps) {
   const title = type === "company" ? "Company recipes" : "People recipes";
 
-  function getRecipeHref(recipeId: string) {
-    if (type === "company") {
-      return `${basePath}?companyRecipe=${recipeId}${pairedRecipeId ? `&peopleRecipe=${pairedRecipeId}` : ""}${basePath.startsWith("/recipes") ? "&editorMode=edit" : ""}`;
+  function buildHref(params: URLSearchParams) {
+    if (extraQuery) {
+      for (const [key, value] of Object.entries(extraQuery)) {
+        if (Array.isArray(value)) {
+          value.forEach((item) => {
+            if (item) {
+              params.append(key, item);
+            }
+          });
+          continue;
+        }
+
+        if (value) {
+          params.set(key, value);
+        }
+      }
     }
 
-    return `${basePath}?peopleRecipe=${recipeId}${pairedRecipeId ? `&companyRecipe=${pairedRecipeId}` : ""}${basePath.startsWith("/recipes") ? "&editorMode=edit" : ""}`;
+    const query = params.toString();
+    return query ? `${basePath}?${query}` : basePath;
+  }
+
+  function getClearedHref() {
+    const params = new URLSearchParams();
+
+    if (type === "company") {
+      if (pairedRecipeId) {
+        params.set("peopleRecipe", pairedRecipeId);
+      }
+    } else if (pairedRecipeId) {
+      params.set("companyRecipe", pairedRecipeId);
+    }
+
+    if (basePath.startsWith("/recipes")) {
+      params.set("editorMode", "new");
+    }
+
+    return buildHref(params);
+  }
+
+  function getRecipeHref(recipeId: string) {
+    const params = new URLSearchParams();
+
+    if (type === "company") {
+      params.set("companyRecipe", recipeId);
+      if (pairedRecipeId) {
+        params.set("peopleRecipe", pairedRecipeId);
+      }
+    } else {
+      params.set("peopleRecipe", recipeId);
+      if (pairedRecipeId) {
+        params.set("companyRecipe", pairedRecipeId);
+      }
+    }
+
+    if (basePath.startsWith("/recipes")) {
+      params.set("editorMode", "edit");
+    }
+
+    return buildHref(params);
+  }
+
+  function getEditorHref(recipeId: string) {
+    const resolvedEditorBasePath =
+      editorBasePath ?? (type === "company" ? "/recipes/company" : "/recipes/people");
+    const params = new URLSearchParams();
+
+    if (type === "company") {
+      params.set("companyRecipe", recipeId);
+      if (pairedRecipeId) {
+        params.set("peopleRecipe", pairedRecipeId);
+      }
+    } else {
+      params.set("peopleRecipe", recipeId);
+      if (pairedRecipeId) {
+        params.set("companyRecipe", pairedRecipeId);
+      }
+    }
+
+    params.set("editorMode", "edit");
+
+    const query = params.toString();
+    return query ? `${resolvedEditorBasePath}?${query}` : resolvedEditorBasePath;
   }
 
   return (
@@ -47,9 +133,9 @@ export function RecipeList({
         <span className="badge">{recipes.length} saved</span>
       </div>
       {createHref ? (
-        <Link className="primary-button recipe-rail-action" href={createHref}>
+        <PreservedScrollLink className="primary-button recipe-rail-action" href={createHref}>
           {type === "company" ? "New company recipe" : "New people recipe"}
-        </Link>
+        </PreservedScrollLink>
       ) : null}
       <div className="recipe-list">
         {recipes.length === 0 ? (
@@ -59,38 +145,56 @@ export function RecipeList({
         ) : null}
         {recipes.map((recipe) => {
           const isActive = recipe.id === activeRecipeId;
-          const recipeHref = getRecipeHref(recipe.id);
+          const recipeHref = isActive ? getClearedHref() : getRecipeHref(recipe.id);
+          const editorHref = getEditorHref(recipe.id);
+          const isEditingActiveRecipe =
+            editorMode === "edit" && isActive;
 
           return (
             <div
               key={recipe.id}
               className={`recipe-list-item${isActive ? " active" : ""}`}
             >
-              <Link className="recipe-list-link" href={recipeHref}>
+              <PreservedScrollLink className="recipe-list-link" href={recipeHref}>
                 <strong>{recipe.name}</strong>
                 <span className="meta">{getRecipeMeta(type, recipe)}</span>
                 <span className="meta">
                   Updated {new Date(recipe.updatedAt).toLocaleDateString()}
                 </span>
-              </Link>
-              <form action={deleteRecipeAction}>
-                <input type="hidden" name="recipeId" value={recipe.id} />
-                <input type="hidden" name="recipeType" value={type} />
-                {type === "company" ? (
-                  pairedRecipeId ? (
-                    <input type="hidden" name="pairedPeopleRecipeId" value={pairedRecipeId} />
-                  ) : null
-                ) : pairedRecipeId ? (
-                  <input type="hidden" name="pairedCompanyRecipeId" value={pairedRecipeId} />
-                ) : null}
-                <button
-                  aria-label={`Delete ${recipe.name}`}
-                  className="secondary-button recipe-delete-button"
-                  type="submit"
+              </PreservedScrollLink>
+              <div className="recipe-list-actions">
+                <PreservedScrollLink
+                  aria-label={
+                    isEditingActiveRecipe
+                      ? `Close editor for ${recipe.name}`
+                      : `Edit ${recipe.name}`
+                  }
+                  className="secondary-button recipe-edit-button"
+                  href={isEditingActiveRecipe ? recipeHref : editorHref}
                 >
-                  Delete
-                </button>
-              </form>
+                  {isEditingActiveRecipe ? "×" : "✎"}
+                </PreservedScrollLink>
+                {!isEditingActiveRecipe ? (
+                  <form action={deleteRecipeAction}>
+                    <input type="hidden" name="recipeId" value={recipe.id} />
+                    <input type="hidden" name="recipeType" value={type} />
+                    {type === "company" ? (
+                      pairedRecipeId ? (
+                        <input type="hidden" name="pairedPeopleRecipeId" value={pairedRecipeId} />
+                      ) : null
+                    ) : pairedRecipeId ? (
+                      <input type="hidden" name="pairedCompanyRecipeId" value={pairedRecipeId} />
+                    ) : null}
+                    <button
+                      aria-label={`Delete ${recipe.name}`}
+                      className="secondary-button recipe-delete-button"
+                      type="submit"
+                    >
+                      🗑
+                    </button>
+                  </form>
+                ) : null}
+              </div>
             </div>
           );
         })}

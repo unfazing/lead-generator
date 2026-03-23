@@ -85,7 +85,6 @@ export function PeopleResultsTable({ snapshot }: PeopleResultsTableProps) {
     ...snapshot.recipeParams,
     organizationIds: snapshot.recipeParams.organizationIds,
     selectionMode: snapshot.selectionMode,
-    organizationImports: snapshot.organizationImports,
   };
 
   return (
@@ -119,11 +118,25 @@ export function PeopleResultsTable({ snapshot }: PeopleResultsTableProps) {
       summarySlot={
         snapshot.organizationImports.length > 0 ? (
           <div className="stack">
+            <div className="workspace-header">
+              <p className="eyebrow">Import provenance</p>
+              <h3>Company snapshot sources used for this people search.</h3>
+            </div>
             {snapshot.organizationImports.map((entry) => (
-              <p key={entry.snapshotId} className="meta">
-                Snapshot {entry.snapshotId.slice(0, 8)} · {entry.importMode} ·{" "}
-                {entry.organizationIds.length} organization IDs
-              </p>
+              <div key={entry.snapshotId} className="subtle-card card stack">
+                <p className="meta">
+                  Snapshot {entry.snapshotId.slice(0, 8)} · {entry.importMode} import
+                </p>
+                <p className="meta">
+                  {entry.organizationIds.length} organization IDs
+                  {entry.selectedCompanyIds.length > 0
+                    ? ` · ${entry.selectedCompanyIds.length} selected companies`
+                    : ""}
+                </p>
+                <p className="meta">
+                  Imported {new Date(entry.importedAt).toLocaleString()}
+                </p>
+              </div>
             ))}
           </div>
         ) : null

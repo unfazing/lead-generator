@@ -39,6 +39,10 @@ export async function saveRecipeAction(formData: FormData) {
       : null;
   const pairedCompanyRecipeId = formData.get("pairedCompanyRecipeId");
   const pairedPeopleRecipeId = formData.get("pairedPeopleRecipeId");
+  const returnBasePath = formData.get("returnBasePath");
+  const returnSourceSnapshotIds = formData
+    .getAll("returnSourceSnapshot")
+    .filter((value): value is string => typeof value === "string" && value.length > 0);
 
   let recipe;
   if (recipeType === "company") {
@@ -82,6 +86,16 @@ export async function saveRecipeAction(formData: FormData) {
     query.set("peopleRecipe", peopleRecipeId);
   }
 
+  if (typeof returnBasePath === "string" && returnBasePath.startsWith("/search")) {
+    for (const snapshotId of returnSourceSnapshotIds) {
+      query.append("sourceSnapshot", snapshotId);
+    }
+
+    redirect(
+      `${returnBasePath}${query.size > 0 ? `?${query.toString()}` : ""}`,
+    );
+  }
+
   query.set("editorMode", "edit");
 
   redirect(
@@ -96,6 +110,7 @@ export async function deleteRecipeAction(formData: FormData) {
   const recipeType = recipeTypeSchema.parse(formData.get("recipeType"));
   const pairedCompanyRecipeId = formData.get("pairedCompanyRecipeId");
   const pairedPeopleRecipeId = formData.get("pairedPeopleRecipeId");
+  const returnBasePath = formData.get("returnBasePath");
 
   if (typeof recipeId !== "string" || !recipeId) {
     throw new Error("Recipe is required");
@@ -125,6 +140,10 @@ export async function deleteRecipeAction(formData: FormData) {
     pairedPeopleRecipeId
   ) {
     query.set("peopleRecipe", pairedPeopleRecipeId);
+  }
+
+  if (typeof returnBasePath === "string" && returnBasePath.startsWith("/search")) {
+    redirect(returnBasePath);
   }
 
   query.set("editorMode", "new");

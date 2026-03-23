@@ -54,33 +54,31 @@ export default async function PeopleSnapshotReviewPage({
           <WorkspaceStageNav current="people" />
         </div>
       </section>
-      <div className="workspace-grid workspace-grid-wide search-grid">
-        <div className="stack search-main">
-          <div className="card stack">
-            <div className="workspace-header">
-              <p className="eyebrow">Snapshot context</p>
-              <h2>{peopleRecipe?.name ?? "People snapshot"}</h2>
-              <p>
-                Snapshot {snapshot.id.slice(0, 8)} · {snapshot.organizationImports.length} import source(s)
-              </p>
-            </div>
-            <div className="workspace-actions">
-              <Link
-                className="secondary-button"
-                href={`/search/people?${buildSearchWorkspaceQuery({
-                  workflow: "people",
-                  peopleRecipeId: snapshot.peopleRecipeId,
-                  sourceSnapshotIds: snapshot.organizationImports.map(
-                    (entry) => entry.snapshotId,
-                  ),
-                })}`}
-              >
-                Back to people workflow
-              </Link>
-            </div>
+      <div className="stack search-main">
+        <div className="card stack">
+          <div className="workspace-header">
+            <p className="eyebrow">Snapshot context</p>
+            <h2>{peopleRecipe?.name ?? "People snapshot"}</h2>
+            <p>
+              Snapshot {snapshot.id.slice(0, 8)} · {snapshot.organizationImports.length} import source(s)
+            </p>
           </div>
-          <PeopleResultsTable snapshot={snapshot} />
+          <div className="workspace-actions">
+            <Link
+              className="secondary-button"
+              href={`/search/people?${buildSearchWorkspaceQuery({
+                workflow: "people",
+                peopleRecipeId: snapshot.peopleRecipeId,
+                sourceSnapshotIds: snapshot.organizationImports.map(
+                  (entry) => entry.snapshotId,
+                ),
+              })}`}
+            >
+              Back to people workflow
+            </Link>
+          </div>
         </div>
+        <PeopleResultsTable snapshot={snapshot} />
       </div>
     </main>
   );

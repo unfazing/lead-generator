@@ -61,7 +61,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       </section>
       <div className="stack search-main">
         <UsageSummary summary={usageSummary} />
-        <div className="workspace-grid">
+        <div className="workspace-grid search-entry-grid">
           <section className="card stack">
             <div className="workspace-header">
               <p className="eyebrow">Company workflow</p>
@@ -82,8 +82,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               <Link className="primary-button" href={companyHref}>
                 Open company workflow
               </Link>
-              <Link className="secondary-button" href="/recipes/company">
-                Manage company recipes
+              <Link className="secondary-button" href="/search/company?editorMode=new">
+                New company recipe
               </Link>
             </div>
           </section>
@@ -99,7 +99,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                 <strong>{peopleRecipes.length}</strong>
               </div>
               <div className="stat-tile">
-                <span className="meta">Context in URL</span>
+                <span className="meta">Saved recipe carried over</span>
                 <strong>{context.companyRecipeId || context.peopleRecipeId ? "Explicit" : "None yet"}</strong>
               </div>
             </div>
@@ -107,8 +107,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               <Link className="primary-button" href={peopleHref}>
                 Open people workflow
               </Link>
-              <Link className="secondary-button" href="/recipes/people">
-                Manage people recipes
+              <Link className="secondary-button" href="/search/people?editorMode=new">
+                New people recipe
               </Link>
             </div>
           </section>
@@ -118,8 +118,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
             eyebrow="Search workspace"
             title="Create your first saved recipe."
             description="This workspace is instructions-first. Once you have a company or people recipe, use the route that matches the workflow you want to run."
-            primaryAction={{ href: "/recipes/company", label: "Create company recipe" }}
-            secondaryAction={{ href: "/recipes/people", label: "Create people recipe" }}
+            primaryAction={{ href: "/search/company?editorMode=new", label: "Create company recipe" }}
+            secondaryAction={{ href: "/search/people?editorMode=new", label: "Create people recipe" }}
           />
         ) : null}
       </div>

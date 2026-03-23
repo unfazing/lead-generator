@@ -93,6 +93,13 @@ export async function listPeopleSnapshotsForContext(
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
+export async function listPeopleSnapshotsForRecipe(peopleRecipeId: string) {
+  const records = await readSnapshots();
+  return records
+    .filter((record) => record.peopleRecipeId === peopleRecipeId)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+}
+
 export async function getPeopleSnapshotById(snapshotId: string) {
   const records = await readSnapshots();
   return records.find((record) => record.id === snapshotId) ?? null;

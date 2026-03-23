@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { CompanySearchWarning } from "@/features/company-search/components/company-search-warning";
 import { CompanySearchPanel } from "@/features/company-search/components/company-search-panel";
+import { RecipeEditor } from "@/features/recipes/components/recipe-editor";
 import { RecipeList } from "@/features/recipes/components/recipe-list";
+import { getCompanyRecipeDraft } from "@/features/recipes/lib/recipe-form";
 import { WorkspaceEmptyState } from "@/features/search-workspace/components/workspace-empty-state";
 import { WorkspaceStageNav } from "@/features/search-workspace/components/workspace-stage-nav";
+import { summarizeSnapshotParams } from "@/features/search-workspace/lib/snapshot-param-summary";
 import {
   buildSearchWorkspaceQuery,
   parseSearchWorkspaceContext,
 } from "@/features/search-workspace/lib/workspace-route-state";
-import { UsageSummary } from "@/features/usage/components/usage-summary";
-import { getApolloUsageSummary } from "@/features/usage/lib/apollo-usage";
 import { listSnapshotsForRecipe } from "@/lib/db/repositories/company-snapshots";
 import { getRecipeById, listRecipesByType } from "@/lib/db/repositories/recipes";
 
@@ -17,29 +18,42 @@ type SearchPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+function getSingleParam(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+) {
+  const value = params[key];
+  return typeof value === "string" ? value : Array.isArray(value) ? value[0] : null;
+}
+
 export default async function CompanySearchPage({ searchParams }: SearchPageProps) {
   const params = searchParams ? await searchParams : {};
+  const editorParam = getSingleParam(params, "editorMode");
+  const editorMode =
+    editorParam === "new" || editorParam === "edit" ? editorParam : "view";
   const context = parseSearchWorkspaceContext("company", params);
 
-  const [companyRecipes, peopleRecipes, usageSummary] = await Promise.all([
-    listRecipesByType("company"),
-    listRecipesByType("people"),
-    getApolloUsageSummary(),
-  ]);
+  const companyRecipes = await listRecipesByType("company");
 
-  const [selectedCompanyRecipe, selectedPeopleRecipe] = await Promise.all([
-    context.companyRecipeId ? getRecipeById(context.companyRecipeId) : Promise.resolve(null),
-    context.peopleRecipeId ? getRecipeById(context.peopleRecipeId) : Promise.resolve(null),
-  ]);
+  const selectedCompanyRecipe = context.companyRecipeId
+    ? await getRecipeById(context.companyRecipeId)
+    : null;
 
   const companyRecipe =
     selectedCompanyRecipe?.type === "company" ? selectedCompanyRecipe : null;
-  const peopleRecipe =
-    selectedPeopleRecipe?.type === "people" ? selectedPeopleRecipe : null;
+  const companyDraft = getCompanyRecipeDraft(
+    editorMode === "new" ? null : companyRecipe,
+  );
   const snapshots = companyRecipe ? await listSnapshotsForRecipe(companyRecipe.id) : [];
   const activeSnapshot = context.companySnapshotId
     ? snapshots.find((snapshot) => snapshot.id === context.companySnapshotId) ?? null
     : null;
+  const closeHref = companyRecipe
+    ? `/search/company?${buildSearchWorkspaceQuery({
+        workflow: "company",
+        companyRecipeId: companyRecipe.id,
+      })}`
+    : "/search/company";
 
   return (
     <main className="shell workspace-shell">
@@ -56,38 +70,39 @@ export default async function CompanySearchPage({ searchParams }: SearchPageProp
           <RecipeList
             activeRecipeId={companyRecipe?.id ?? null}
             basePath="/search/company"
-            pairedRecipeId={peopleRecipe?.id ?? null}
+            createHref="/search/company?editorMode=new"
+            editorBasePath="/search/company"
+            editorMode={editorMode}
+            pairedRecipeId={null}
             recipes={companyRecipes}
             type="company"
           />
-          <RecipeList
-            activeRecipeId={peopleRecipe?.id ?? null}
-            basePath="/search/company"
-            pairedRecipeId={companyRecipe?.id ?? null}
-            recipes={peopleRecipes}
-            type="people"
-          />
         </div>
         <div className="stack search-main">
-          <UsageSummary summary={usageSummary} />
           {companyRecipes.length === 0 ? (
             <WorkspaceEmptyState
               eyebrow="Company workflow"
               title="Save a company recipe to start."
               description="Company search runs from saved Apollo filters. Create one recipe, then return here to run or reopen snapshots."
-              primaryAction={{ href: "/recipes/company", label: "Create company recipe" }}
+            />
+          ) : editorMode === "new" || (editorMode === "edit" && companyRecipe) ? (
+            <RecipeEditor
+              closeHref={closeHref}
+              draft={companyDraft}
+              pairedRecipeId={null}
+              recipe={editorMode === "new" ? null : companyRecipe}
+              returnBasePath="/search/company"
+              type="company"
             />
           ) : !companyRecipe ? (
             <WorkspaceEmptyState
               eyebrow="Company workflow"
               title="Choose a company recipe."
               description="This route stays empty until you explicitly select a saved company recipe from the sidebar."
-              primaryAction={{ href: "/recipes/company", label: "Manage company recipes" }}
             />
           ) : (
             <>
               <CompanySearchPanel
-                pairedPeopleRecipe={peopleRecipe}
                 recipe={companyRecipe}
                 snapshot={activeSnapshot}
               />
@@ -104,28 +119,41 @@ export default async function CompanySearchPage({ searchParams }: SearchPageProp
                 ) : (
                   <div className="recipe-list">
                     {snapshots.map((snapshot) => {
+                      const paramSummary = summarizeSnapshotParams(snapshot.recipeParams);
                       const href = `/search/company/${snapshot.id}?${buildSearchWorkspaceQuery({
                         workflow: "company",
                         companyRecipeId: companyRecipe.id,
-                        peopleRecipeId: peopleRecipe?.id ?? null,
                       })}`;
 
                       return (
-                        <Link
+                        <div
                           key={snapshot.id}
-                          className={`recipe-list-item${
+                          className={`recipe-list-item snapshot-list-item${
                             snapshot.id === activeSnapshot?.id ? " active" : ""
                           }`}
-                          href={href}
                         >
-                          <span className="recipe-list-link">
+                          <Link className="recipe-list-link" href={href}>
                             <strong>{snapshot.result.rows.length} companies</strong>
                             <span className="meta">
-                              Updated {new Date(snapshot.updatedAt).toLocaleDateString()}
+                              {new Date(snapshot.updatedAt).toLocaleDateString()} · {snapshot.id.slice(0, 8)}
                             </span>
-                            <span className="meta">Snapshot {snapshot.id.slice(0, 8)}</span>
-                          </span>
-                        </Link>
+                          </Link>
+                          {paramSummary.length > 0 ? (
+                            <details className="snapshot-param-disclosure">
+                              <summary className="meta">Show params</summary>
+                              <div className="snapshot-param-summary">
+                                {paramSummary.map((entry) => (
+                                  <span
+                                    key={`${snapshot.id}-${entry}`}
+                                    className="meta"
+                                  >
+                                    {entry}
+                                  </span>
+                                ))}
+                              </div>
+                            </details>
+                          ) : null}
+                        </div>
                       );
                     })}
                   </div>

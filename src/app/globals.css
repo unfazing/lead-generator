@@ -153,6 +153,10 @@ a {
   gap: 20px;
 }
 
+.search-entry-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .search-sidebar {
   gap: 14px;
   align-content: start;
@@ -477,9 +481,54 @@ a {
   flex: 1;
 }
 
+.snapshot-list-item {
+  display: grid;
+  gap: 6px;
+}
+
+.snapshot-param-disclosure {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  margin-top: 0;
+}
+
+.snapshot-param-disclosure summary {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  cursor: pointer;
+  list-style: none;
+}
+
+.snapshot-param-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.snapshot-param-summary {
+  display: grid;
+  gap: 4px;
+  padding-top: 2px;
+}
+
 .recipe-delete-button {
-  padding: 8px 12px;
-  font-size: 0.82rem;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.recipe-list-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.recipe-edit-button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  font-size: 0.95rem;
   white-space: nowrap;
 }
 
