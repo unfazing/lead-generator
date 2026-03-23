@@ -59,7 +59,7 @@ export async function getRunPlanById(runPlanId: string) {
 }
 
 export async function saveRunPlan(
-  input: Omit<RunPlanRecord, "id" | "createdAt" | "updatedAt" | "confirmedAt" | "status">,
+  input: Omit<RunPlanRecord, "id" | "createdAt" | "updatedAt">,
 ) {
   const records = await readRunPlans();
   const now = new Date().toISOString();
@@ -71,8 +71,6 @@ export async function saveRunPlan(
     const updated: RunPlanRecord = {
       ...existing,
       ...input,
-      status: "draft",
-      confirmedAt: null,
       updatedAt: now,
     };
     await writeRunPlans(
@@ -84,32 +82,9 @@ export async function saveRunPlan(
   const created: RunPlanRecord = {
     id: randomUUID(),
     ...input,
-    status: "draft",
-    confirmedAt: null,
     createdAt: now,
     updatedAt: now,
   };
   await writeRunPlans([...records, created]);
   return created;
-}
-
-export async function markRunPlanReady(runPlanId: string) {
-  const records = await readRunPlans();
-  const existing = records.find((record) => record.id === runPlanId);
-
-  if (!existing) {
-    throw new Error("Run plan not found");
-  }
-
-  const now = new Date().toISOString();
-  const updated: RunPlanRecord = {
-    ...existing,
-    status: "ready",
-    confirmedAt: now,
-    updatedAt: now,
-  };
-  await writeRunPlans(
-    records.map((record) => (record.id === runPlanId ? updated : record)),
-  );
-  return updated;
 }

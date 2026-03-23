@@ -8,6 +8,7 @@ const routeQuerySchema = z.object({
   peopleRecipeId: z.string().min(1).nullable(),
   companySnapshotId: z.string().min(1).nullable(),
   peopleSnapshotId: z.string().min(1).nullable(),
+  retrievalRunId: z.string().min(1).nullable(),
   sourceSnapshotIds: z.array(z.string().min(1)),
 });
 
@@ -45,6 +46,7 @@ function normalizeRouteQuery(params: SearchWorkspaceParams): ParsedQuery {
     peopleRecipeId: readSingleParam(params, "peopleRecipe"),
     companySnapshotId: readSingleParam(params, "snapshot"),
     peopleSnapshotId: readSingleParam(params, "peopleSnapshot"),
+    retrievalRunId: readSingleParam(params, "retrievalRun"),
     sourceSnapshotIds: [
       ...readMultiParam(params, "sourceSnapshot"),
       ...readMultiParam(params, "sourceSnapshots"),
@@ -57,7 +59,12 @@ function assertValidContext(
   query: ParsedQuery,
 ): SearchWorkspaceContext {
   if (workflow === "landing") {
-    if (query.companySnapshotId || query.peopleSnapshotId || query.sourceSnapshotIds.length > 0) {
+    if (
+      query.companySnapshotId ||
+      query.peopleSnapshotId ||
+      query.retrievalRunId ||
+      query.sourceSnapshotIds.length > 0
+    ) {
       throw new Error("Landing route only accepts explicit recipe context.");
     }
 
@@ -65,7 +72,11 @@ function assertValidContext(
   }
 
   if (workflow === "company") {
-    if (query.peopleSnapshotId || query.sourceSnapshotIds.length > 0) {
+    if (
+      query.peopleSnapshotId ||
+      query.retrievalRunId ||
+      query.sourceSnapshotIds.length > 0
+    ) {
       throw new Error("Company workflow does not accept people snapshot or source snapshot context.");
     }
 
@@ -82,6 +93,10 @@ function assertValidContext(
 
   if (query.sourceSnapshotIds.length > 0 && !query.peopleRecipeId) {
     throw new Error("People workflow requires a people recipe before selecting source snapshots.");
+  }
+
+  if (query.retrievalRunId && !query.peopleRecipeId) {
+    throw new Error("People workflow requires a people recipe when loading a retrieval run.");
   }
 
   return { workflow, ...query };
@@ -111,6 +126,10 @@ export function buildSearchWorkspaceQuery(context: Partial<SearchWorkspaceContex
 
   if (context.peopleSnapshotId) {
     query.set("peopleSnapshot", context.peopleSnapshotId);
+  }
+
+  if (context.retrievalRunId) {
+    query.set("retrievalRun", context.retrievalRunId);
   }
 
   if (context.sourceSnapshotIds) {

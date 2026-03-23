@@ -23,7 +23,7 @@ const DEFAULT_THROTTLE_MS = 50;
 
 export async function kickoffRetrievalRun(
   runPlanId: string,
-  options?: { autoExecute?: boolean },
+  options?: { autoExecute?: boolean; selectedApolloIds?: string[] },
 ) {
   const plan = await getRunPlanById(runPlanId);
 
@@ -41,9 +41,15 @@ export async function kickoffRetrievalRun(
     throw new Error("People snapshot not found");
   }
 
-  const totalItems = Math.min(snapshot.result.rows.length, plan.maxContacts);
+  const selectedApolloIds = options?.selectedApolloIds?.length
+    ? new Set(options.selectedApolloIds)
+    : null;
+  const eligibleRows = selectedApolloIds
+    ? snapshot.result.rows.filter((row) => selectedApolloIds.has(row.apollo_id))
+    : snapshot.result.rows;
+  const totalItems = Math.min(eligibleRows.length, plan.maxContacts);
   const run = await createRetrievalRunFromPlan(plan, totalItems);
-  await seedRetrievalRunItems(run.id, snapshot.result.rows, plan.maxContacts);
+  await seedRetrievalRunItems(run.id, eligibleRows, plan.maxContacts);
   if (options?.autoExecute !== false) {
     void executeRetrievalRun(run.id);
   }

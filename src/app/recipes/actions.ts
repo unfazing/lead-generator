@@ -12,13 +12,12 @@ import {
   deleteCompanySnapshotsForRecipe,
 } from "@/lib/db/repositories/company-snapshots";
 import {
+  getPeopleSnapshotById,
   savePeopleSnapshot,
   deletePeopleSnapshotsForCompanyRecipe,
   deletePeopleSnapshotsForRecipe,
 } from "@/lib/db/repositories/people-snapshots";
 import {
-  getRunPlanById,
-  markRunPlanReady,
   saveRunPlan,
 } from "@/lib/db/repositories/run-plans";
 import { kickoffRetrievalRun } from "@/lib/retrieval/execution";
@@ -361,97 +360,48 @@ export async function applyCompaniesToPeopleRecipeAction(formData: FormData) {
   redirect(`/search/people?${query}`);
 }
 
-export async function saveRunPlanAction(formData: FormData) {
-  const companyRecipeId = String(formData.get("companyRecipeId") ?? "");
-  const companySnapshotId = String(formData.get("companySnapshotId") ?? "");
-  const peopleRecipeId = String(formData.get("peopleRecipeId") ?? "");
+export async function enrichSelectedPeopleAction(formData: FormData) {
   const peopleSnapshotId = String(formData.get("peopleSnapshotId") ?? "");
-  const maxContacts = Number(formData.get("maxContacts") ?? 0);
+  const selectedApolloIdsRaw = String(formData.get("selectedApolloIds") ?? "[]");
 
-  if (
-    !companyRecipeId ||
-    !companySnapshotId ||
-    !peopleRecipeId ||
-    !peopleSnapshotId ||
-    Number.isNaN(maxContacts) ||
-    maxContacts < 1
-  ) {
-    throw new Error("Run plan requires snapshot context and a positive max contacts cap");
+  if (!peopleSnapshotId) {
+    throw new Error("People snapshot is required");
   }
 
-  const peopleSnapshots = await import("@/lib/db/repositories/people-snapshots");
-  const snapshotList = await peopleSnapshots.listPeopleSnapshotsForContext(
-    peopleRecipeId,
-    companySnapshotId,
-  );
-  const snapshot = snapshotList.find((record) => record.id === peopleSnapshotId);
+  const selectedApolloIds = z.array(z.string().min(1)).parse(JSON.parse(selectedApolloIdsRaw));
+
+  if (selectedApolloIds.length === 0) {
+    throw new Error("Select at least one person before starting enrichment");
+  }
+
+  const snapshot = await getPeopleSnapshotById(peopleSnapshotId);
 
   if (!snapshot) {
     throw new Error("People snapshot not found");
   }
 
-  const estimate = buildRunPlanEstimate(snapshot, maxContacts);
-  await saveRunPlan({
-    companyRecipeId,
-    peopleRecipeId,
-    companySnapshotId,
-    peopleSnapshotId,
-    maxContacts,
+  const estimate = buildRunPlanEstimate(snapshot, selectedApolloIds.length);
+  const plan = await saveRunPlan({
+    companyRecipeId: snapshot.companyRecipeId,
+    peopleRecipeId: snapshot.peopleRecipeId,
+    companySnapshotId: snapshot.companySnapshotId,
+    peopleSnapshotId: snapshot.id,
+    maxContacts: selectedApolloIds.length,
     estimatedContacts: estimate.estimatedContacts,
     estimateSummary: estimate.estimateSummary,
     estimateNote: estimate.estimateNote,
+    status: "ready",
+    confirmedAt: new Date().toISOString(),
   });
+  const run = await kickoffRetrievalRun(plan.id, { selectedApolloIds });
 
   revalidatePath("/search");
+  revalidatePath("/search/people");
   redirect(
-    `/search?${new URLSearchParams({
-      companyRecipe: companyRecipeId,
-      peopleRecipe: peopleRecipeId,
-      snapshot: companySnapshotId,
-      peopleSnapshot: peopleSnapshotId,
-    }).toString()}`,
-  );
-}
-
-export async function confirmRunPlanAction(formData: FormData) {
-  const runPlanId = String(formData.get("runPlanId") ?? "");
-  if (!runPlanId) {
-    throw new Error("Run plan is required");
-  }
-
-  const plan = await markRunPlanReady(runPlanId);
-  revalidatePath("/search");
-  redirect(
-    `/search?${new URLSearchParams({
-      companyRecipe: plan.companyRecipeId,
-      peopleRecipe: plan.peopleRecipeId,
-      snapshot: plan.companySnapshotId,
-      peopleSnapshot: plan.peopleSnapshotId,
-    }).toString()}`,
-  );
-}
-
-export async function startRetrievalRunAction(formData: FormData) {
-  const runPlanId = String(formData.get("runPlanId") ?? "");
-
-  if (!runPlanId) {
-    throw new Error("Run plan is required");
-  }
-
-  const plan = await getRunPlanById(runPlanId);
-
-  if (!plan) {
-    throw new Error("Run plan not found");
-  }
-
-  const run = await kickoffRetrievalRun(runPlanId);
-  revalidatePath("/search");
-  redirect(
-    `/search?${new URLSearchParams({
-      companyRecipe: plan.companyRecipeId,
-      peopleRecipe: plan.peopleRecipeId,
-      snapshot: plan.companySnapshotId,
-      peopleSnapshot: plan.peopleSnapshotId,
+    `/search/people?${new URLSearchParams({
+      companyRecipe: snapshot.companyRecipeId,
+      peopleRecipe: snapshot.peopleRecipeId,
+      snapshot: snapshot.companySnapshotId,
       retrievalRun: run.id,
     }).toString()}`,
   );

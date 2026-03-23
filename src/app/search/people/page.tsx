@@ -12,6 +12,10 @@ import {
 import type { CompanySnapshotRecord } from "@/lib/db/repositories/company-snapshots";
 import { listSnapshotsForRecipe } from "@/lib/db/repositories/company-snapshots";
 import { listPeopleSnapshotsForRecipe } from "@/lib/db/repositories/people-snapshots";
+import {
+  getLatestRetrievalRunForPeopleSnapshot,
+  getRetrievalRunById,
+} from "@/lib/db/repositories/retrieval-runs";
 import { getRecipeById, listRecipesByType } from "@/lib/db/repositories/recipes";
 
 type SearchPageProps = {
@@ -53,9 +57,22 @@ export default async function PeopleSearchPage({ searchParams }: SearchPageProps
   const peopleDraft = getPeopleRecipeDraft(
     editorMode === "new" ? null : peopleRecipe,
   );
+  const activeRetrievalRun = context.retrievalRunId
+    ? await getRetrievalRunById(context.retrievalRunId)
+    : null;
   const peopleSnapshots = peopleRecipe
     ? await listPeopleSnapshotsForRecipe(peopleRecipe.id)
     : [];
+  const initialPeopleSnapshotId =
+    activeRetrievalRun?.peopleSnapshotId ?? context.peopleSnapshotId ?? null;
+  const retrievalRunsBySnapshotId = Object.fromEntries(
+    await Promise.all(
+      peopleSnapshots.map(async (snapshot) => [
+        snapshot.id,
+        await getLatestRetrievalRunForPeopleSnapshot(snapshot.id),
+      ]),
+    ),
+  );
 
   const companyRecipes = await listRecipesByType("company");
   const snapshotGroups = await Promise.all(
@@ -156,7 +173,8 @@ export default async function PeopleSearchPage({ searchParams }: SearchPageProps
                 />
               )}
               <SavedPeopleSnapshotsPanel
-                initialSnapshotId={context.peopleSnapshotId ?? null}
+                initialSnapshotId={initialPeopleSnapshotId}
+                retrievalRunsBySnapshotId={retrievalRunsBySnapshotId}
                 snapshots={peopleSnapshots}
               />
             </>

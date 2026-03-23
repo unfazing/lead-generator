@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { executeRetrievalRun, kickoffRetrievalRun } from "@/lib/retrieval/execution";
 import { listRetrievalRunItems } from "@/lib/db/repositories/retrieval-run-items";
 import { getRetrievalRunById } from "@/lib/db/repositories/retrieval-runs";
-import { saveRunPlan, markRunPlanReady } from "@/lib/db/repositories/run-plans";
+import { saveRunPlan } from "@/lib/db/repositories/run-plans";
 import { savePeopleSnapshot } from "@/lib/db/repositories/people-snapshots";
 
 const dataDir = path.join(process.cwd(), "data");
@@ -138,9 +138,10 @@ async function buildReadyPlan(personCount: number) {
     estimatedContacts: personCount,
     estimateSummary: `${personCount} contacts estimated`,
     estimateNote: "fixture",
+    status: "ready",
+    confirmedAt: new Date().toISOString(),
   });
-
-  return markRunPlanReady(plan.id);
+  return plan;
 }
 
 describe("people enrichment execution", () => {
@@ -204,6 +205,18 @@ describe("people enrichment execution", () => {
     });
 
     expect(modes).toEqual(["bulk_match", "match"]);
+  });
+
+  it("can kickoff enrichment for only the selected Apollo ids", async () => {
+    const plan = await buildReadyPlan(5);
+    const run = await kickoffRetrievalRun(plan.id, {
+      autoExecute: false,
+      selectedApolloIds: ["person-2", "person-4"],
+    });
+
+    const items = await listRetrievalRunItems(run.id);
+
+    expect(items.map((item) => item.personApolloId)).toEqual(["person-2", "person-4"]);
   });
 
   it("persists each completed batch before the next batch starts", async () => {
