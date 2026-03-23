@@ -30,7 +30,6 @@ export function PeopleResultsTable({ snapshot }: PeopleResultsTableProps) {
       emptyMessage="No people snapshot yet. Run people search from the current company and people recipe pairing."
       metaDetail={snapshot ? `${snapshot.result.rows.length} people • source ${snapshot.result.source}` : ""}
       params={paramsForViewer}
-      selectable
       snapshot={snapshot}
     />
   );

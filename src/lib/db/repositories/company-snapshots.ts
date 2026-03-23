@@ -67,6 +67,12 @@ export async function getCompanySnapshotById(snapshotId: string) {
   return records.find((record) => record.id === snapshotId) ?? null;
 }
 
+export async function deleteCompanySnapshotsForRecipe(recipeId: string) {
+  const records = await readSnapshots();
+  const remaining = records.filter((record) => record.recipeId !== recipeId);
+  await writeSnapshots(remaining);
+}
+
 export async function getLatestSnapshotForSignature(
   recipeId: string,
   signature: string,

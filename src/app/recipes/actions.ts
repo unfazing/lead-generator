@@ -9,8 +9,13 @@ import {
   getCompanySnapshotById,
   getLatestSnapshotForSignature,
   saveCompanySnapshot,
+  deleteCompanySnapshotsForRecipe,
 } from "@/lib/db/repositories/company-snapshots";
-import { savePeopleSnapshot } from "@/lib/db/repositories/people-snapshots";
+import {
+  savePeopleSnapshot,
+  deletePeopleSnapshotsForCompanyRecipe,
+  deletePeopleSnapshotsForRecipe,
+} from "@/lib/db/repositories/people-snapshots";
 import {
   markRunPlanReady,
   saveRunPlan,
@@ -117,6 +122,13 @@ export async function deleteRecipeAction(formData: FormData) {
   }
 
   await deleteRecipe(recipeId);
+
+  if (recipeType === "company") {
+    await deleteCompanySnapshotsForRecipe(recipeId);
+    await deletePeopleSnapshotsForCompanyRecipe(recipeId);
+  } else {
+    await deletePeopleSnapshotsForRecipe(recipeId);
+  }
 
   revalidatePath("/recipes/company");
   revalidatePath("/recipes/people");
@@ -272,9 +284,10 @@ export async function runPeopleSearchAction(formData: FormData) {
   const query = buildSearchWorkspaceQuery({
     workflow: "people",
     peopleRecipeId,
+    peopleSnapshotId: snapshot.id,
     sourceSnapshotIds,
   });
-  redirect(`/search/people/${snapshot.id}?${query}`);
+  redirect(`/search/people?${query}`);
 }
 
 export async function applyCompaniesToPeopleRecipeAction(formData: FormData) {

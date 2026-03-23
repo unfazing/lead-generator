@@ -58,7 +58,7 @@ export function SnapshotParamsViewer({
             onClick={onToggleVisibility}
             type="button"
           >
-            {isVisible ? "Hide params" : "Show params"}
+            {isVisible ? "Hide" : "Show"}
           </button>
         </div>
       </div>

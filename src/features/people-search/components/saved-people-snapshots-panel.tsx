@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { PeopleResultsTable } from "@/features/people-search/components/people-results-table";
 import { SnapshotVersionSelector } from "@/features/search-workspace/components/snapshot-version-selector";
-import { summarizeSnapshotParams } from "@/features/search-workspace/lib/snapshot-param-summary";
 import type { PeopleSnapshotRecord } from "@/lib/db/repositories/people-snapshots";
 
 type SavedPeopleSnapshotsPanelProps = {
@@ -16,7 +15,7 @@ export function SavedPeopleSnapshotsPanel({
   snapshots,
 }: SavedPeopleSnapshotsPanelProps) {
   const [activeSnapshotId, setActiveSnapshotId] = useState<string | null>(
-    initialSnapshotId,
+    initialSnapshotId ?? snapshots[0]?.id ?? null,
   );
 
   const activeSnapshot = useMemo(
@@ -47,22 +46,9 @@ export function SavedPeopleSnapshotsPanel({
               id: snapshot.id,
               label: `${index === 0 ? "Latest" : `Older ${index}`} · ${new Date(
                 snapshot.updatedAt,
-              ).toLocaleDateString()} · ${snapshot.id.slice(0, 8)}`,
+              ).toLocaleDateString("en-GB", { timeZone: "UTC" })} · ${snapshot.id.slice(0, 8)}`,
             }))}
           />
-          {activeSnapshot &&
-          summarizeSnapshotParams(activeSnapshot.recipeParams).length > 0 ? (
-            <details className="snapshot-param-disclosure">
-              <summary className="meta">Show params</summary>
-              <div className="snapshot-param-summary">
-                {summarizeSnapshotParams(activeSnapshot.recipeParams).map((entry) => (
-                  <span key={`${activeSnapshot.id}-${entry}`} className="meta">
-                    {entry}
-                  </span>
-                ))}
-              </div>
-            </details>
-          ) : null}
           {activeSnapshot ? <PeopleResultsTable snapshot={activeSnapshot} /> : null}
         </div>
       )}

@@ -7,11 +7,15 @@ type SnapshotResultsTableProps<Row extends { apollo_id: string }> = {
   rows: Row[];
   selectedColumns: string[];
   source: "live" | "fixture";
-  columnPicker?: ReactNode;
-  paramsViewer?: ReactNode;
+  controls?: ReactNode;
+  detailPanels?: ReactNode;
+  headerActions?: ReactNode;
   summarySlot?: ReactNode;
   selectedRowIds?: string[];
   onToggleRow?: (rowId: string) => void;
+  sortColumn?: string | null;
+  sortDirection?: "asc" | "desc";
+  onToggleSort?: (column: string) => void;
 };
 
 export function SnapshotResultsTable<Row extends { apollo_id: string }>({
@@ -21,11 +25,15 @@ export function SnapshotResultsTable<Row extends { apollo_id: string }>({
   rows,
   selectedColumns,
   source,
-  columnPicker,
-  paramsViewer,
+  controls,
+  detailPanels,
+  headerActions,
   summarySlot,
   selectedRowIds = [],
   onToggleRow,
+  sortColumn = null,
+  sortDirection = "asc",
+  onToggleSort,
 }: SnapshotResultsTableProps<Row>) {
   if (rows.length === 0 && !metaDetail) {
     return <div className="card empty-message">{emptyMessage}</div>;
@@ -41,11 +49,14 @@ export function SnapshotResultsTable<Row extends { apollo_id: string }>({
           <span className="meta">{metaLabel}</span>
           <span className="meta">{metaDetail}</span>
         </div>
+        {headerActions ? (
+          <div className="table-toolbar-actions">{headerActions}</div>
+        ) : null}
       </div>
-      {columnPicker || paramsViewer ? (
-        <div className="table-toolbar-panel">
-          {paramsViewer}
-          {columnPicker}
+      {controls || detailPanels ? (
+        <div className="table-toolbar-panel snapshot-toolbar-stack">
+          {controls}
+          {detailPanels}
         </div>
       ) : null}
       {summarySlot ? <div className="table-toolbar-panel">{summarySlot}</div> : null}
@@ -55,7 +66,24 @@ export function SnapshotResultsTable<Row extends { apollo_id: string }>({
             <tr>
               {onToggleRow ? <th>Select</th> : null}
               {selectedColumns.map((column) => (
-                <th key={column}>{column}</th>
+                <th key={column}>
+                  {onToggleSort ? (
+                    <button
+                      className={`table-sort-button${
+                        sortColumn === column ? " active" : ""
+                      }`}
+                      onClick={() => onToggleSort(column)}
+                      type="button"
+                    >
+                      <span>{column}</span>
+                      {sortColumn === column ? (
+                        <span>{sortDirection === "asc" ? "↑" : "↓"}</span>
+                      ) : null}
+                    </button>
+                  ) : (
+                    column
+                  )}
+                </th>
               ))}
             </tr>
           </thead>

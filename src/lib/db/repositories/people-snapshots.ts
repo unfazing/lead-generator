@@ -105,6 +105,22 @@ export async function getPeopleSnapshotById(snapshotId: string) {
   return records.find((record) => record.id === snapshotId) ?? null;
 }
 
+export async function deletePeopleSnapshotsForRecipe(peopleRecipeId: string) {
+  const records = await readSnapshots();
+  const remaining = records.filter(
+    (record) => record.peopleRecipeId !== peopleRecipeId,
+  );
+  await writeSnapshots(remaining);
+}
+
+export async function deletePeopleSnapshotsForCompanyRecipe(companyRecipeId: string) {
+  const records = await readSnapshots();
+  const remaining = records.filter(
+    (record) => record.companyRecipeId !== companyRecipeId,
+  );
+  await writeSnapshots(remaining);
+}
+
 export async function savePeopleSnapshot(
   meta: {
     companyRecipeId: string;

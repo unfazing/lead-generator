@@ -1,3 +1,5 @@
+"use client";
+
 import { deleteRecipeAction } from "@/app/recipes/actions";
 import { PreservedScrollLink } from "@/features/ui/components/preserved-scroll-link";
 import type { CompanyRecipe, PeopleRecipe, RecipeType } from "@/lib/recipes/schema";
@@ -38,6 +40,10 @@ export function RecipeList({
   pairedRecipeId,
 }: RecipeListProps) {
   const title = type === "company" ? "Company recipes" : "People recipes";
+
+  function confirmDelete(recipeName: string) {
+    return window.confirm(`Delete "${recipeName}" and its related snapshots?`);
+  }
 
   function buildHref(params: URLSearchParams) {
     if (extraQuery) {
@@ -155,11 +161,15 @@ export function RecipeList({
               key={recipe.id}
               className={`recipe-list-item${isActive ? " active" : ""}`}
             >
-              <PreservedScrollLink className="recipe-list-link" href={recipeHref}>
+              <PreservedScrollLink
+                className="recipe-list-link"
+                confirmIfRecipeDirty={editorMode === "edit" || editorMode === "new"}
+                href={recipeHref}
+              >
                 <strong>{recipe.name}</strong>
                 <span className="meta">{getRecipeMeta(type, recipe)}</span>
                 <span className="meta">
-                  Updated {new Date(recipe.updatedAt).toLocaleDateString()}
+                  Updated {formatStableDate(recipe.updatedAt)}
                 </span>
               </PreservedScrollLink>
               <div className="recipe-list-actions">
@@ -170,12 +180,20 @@ export function RecipeList({
                       : `Edit ${recipe.name}`
                   }
                   className="secondary-button recipe-edit-button"
+                  confirmIfRecipeDirty={isEditingActiveRecipe}
                   href={isEditingActiveRecipe ? recipeHref : editorHref}
                 >
                   {isEditingActiveRecipe ? "×" : "✎"}
                 </PreservedScrollLink>
                 {!isEditingActiveRecipe ? (
-                  <form action={deleteRecipeAction}>
+                  <form
+                    action={deleteRecipeAction}
+                    onSubmit={(event) => {
+                      if (!confirmDelete(recipe.name)) {
+                        event.preventDefault();
+                      }
+                    }}
+                  >
                     <input type="hidden" name="recipeId" value={recipe.id} />
                     <input type="hidden" name="recipeType" value={type} />
                     {type === "company" ? (
@@ -213,4 +231,13 @@ function getRecipeMeta(type: RecipeType, recipe: CompanyRecipe | PeopleRecipe) {
   }
 
   return "";
+}
+
+function formatStableDate(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(value));
 }

@@ -287,6 +287,13 @@ export function PeopleSearchPanel({
           </div>
         </div>
 
+        <div className="pairing-summary">
+          <div className="stat-tile">
+            <span className="meta">People recipe</span>
+            <strong>{peopleRecipe.name}</strong>
+          </div>
+        </div>
+
         <section className="filter-section">
           <details className="filter-details">
             <summary className="filter-details-summary">

@@ -12,7 +12,7 @@ export function RetrievalReadinessGate({
     return (
       <div className="subtle-card card stack">
         <p className="meta">
-          Retrieval readiness confirmed {plan.confirmedAt ? new Date(plan.confirmedAt).toLocaleString() : ""}.
+          Retrieval readiness confirmed {plan.confirmedAt ? formatStableDateTime(plan.confirmedAt) : ""}.
         </p>
         <p className="field-hint">
           This plan is approved for later retrieval execution in Phase 4. No retrieval starts from this screen.
@@ -36,4 +36,15 @@ export function RetrievalReadinessGate({
       </div>
     </form>
   );
+}
+
+function formatStableDateTime(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "UTC",
+  }).format(new Date(value));
 }

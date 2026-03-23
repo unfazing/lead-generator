@@ -582,11 +582,37 @@ a {
 }
 
 .table-toolbar {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
-  align-items: flex-start;
+  align-items: start;
+}
+
+.table-toolbar-actions {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  justify-content: flex-end;
+}
+
+.table-meta {
+  display: flex;
+  gap: 10px;
+  align-items: center;
   flex-wrap: wrap;
+  min-width: 0;
+}
+
+.table-meta .meta {
+  white-space: nowrap;
+}
+
+.snapshot-export-button {
+  min-width: 170px;
+  min-height: 36px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  justify-content: center;
 }
 
 .table-toolbar-panel {
@@ -594,6 +620,51 @@ a {
   border-radius: 16px;
   background: rgba(255, 250, 241, 0.55);
   padding: 14px 16px;
+}
+
+.snapshot-toolbar-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.snapshot-toolbar {
+  display: grid;
+  gap: 14px;
+  width: 100%;
+}
+
+.snapshot-toolbar-toggles {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+}
+
+.snapshot-toolbar-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.snapshot-detail-panels {
+  display: grid;
+  gap: 12px;
+}
+
+.snapshot-control-select,
+.snapshot-control-input {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fffdf8;
+  padding: 10px 12px;
+  font: inherit;
+  color: var(--text);
+}
+
+
+.column-picker {
+  display: grid;
+  gap: 12px;
 }
 
 .snapshot-params-grid {
@@ -646,6 +717,24 @@ a {
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.table-sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-transform: inherit;
+  letter-spacing: inherit;
+}
+
+.table-sort-button.active {
+  color: var(--text);
 }
 
 .warning-stack {
@@ -772,18 +861,25 @@ a {
 .column-picker {
   display: grid;
   gap: 10px;
+  width: 100%;
 }
 
 .column-picker-header {
-  display: inline-flex;
+  display: flex;
+  width: 100%;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
 }
 
+.column-picker-header > strong {
+  flex: 1 1 auto;
+}
+
 .column-picker-header-actions {
   display: inline-flex;
+  margin-left: auto;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;

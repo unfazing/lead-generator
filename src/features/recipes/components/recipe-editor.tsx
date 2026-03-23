@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { deleteRecipeAction, saveRecipeAction } from "@/app/recipes/actions";
 import { MultiValueInput } from "@/features/recipes/components/multi-value-input";
 import { InfoTip } from "@/features/ui/components/info-tip";
@@ -14,6 +17,12 @@ import type {
   PeopleRecipeInput,
   RecipeType,
 } from "@/lib/recipes/schema";
+
+declare global {
+  interface Window {
+    __recipeEditorDirty?: boolean;
+  }
+}
 
 type RecipeEditorProps =
   | {
@@ -56,6 +65,28 @@ export function RecipeEditor(props: RecipeEditorProps) {
     returnBasePath,
     returnSourceSnapshotIds = [],
   } = props;
+  const [isDirty, setIsDirty] = useState(false);
+
+  useEffect(() => {
+    window.__recipeEditorDirty = isDirty;
+    return () => {
+      window.__recipeEditorDirty = false;
+    };
+  }, [isDirty]);
+
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!window.__recipeEditorDirty) {
+        return;
+      }
+
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
   return (
     <section className="card">
@@ -64,7 +95,15 @@ export function RecipeEditor(props: RecipeEditorProps) {
         <h1>{getTitle(type, recipe)}</h1>
       </div>
 
-      <form action={saveRecipeAction} className="stack">
+      <form
+        action={saveRecipeAction}
+        className="stack"
+        onChange={() => setIsDirty(true)}
+        onSubmit={() => {
+          setIsDirty(false);
+          window.__recipeEditorDirty = false;
+        }}
+      >
         <input type="hidden" name="recipeType" value={type} />
         {recipe ? <input type="hidden" name="recipeId" value={recipe.id} /> : null}
         {returnBasePath ? (
@@ -625,12 +664,38 @@ export function RecipeEditor(props: RecipeEditorProps) {
             {recipe ? "Update recipe" : "Save recipe"}
           </button>
           {closeHref ? (
-            <Link className="secondary-button" href={closeHref}>
+            <Link
+              className="secondary-button"
+              href={closeHref}
+              onClick={(event) => {
+                if (!isDirty) {
+                  return;
+                }
+
+                const confirmed = window.confirm(
+                  "Discard unsaved changes to this recipe?",
+                );
+                if (!confirmed) {
+                  event.preventDefault();
+                }
+              }}
+            >
               Close editor
             </Link>
           ) : null}
           {recipe ? (
-            <button className="secondary-button destructive-button" formAction={deleteRecipeAction}>
+            <button
+              className="secondary-button destructive-button"
+              formAction={deleteRecipeAction}
+              onClick={(event) => {
+                const confirmed = window.confirm(
+                  `Delete "${recipe.name}" and its related snapshots?`,
+                );
+                if (!confirmed) {
+                  event.preventDefault();
+                }
+              }}
+            >
               Delete recipe
             </button>
           ) : null}

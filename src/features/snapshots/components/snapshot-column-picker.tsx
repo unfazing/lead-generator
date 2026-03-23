@@ -32,7 +32,7 @@ export function SnapshotColumnPicker({
             onClick={onToggleVisibility}
             type="button"
           >
-            {isVisible ? "Hide controls" : "Show controls"}
+            {isVisible ? "Hide" : "Show"}
           </button>
         </div>
       </div>

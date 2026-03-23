@@ -24,7 +24,6 @@ export function CompanyResultsWorkspace({
             : ""
         }
         params={companySnapshot?.recipeParams ?? {}}
-        selectable
         snapshot={companySnapshot}
       />
     </section>
