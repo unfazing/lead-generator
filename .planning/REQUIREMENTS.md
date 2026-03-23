@@ -9,9 +9,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Recipes
 
-- [ ] **RECP-01**: User can create a saved recipe with Apollo company-search filters
-- [ ] **RECP-02**: User can add person-search filters to a saved recipe
-- [ ] **RECP-03**: User can save output column selections and CSV export settings as part of a recipe
+- [x] **RECP-01**: User can create a saved recipe with Apollo company-search filters
+- [x] **RECP-02**: User can add person-search filters to a saved recipe
+- [x] **RECP-03**: User can save output column selections and CSV export settings as part of a recipe
 - [ ] **RECP-04**: User can load an existing recipe and rerun it without re-entering filters
 
 ### Company Search
@@ -30,7 +30,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Credit Controls
 
-- [ ] **COST-01**: User can see current Apollo API or credit usage data in the frontend
+- [x] **COST-01**: User can see current Apollo API or credit usage data in the frontend
 - [ ] **COST-02**: User can see an estimated credit cost before starting verified-email retrieval
 - [ ] **COST-03**: User can configure run limits or stop conditions that cap how many contacts are processed
 - [ ] **COST-04**: User can compare estimated usage with actual usage after a run completes
@@ -79,9 +79,9 @@ Requirements for initial release. Each maps to roadmap phases.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| RECP-01 | Phase 1 | Pending |
-| RECP-02 | Phase 1 | Pending |
-| RECP-03 | Phase 1 | Pending |
+| RECP-01 | Phase 1 | Complete |
+| RECP-02 | Phase 1 | Complete |
+| RECP-03 | Phase 1 | Complete |
 | RECP-04 | Phase 5 | Pending |
 | COMP-01 | Phase 2 | Pending |
 | COMP-02 | Phase 2 | Pending |
@@ -91,7 +91,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | PEOP-02 | Phase 3 | Pending |
 | PEOP-03 | Phase 3 | Pending |
 | PEOP-04 | Phase 3 | Pending |
-| COST-01 | Phase 1 | Pending |
+| COST-01 | Phase 1 | Complete |
 | COST-02 | Phase 3 | Pending |
 | COST-03 | Phase 3 | Pending |
 | COST-04 | Phase 4 | Pending |
@@ -112,4 +112,4 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ---
 *Requirements defined: 2026-03-23*
-*Last updated: 2026-03-23 after initial definition*
+*Last updated: 2026-03-23 after Phase 1 execution*

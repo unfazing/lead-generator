@@ -12,15 +12,15 @@ Turn precise Apollo filters into verified-email exports quickly without wasting 
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Save reusable recipes that remember search inputs and export configuration — validated in Phase 1.
+- [x] Show current Apollo API usage data in the frontend before search execution — validated in Phase 1.
 
 ### Active
 
 - [ ] Search Apollo companies using configurable filter criteria
 - [ ] Search Apollo people from matched companies in both manual-select and all-company modes
 - [ ] Retrieve and display verified email contacts with exportable CSV output
-- [ ] Save reusable recipes that remember both search filters and output/export configuration
-- [ ] Show API usage, credit consumption, and pre-run cost estimates in the frontend
+- [ ] Show credit consumption and pre-run cost estimates in the frontend
 
 ### Out of Scope
 
@@ -45,11 +45,11 @@ Apollo basic-plan efficiency is a primary product concern. The system should avo
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Build the first version as a single-user frontend application | The tool is only for personal use right now, so multi-user complexity would slow delivery without adding value | — Pending |
+| Build the first version as a single-user web application | The tool is only for personal use right now, so multi-user complexity would slow delivery without adding value | Validated in Phase 1 |
 | Support both manual company selection and all-company people-search execution | Some runs need tighter control while others should be repeatable end-to-end | — Pending |
-| Save recipes with both search filters and output/export setup | Repeated prospecting sessions should require minimal reconfiguration | — Pending |
+| Save recipes with both search filters and output/export setup | Repeated prospecting sessions should require minimal reconfiguration | Validated in Phase 1 |
 | Focus v1 enrichment on verified emails only | Verified email is the only contact detail that matters right now, which keeps scope and API spend tighter | — Pending |
-| Expose usage monitoring and pre-run cost estimation in the frontend | Credit preservation is a core success criterion, not a secondary admin concern | — Pending |
+| Expose usage monitoring and pre-run cost estimation in the frontend | Credit preservation is a core success criterion, not a secondary admin concern | Usage visibility validated in Phase 1; cost estimation remains active |
 
 ## Evolution
 
@@ -69,4 +69,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-23 after initialization*
+*Last updated: 2026-03-23 after Phase 1 execution*

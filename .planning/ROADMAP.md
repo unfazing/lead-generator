@@ -12,7 +12,7 @@ This roadmap turns Apollo Lead Finder into a focused, credit-aware workflow from
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Recipe and Usage Foundation** - Define reusable recipe state and expose baseline Apollo usage visibility.
+- [x] **Phase 1: Recipe and Usage Foundation** - Define reusable recipe state and expose baseline Apollo usage visibility. Completed 2026-03-23.
 - [ ] **Phase 2: Company Search and Snapshot Preview** - Let the user search Apollo companies, inspect results, and persist company snapshots safely.
 - [ ] **Phase 3: People Discovery and Run Planning** - Turn reviewed companies into people previews and gated retrieval plans with estimated cost.
 - [ ] **Phase 4: Retrieval Execution and Run Safety** - Execute verified-email retrieval with monitoring, resumability, and spend protection.
@@ -31,9 +31,9 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: Create app shell, persistence primitives, and recipe data model
-- [ ] 01-02: Build recipe create/edit flows with shared validation
-- [ ] 01-03: Surface Apollo usage data in the frontend
+- [x] 01-01: Create app shell, persistence primitives, and recipe data model
+- [x] 01-02: Build recipe create/edit flows with shared validation
+- [x] 01-03: Surface Apollo usage data in the frontend
 
 ### Phase 2: Company Search and Snapshot Preview
 **Goal**: Users can search Apollo companies from the frontend, review paginated results, and persist reusable company snapshots without blind overspend.
@@ -104,7 +104,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 2.2 -> 3 -> 3.1 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Recipe and Usage Foundation | 0/3 | Not started | - |
+| 1. Recipe and Usage Foundation | 3/3 | Complete | 2026-03-23 |
 | 2. Company Search and Snapshot Preview | 0/3 | Not started | - |
 | 3. People Discovery and Run Planning | 0/3 | Not started | - |
 | 4. Retrieval Execution and Run Safety | 0/3 | Not started | - |
