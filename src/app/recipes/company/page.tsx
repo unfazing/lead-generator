@@ -43,6 +43,15 @@ export default async function CompanyRecipesPage({
   const companyDraft = getCompanyRecipeDraft(
     editorMode === "new" ? null : companyRecipe,
   );
+  const newCompanyRecipeHref = `/recipes/company?${new URLSearchParams(
+    Object.fromEntries(
+      [
+        companyRecipeId ? ["companyRecipe", companyRecipeId] : null,
+        peopleRecipeId ? ["peopleRecipe", peopleRecipeId] : null,
+        ["editorMode", "new"],
+      ].filter(Boolean) as string[][],
+    ),
+  ).toString()}`;
 
   return (
     <main className="shell workspace-shell">
@@ -53,6 +62,11 @@ export default async function CompanyRecipesPage({
           <p>
             Keep company recipe authoring separate from people recipe setup and operational search work.
           </p>
+          <div className="workspace-actions">
+            <Link className="primary-button" href={newCompanyRecipeHref}>
+              New company recipe
+            </Link>
+          </div>
           <div className="tab-bar">
             <Link className="tab-pill active" href="/recipes/company">
               Company recipes

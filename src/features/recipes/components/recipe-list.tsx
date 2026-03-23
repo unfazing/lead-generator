@@ -25,10 +25,6 @@ export function RecipeList({
   pairedRecipeId,
 }: RecipeListProps) {
   const title = type === "company" ? "Company recipes" : "People recipes";
-  const newHref =
-    type === "company"
-      ? `${basePath}?editorMode=new${pairedRecipeId ? `&peopleRecipe=${pairedRecipeId}` : ""}${activeRecipeId ? `&companyRecipe=${activeRecipeId}` : ""}`
-      : `${basePath}?editorMode=new${pairedRecipeId ? `&companyRecipe=${pairedRecipeId}` : ""}${activeRecipeId ? `&peopleRecipe=${activeRecipeId}` : ""}`;
 
   function getRecipeHref(recipeId: string) {
     if (type === "company") {
@@ -45,9 +41,6 @@ export function RecipeList({
           <p className="eyebrow">{title}</p>
           <div className="workspace-actions">
             <span className="badge">{recipes.length} saved</span>
-            <Link className="secondary-button" href={newHref}>
-              New {type} recipe
-            </Link>
           </div>
         </div>
       </div>
