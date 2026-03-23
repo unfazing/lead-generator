@@ -35,18 +35,16 @@ export function RecipeList({
   }
 
   return (
-    <section className="stack">
-      <div className="card">
+    <section className="card recipe-rail">
+      <div className="recipe-rail-header">
         <div className="workspace-header">
           <p className="eyebrow">{title}</p>
-          <div className="workspace-actions">
-            <span className="badge">{recipes.length} saved</span>
-          </div>
         </div>
+        <span className="badge">{recipes.length} saved</span>
       </div>
       <div className="recipe-list">
         {recipes.length === 0 ? (
-          <div className="card empty-message">
+          <div className="empty-message recipe-empty-state">
             No {type} recipes yet. Start by saving a reusable {type} search.
           </div>
         ) : null}

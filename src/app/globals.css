@@ -278,6 +278,28 @@ a {
   gap: 12px;
 }
 
+.recipe-rail {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+.recipe-rail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.recipe-empty-state {
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px dashed var(--line);
+  background: rgba(255, 250, 241, 0.65);
+}
+
 .workspace-header {
   display: grid;
   gap: 10px;
@@ -285,16 +307,37 @@ a {
 
 .recipe-list-item {
   display: grid;
-  gap: 6px;
-  padding: 14px 16px;
+  gap: 8px;
+  padding: 16px;
   border-radius: 16px;
   border: 1px solid var(--line);
   background: #fffdf8;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+
+.recipe-list-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(15, 118, 110, 0.22);
 }
 
 .recipe-list-item.active {
   border-color: rgba(15, 118, 110, 0.4);
-  box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.14);
+  background: linear-gradient(
+    180deg,
+    rgba(15, 118, 110, 0.1),
+    rgba(255, 253, 248, 0.98) 26%
+  );
+  box-shadow:
+    inset 0 0 0 1px rgba(15, 118, 110, 0.14),
+    0 10px 24px rgba(35, 28, 20, 0.06);
+}
+
+.recipe-list-item strong {
+  font-size: 1rem;
+  line-height: 1.25;
 }
 
 .meta {
