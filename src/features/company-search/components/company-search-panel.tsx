@@ -4,15 +4,17 @@ import {
   employeeRangeOptions,
 } from "@/lib/apollo/company-filter-definitions";
 import type { CompanySnapshotRecord } from "@/lib/db/repositories/company-snapshots";
-import type { Recipe } from "@/lib/recipes/schema";
+import type { CompanyRecipe, PeopleRecipe } from "@/lib/recipes/schema";
 
 type CompanySearchPanelProps = {
-  recipe: Recipe | null;
+  recipe: CompanyRecipe | null;
+  pairedPeopleRecipe: PeopleRecipe | null;
   snapshot: CompanySnapshotRecord | null;
 };
 
 export function CompanySearchPanel({
   recipe,
+  pairedPeopleRecipe,
   snapshot,
 }: CompanySearchPanelProps) {
   if (!recipe) {
@@ -35,13 +37,27 @@ export function CompanySearchPanel({
       </div>
 
       <form action={runCompanySearchAction} className="stack">
-        <input type="hidden" name="recipeId" value={recipe.id} />
+        <input type="hidden" name="companyRecipeId" value={recipe.id} />
+        {pairedPeopleRecipe ? (
+          <input type="hidden" name="peopleRecipeId" value={pairedPeopleRecipe.id} />
+        ) : null}
         <div className="form-intro">
           <span className="badge">Credit-bearing search</span>
           <p className="meta">
             Start narrow, reuse snapshots when possible, and only refresh when
             you intentionally want fresh Apollo data.
           </p>
+        </div>
+
+        <div className="pairing-summary">
+          <div className="stat-tile">
+            <span className="meta">Company recipe</span>
+            <strong>{recipe.name}</strong>
+          </div>
+          <div className="stat-tile">
+            <span className="meta">People recipe</span>
+            <strong>{pairedPeopleRecipe?.name ?? "None paired yet"}</strong>
+          </div>
         </div>
 
         <section className="filter-section">

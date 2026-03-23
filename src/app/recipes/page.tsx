@@ -4,39 +4,65 @@ import { CompanySearchPanel } from "@/features/company-search/components/company
 import { CompanySearchWarning } from "@/features/company-search/components/company-search-warning";
 import { RecipeEditor } from "@/features/recipes/components/recipe-editor";
 import { RecipeList } from "@/features/recipes/components/recipe-list";
+import {
+  getCompanyRecipeDraft,
+  getPeopleRecipeDraft,
+} from "@/features/recipes/lib/recipe-form";
 import { UsageSummary } from "@/features/usage/components/usage-summary";
-import { getRecipeDraft } from "@/features/recipes/lib/recipe-form";
 import { getApolloUsageSummary } from "@/features/usage/lib/apollo-usage";
 import { defaultOptionalCompanyColumns } from "@/lib/apollo/company-filter-definitions";
 import { listSnapshotsForRecipe } from "@/lib/db/repositories/company-snapshots";
-import { getRecipeById, listRecipes } from "@/lib/db/repositories/recipes";
+import {
+  getRecipeById,
+  listRecipesByType,
+} from "@/lib/db/repositories/recipes";
 
 type RecipesPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
+function getSingleParam(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+) {
+  const value = params[key];
+  return typeof value === "string" ? value : Array.isArray(value) ? value[0] : null;
+}
+
 export default async function RecipesPage({ searchParams }: RecipesPageProps) {
   const params = searchParams ? await searchParams : {};
-  const recipeId =
-    typeof params.recipe === "string"
-      ? params.recipe
-      : Array.isArray(params.recipe)
-        ? params.recipe[0]
-        : null;
+  const companyRecipeId = getSingleParam(params, "companyRecipe");
+  const peopleRecipeId = getSingleParam(params, "peopleRecipe");
+  const snapshotId = getSingleParam(params, "snapshot");
 
-  const snapshotId =
-    typeof params.snapshot === "string"
-      ? params.snapshot
-      : Array.isArray(params.snapshot)
-        ? params.snapshot[0]
-        : null;
+  const [companyRecipes, peopleRecipes] = await Promise.all([
+    listRecipesByType("company"),
+    listRecipesByType("people"),
+  ]);
 
-  const recipes = await listRecipes();
-  const selectedRecipe = recipeId ? await getRecipeById(recipeId) : recipes[0] ?? null;
-  const draft = getRecipeDraft(selectedRecipe);
+  const selectedCompanyRecipe =
+    companyRecipeId && companyRecipeId !== "new"
+      ? await getRecipeById(companyRecipeId)
+      : companyRecipes[0] ?? null;
+  const selectedPeopleRecipe =
+    peopleRecipeId && peopleRecipeId !== "new"
+      ? await getRecipeById(peopleRecipeId)
+      : peopleRecipes[0] ?? null;
+
+  const companyRecipe =
+    selectedCompanyRecipe?.type === "company" ? selectedCompanyRecipe : null;
+  const peopleRecipe =
+    selectedPeopleRecipe?.type === "people" ? selectedPeopleRecipe : null;
+
+  const companyDraft = getCompanyRecipeDraft(
+    companyRecipeId === "new" ? null : companyRecipe,
+  );
+  const peopleDraft = getPeopleRecipeDraft(
+    peopleRecipeId === "new" ? null : peopleRecipe,
+  );
   const usageSummary = await getApolloUsageSummary();
-  const snapshots = selectedRecipe
-    ? await listSnapshotsForRecipe(selectedRecipe.id)
+  const snapshots = companyRecipe
+    ? await listSnapshotsForRecipe(companyRecipe.id)
     : [];
   const activeSnapshot =
     (snapshotId
@@ -48,18 +74,35 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
       <section className="workspace-panel">
         <div className="workspace-header">
           <p className="eyebrow">Search workspace</p>
-          <h1>Build narrow Apollo searches before you spend.</h1>
+          <h1>Mix a company search with any people search.</h1>
           <p>
-            Keep saved filters, company snapshots, and usage visibility in one
-            operator-first workspace so every search run is deliberate.
+            Save company and people recipes independently, then pair them in one
+            workspace before you search or spend.
           </p>
         </div>
       </section>
-      <div className="workspace-grid">
-        <RecipeList activeRecipeId={selectedRecipe?.id ?? null} recipes={recipes} />
+      <div className="workspace-grid workspace-grid-wide">
+        <div className="stack">
+          <RecipeList
+            activeRecipeId={companyRecipeId === "new" ? null : companyRecipe?.id ?? null}
+            pairedRecipeId={peopleRecipeId === "new" ? null : peopleRecipe?.id ?? null}
+            recipes={companyRecipes}
+            type="company"
+          />
+          <RecipeList
+            activeRecipeId={peopleRecipeId === "new" ? null : peopleRecipe?.id ?? null}
+            pairedRecipeId={companyRecipeId === "new" ? null : companyRecipe?.id ?? null}
+            recipes={peopleRecipes}
+            type="people"
+          />
+        </div>
         <div className="stack">
           <UsageSummary summary={usageSummary} />
-          <CompanySearchPanel recipe={selectedRecipe} snapshot={activeSnapshot} />
+          <CompanySearchPanel
+            pairedPeopleRecipe={peopleRecipe}
+            recipe={companyRecipe}
+            snapshot={activeSnapshot}
+          />
           <CompanySearchWarning warnings={activeSnapshot?.result.warnings ?? []} />
           <CompanyColumnPicker
             allColumns={
@@ -68,7 +111,20 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
             selectedColumns={activeSnapshot?.result.availableColumns ?? []}
           />
           <CompanyResultsTable snapshot={activeSnapshot} />
-          <RecipeEditor draft={draft} recipe={selectedRecipe} />
+          <div className="dual-editor-grid">
+            <RecipeEditor
+              draft={companyDraft}
+              pairedRecipeId={peopleRecipeId === "new" ? null : peopleRecipe?.id ?? null}
+              recipe={companyRecipeId === "new" ? null : companyRecipe}
+              type="company"
+            />
+            <RecipeEditor
+              draft={peopleDraft}
+              pairedRecipeId={companyRecipeId === "new" ? null : companyRecipe?.id ?? null}
+              recipe={peopleRecipeId === "new" ? null : peopleRecipe}
+              type="people"
+            />
+          </div>
         </div>
       </div>
     </main>

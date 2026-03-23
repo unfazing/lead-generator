@@ -5,27 +5,65 @@ import { redirect } from "next/navigation";
 import { searchCompanies, createCompanySearchSignature } from "@/lib/apollo/company-search";
 import { companySearchPayloadSchema } from "@/lib/company-search/schema";
 import { getLatestSnapshotForSignature, saveCompanySnapshot } from "@/lib/db/repositories/company-snapshots";
-import { createRecipe, getRecipeById, updateRecipe } from "@/lib/db/repositories/recipes";
+import {
+  createCompanyRecipe,
+  createPeopleRecipe,
+  getRecipeById,
+  updateCompanyRecipe,
+  updatePeopleRecipe,
+} from "@/lib/db/repositories/recipes";
 import { parseRecipeFormData } from "@/features/recipes/lib/recipe-form";
+import { recipeTypeSchema } from "@/lib/recipes/schema";
 
 export async function saveRecipeAction(formData: FormData) {
   const recipeId = formData.get("recipeId");
-  const recipeInput = parseRecipeFormData(formData);
+  const recipeType = recipeTypeSchema.parse(formData.get("recipeType"));
   const existingRecipe =
     typeof recipeId === "string" && recipeId
       ? await getRecipeById(recipeId)
       : null;
+  const pairedCompanyRecipeId = formData.get("pairedCompanyRecipeId");
+  const pairedPeopleRecipeId = formData.get("pairedPeopleRecipeId");
 
-  const recipe =
-    typeof recipeId === "string" && recipeId
-      ? await updateRecipe(recipeId, {
-          ...recipeInput,
-          companyFilters: existingRecipe?.companyFilters ?? recipeInput.companyFilters,
-        })
-      : await createRecipe(recipeInput);
+  let recipe;
+  if (recipeType === "company") {
+    const recipeInput = parseRecipeFormData(formData, "company");
+    recipe =
+      typeof recipeId === "string" && recipeId && existingRecipe?.type === "company"
+        ? await updateCompanyRecipe(recipeId, recipeInput)
+        : await createCompanyRecipe(recipeInput);
+  } else {
+    const recipeInput = parseRecipeFormData(formData, "people");
+    recipe =
+      typeof recipeId === "string" && recipeId && existingRecipe?.type === "people"
+        ? await updatePeopleRecipe(recipeId, recipeInput)
+        : await createPeopleRecipe(recipeInput);
+  }
 
   revalidatePath("/recipes");
-  redirect(`/recipes?recipe=${recipe.id}`);
+  const companyRecipeId =
+    recipe.type === "company"
+      ? recipe.id
+      : typeof pairedCompanyRecipeId === "string" && pairedCompanyRecipeId
+        ? pairedCompanyRecipeId
+        : "";
+  const peopleRecipeId =
+    recipe.type === "people"
+      ? recipe.id
+      : typeof pairedPeopleRecipeId === "string" && pairedPeopleRecipeId
+        ? pairedPeopleRecipeId
+        : "";
+  const query = new URLSearchParams();
+
+  if (companyRecipeId) {
+    query.set("companyRecipe", companyRecipeId);
+  }
+
+  if (peopleRecipeId) {
+    query.set("peopleRecipe", peopleRecipeId);
+  }
+
+  redirect(`/recipes${query.size > 0 ? `?${query.toString()}` : ""}`);
 }
 
 function splitLines(value: FormDataEntryValue | null) {
@@ -40,11 +78,12 @@ function splitLines(value: FormDataEntryValue | null) {
 }
 
 export async function runCompanySearchAction(formData: FormData) {
-  const recipeId = formData.get("recipeId");
+  const recipeId = formData.get("companyRecipeId");
   const mode = formData.get("mode") === "latest" ? "latest" : "reuse";
+  const pairedPeopleRecipeId = formData.get("peopleRecipeId");
 
   if (typeof recipeId !== "string" || !recipeId) {
-    throw new Error("Recipe is required for company search");
+    throw new Error("Company recipe is required for company search");
   }
 
   const payload = companySearchPayloadSchema.parse({
@@ -74,12 +113,15 @@ export async function runCompanySearchAction(formData: FormData) {
     throw new Error("Recipe not found");
   }
 
-  await updateRecipe(recipeId, {
+  if (recipe.type !== "company") {
+    throw new Error("Selected recipe is not a company recipe");
+  }
+
+  await updateCompanyRecipe(recipeId, {
+    type: "company",
     name: recipe.name,
     notes: recipe.notes,
     companyFilters: payload,
-    peopleFilters: recipe.peopleFilters,
-    exportSettings: recipe.exportSettings,
   });
 
   const signature = createCompanySearchSignature(payload);
@@ -87,12 +129,26 @@ export async function runCompanySearchAction(formData: FormData) {
 
   if (mode === "reuse" && existing) {
     revalidatePath("/recipes");
-    redirect(`/recipes?recipe=${recipeId}&snapshot=${existing.id}`);
+    const query = new URLSearchParams({
+      companyRecipe: recipeId,
+      snapshot: existing.id,
+    });
+    if (typeof pairedPeopleRecipeId === "string" && pairedPeopleRecipeId) {
+      query.set("peopleRecipe", pairedPeopleRecipeId);
+    }
+    redirect(`/recipes?${query.toString()}`);
   }
 
   const result = await searchCompanies(payload);
   const snapshot = await saveCompanySnapshot(recipeId, result);
 
   revalidatePath("/recipes");
-  redirect(`/recipes?recipe=${recipeId}&snapshot=${snapshot.id}`);
+  const query = new URLSearchParams({
+    companyRecipe: recipeId,
+    snapshot: snapshot.id,
+  });
+  if (typeof pairedPeopleRecipeId === "string" && pairedPeopleRecipeId) {
+    query.set("peopleRecipe", pairedPeopleRecipeId);
+  }
+  redirect(`/recipes?${query.toString()}`);
 }
