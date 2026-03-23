@@ -34,6 +34,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
   const companyRecipeId = getSingleParam(params, "companyRecipe");
   const peopleRecipeId = getSingleParam(params, "peopleRecipe");
   const snapshotId = getSingleParam(params, "snapshot");
+  const editorTab = getSingleParam(params, "editorTab") === "people" ? "people" : "company";
 
   const [companyRecipes, peopleRecipes] = await Promise.all([
     listRecipesByType("company"),
@@ -68,6 +69,26 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
     (snapshotId
       ? snapshots.find((snapshot) => snapshot.id === snapshotId)
       : snapshots[0]) ?? null;
+  const companyEditorHref = `/recipes?${new URLSearchParams(
+    Object.fromEntries(
+      [
+        companyRecipeId ? ["companyRecipe", companyRecipeId] : null,
+        peopleRecipeId ? ["peopleRecipe", peopleRecipeId] : null,
+        snapshotId ? ["snapshot", snapshotId] : null,
+        ["editorTab", "company"],
+      ].filter(Boolean) as string[][],
+    ),
+  ).toString()}`;
+  const peopleEditorHref = `/recipes?${new URLSearchParams(
+    Object.fromEntries(
+      [
+        companyRecipeId ? ["companyRecipe", companyRecipeId] : null,
+        peopleRecipeId ? ["peopleRecipe", peopleRecipeId] : null,
+        snapshotId ? ["snapshot", snapshotId] : null,
+        ["editorTab", "people"],
+      ].filter(Boolean) as string[][],
+    ),
+  ).toString()}`;
 
   return (
     <main className="shell workspace-shell">
@@ -111,20 +132,44 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
             selectedColumns={activeSnapshot?.result.availableColumns ?? []}
           />
           <CompanyResultsTable snapshot={activeSnapshot} />
-          <div className="dual-editor-grid">
-            <RecipeEditor
-              draft={companyDraft}
-              pairedRecipeId={peopleRecipeId === "new" ? null : peopleRecipe?.id ?? null}
-              recipe={companyRecipeId === "new" ? null : companyRecipe}
-              type="company"
-            />
-            <RecipeEditor
-              draft={peopleDraft}
-              pairedRecipeId={companyRecipeId === "new" ? null : companyRecipe?.id ?? null}
-              recipe={peopleRecipeId === "new" ? null : peopleRecipe}
-              type="people"
-            />
-          </div>
+          <section className="card stack">
+            <div className="workspace-header">
+              <p className="eyebrow">Recipe creation</p>
+              <h2>Save company and people searches separately.</h2>
+              <p>
+                Use tabs to switch between recipe types without losing the paired search context.
+              </p>
+            </div>
+            <div className="tab-bar">
+              <a
+                className={`tab-pill${editorTab === "company" ? " active" : ""}`}
+                href={companyEditorHref}
+              >
+                Company recipe
+              </a>
+              <a
+                className={`tab-pill${editorTab === "people" ? " active" : ""}`}
+                href={peopleEditorHref}
+              >
+                People recipe
+              </a>
+            </div>
+            {editorTab === "company" ? (
+              <RecipeEditor
+                draft={companyDraft}
+                pairedRecipeId={peopleRecipeId === "new" ? null : peopleRecipe?.id ?? null}
+                recipe={companyRecipeId === "new" ? null : companyRecipe}
+                type="company"
+              />
+            ) : (
+              <RecipeEditor
+                draft={peopleDraft}
+                pairedRecipeId={companyRecipeId === "new" ? null : companyRecipe?.id ?? null}
+                recipe={peopleRecipeId === "new" ? null : peopleRecipe}
+                type="people"
+              />
+            )}
+          </section>
         </div>
       </div>
     </main>
