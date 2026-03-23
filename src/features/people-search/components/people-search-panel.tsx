@@ -277,29 +277,15 @@ export function PeopleSearchPanel({
     <section className="stack">
       <section className="card stack">
         <div className="workspace-header">
-          <p className="eyebrow">People recipe companies</p>
+          <p className="eyebrow">People search</p>
           <div className="heading-with-tip">
-            <h2>Companies already on this recipe.</h2>
+            <h2>Run people search</h2>
             <InfoTip
-              content="These are the organization IDs currently saved on the people recipe. You can add more companies from saved company snapshots below, then run people search separately."
-              label="People recipe companies help"
+              content="Search uses the organization IDs currently saved on the recipe. Choosing companies below updates the recipe, but search only runs when you click this button."
+              label="People search help"
             />
           </div>
         </div>
-
-        {savedCompanies.length > 0 ? (
-          <div className="chip-grid">
-            {savedCompanies.map((company) => (
-              <span key={company.id} className="chip">
-                {company.label}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <div className="empty-message">
-            No companies are attached to this people recipe yet.
-          </div>
-        )}
 
         <section className="filter-section">
           <details className="filter-details">
@@ -353,6 +339,44 @@ export function PeopleSearchPanel({
             </div>
           </details>
         </section>
+
+        <form action={runPeopleSearchAction} className="workspace-actions">
+          <input type="hidden" name="peopleRecipeId" value={peopleRecipe.id} />
+          <button
+            className="primary-button"
+            disabled={currentOrganizationCount === 0}
+            type="submit"
+          >
+            Run people search
+          </button>
+        </form>
+      </section>
+
+      <section className="card stack">
+        <div className="workspace-header">
+          <p className="eyebrow">People recipe companies</p>
+          <div className="heading-with-tip">
+            <h2>Companies already on this recipe.</h2>
+            <InfoTip
+              content="These are the organization IDs currently saved on the people recipe. You can add more companies from saved company snapshots below, then run people search separately."
+              label="People recipe companies help"
+            />
+          </div>
+        </div>
+
+        {savedCompanies.length > 0 ? (
+          <div className="chip-grid">
+            {savedCompanies.map((company) => (
+              <span key={company.id} className="chip">
+                {company.label}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-message">
+            No companies are attached to this people recipe yet.
+          </div>
+        )}
 
         <section className="stack">
           <div className="workspace-header">
@@ -574,29 +598,6 @@ export function PeopleSearchPanel({
             </button>
           </form>
         </section>
-      </section>
-
-      <section className="card stack">
-        <div className="workspace-header">
-          <p className="eyebrow">People search</p>
-          <div className="heading-with-tip">
-            <h2>Run people search from the saved recipe state.</h2>
-            <InfoTip
-              content="Search uses the organization IDs currently saved on the recipe. Choosing companies above does not trigger search automatically."
-              label="People search help"
-            />
-          </div>
-        </div>
-        <form action={runPeopleSearchAction} className="workspace-actions">
-          <input type="hidden" name="peopleRecipeId" value={peopleRecipe.id} />
-          <button
-            className="primary-button"
-            disabled={currentOrganizationCount === 0}
-            type="submit"
-          >
-            Run people search
-          </button>
-        </form>
       </section>
     </section>
   );
