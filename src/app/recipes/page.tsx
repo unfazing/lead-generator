@@ -47,11 +47,11 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
     <main className="shell workspace-shell">
       <section className="workspace-panel">
         <div className="workspace-header">
-          <p className="eyebrow">Phase 1 workspace</p>
-          <h1>Recipes first, spend visibility always on.</h1>
+          <p className="eyebrow">Search workspace</p>
+          <h1>Build narrow Apollo searches before you spend.</h1>
           <p>
-            Build durable Apollo prospecting recipes before search execution
-            exists, and keep credit visibility close to the working surface.
+            Keep saved filters, company snapshots, and usage visibility in one
+            operator-first workspace so every search run is deliberate.
           </p>
         </div>
       </section>

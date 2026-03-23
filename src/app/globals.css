@@ -141,6 +141,39 @@ a {
   padding: 20px;
 }
 
+.filter-section {
+  display: grid;
+  gap: 16px;
+  padding-top: 4px;
+}
+
+.filter-section + .filter-section {
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.section-heading {
+  display: grid;
+  gap: 6px;
+}
+
+.section-heading h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.form-intro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 250, 241, 0.7);
+}
+
 .field-grid {
   display: grid;
   gap: 16px;
@@ -166,6 +199,13 @@ a {
   padding: 12px 14px;
   color: var(--text);
   font: inherit;
+}
+
+.field input:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: rgba(15, 118, 110, 0.45);
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.08);
 }
 
 .field textarea {
@@ -290,6 +330,10 @@ a {
   border: 1px solid var(--line);
   background: #fffdf8;
   font-size: 0.88rem;
+}
+
+.option-pill {
+  cursor: pointer;
 }
 
 .chip-active {
