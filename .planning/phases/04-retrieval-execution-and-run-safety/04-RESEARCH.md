@@ -58,6 +58,20 @@ Phase 4 should be planned as a server-owned execution pipeline layered on top of
 
 Apollo's current docs, checked on 2026-03-24, still define `POST /api/v1/people/match` for 1 person and `POST /api/v1/people/bulk_match` for up to 10 people per call. Bulk enrichment is the standard path for Phase 4 because it matches the reviewed-snapshot workflow and returns request-level counters such as requested enrichments, unique enrichments, missing records, and credits consumed in the tutorial examples. Waterfall enrichment exists, but it switches the system into webhook-driven asynchronous completion with explicit HTTPS and idempotency requirements, so it should remain out of scope unless Phase 4 is intentionally expanded.
 
+The current People Enrichment reference also sharpens the contract details the executor should plan around:
+- `POST https://api.apollo.io/api/v1/people/match` is the synchronous single-person enrichment path and is appropriate only for one contact at a time, final single-item remainder, or targeted retry.
+- Apollo matches more reliably when the request includes stronger identifiers such as Apollo `id`, `email`, `hashed_email`, `linkedin_url`, or employer `domain`; weak inputs like a bare name can still return `200` with no enriched record.
+- The base synchronous response centers on a `person` object with fields such as `id`, `name`, `title`, `email_status`, `email`, `organization_id`, `organization`, `contact`, and `employment_history`, which gives Phase 4 enough signal to normalize verified vs unusable outcomes without waiting on export work.
+- `reveal_personal_emails` and `reveal_phone_number` are explicitly opt-in and potentially credit-bearing. They should remain `false` for the initial verified-business-email execution path unless Phase 4 scope is reopened.
+- `run_waterfall_email` and `run_waterfall_phone` materially change the delivery model: Apollo responds synchronously with demographic/firmographic data plus waterfall request status, then delivers final enrichment asynchronously to a webhook. That is why Phase 4 should keep those flags `false` and stay on the native synchronous path.
+- `webhook_url` becomes mandatory when `reveal_phone_number=true`, and Apollo documents HTTPS, rate-limit tolerance, and idempotent webhook handling as hard requirements. Those requirements are out of scope for the current phase and should remain deferred with waterfall/phone-reveal behavior.
+
+For planning purposes, this means the first implementation wave should explicitly:
+- prefer synchronous native enrichment only
+- keep `run_waterfall_email=false`, `run_waterfall_phone=false`, `reveal_personal_emails=false`, and `reveal_phone_number=false`
+- treat `people/match` as a narrow fallback path, not the primary batch executor
+- normalize `person.email_status` plus related returned fields into Phase 4 quality categories rather than assuming every `200` means a successful verified-email enrichment
+
 **Primary recommendation:** Use a bulk-first server executor with persisted per-contact outcomes, batch-boundary checkpoints, and a preflight reuse classifier; reserve single `match` calls for single-item remainder or targeted retry only.
 
 ## Standard Stack
@@ -226,6 +240,7 @@ function deriveVisibleStatus(run: RetrievalRunRecord, now = Date.now()) {
 - **Trusting client state for progress:** The current architecture is server-backed; keep run truth on disk and let the UI poll.
 - **Overwriting a single run-plan record with execution details:** Keep planning and execution distinct so estimates remain auditable.
 - **Using Apollo waterfall enrichment in this phase by accident:** Waterfall changes the delivery model to webhook-driven async completion.
+- **Treating a `200` single-match response as guaranteed success:** Apollo documents that weak identifiers can still yield `200` with no actual enriched record, so the executor must inspect returned `person` data and status fields instead of trusting the HTTP code alone.
 
 ## Don't Hand-Roll
 
@@ -319,6 +334,31 @@ export async function GET(
   });
 }
 ```
+
+### Apollo single-person enrichment request shape
+```ts
+const response = await fetch("https://api.apollo.io/api/v1/people/match", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    "X-Api-Key": env.APOLLO_API_KEY,
+  },
+  body: JSON.stringify({
+    id: personApolloId,
+    run_waterfall_email: false,
+    run_waterfall_phone: false,
+    reveal_personal_emails: false,
+    reveal_phone_number: false,
+  }),
+});
+```
+
+### Apollo single-person response implications
+- A successful native response includes a top-level `person` object rather than only aggregate counters.
+- Relevant Phase 4 fields include `person.id`, `person.name`, `person.title`, `person.email_status`, `person.email`, `person.organization_id`, `person.organization`, and `person.employment_history`.
+- Quality classification should be based on returned content and `email_status`, not just whether the endpoint returned `200`.
+- Phone reveal and waterfall behavior should remain disabled in the first execution path because they introduce webhook-only follow-up payloads and different credit semantics.
 
 ### Atomic file write helper
 ```typescript
