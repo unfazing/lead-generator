@@ -253,10 +253,9 @@ export async function runPeopleSearchAction(formData: FormData) {
   const query = buildSearchWorkspaceQuery({
     workflow: "people",
     peopleRecipeId,
-    peopleSnapshotId: snapshot.id,
     sourceSnapshotIds,
   });
-  redirect(`/search/people?${query}`);
+  redirect(`/search/people/${snapshot.id}?${query}`);
 }
 
 export async function applyCompaniesToPeopleRecipeAction(formData: FormData) {

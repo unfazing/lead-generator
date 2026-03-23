@@ -110,12 +110,24 @@ export function PeopleResultsTable({ snapshot }: PeopleResultsTableProps) {
       }
       emptyMessage="No people snapshot yet. Run people search from the current company and people recipe pairing."
       metaDetail={`${snapshot.result.rows.length} people • source ${snapshot.result.source}`}
-      metaLabel={snapshot.selectionMode === "all" ? "All companies" : "Selected companies"}
+      metaLabel={`${snapshot.organizationImports.length} import source(s)`}
       onToggleRow={handleTogglePerson}
       rows={snapshot.result.rows}
       selectedColumns={selectedColumns}
       selectedRowIds={selectedPeopleIds}
       source={snapshot.result.source}
+      summarySlot={
+        snapshot.organizationImports.length > 0 ? (
+          <div className="stack">
+            {snapshot.organizationImports.map((entry) => (
+              <p key={entry.snapshotId} className="meta">
+                Snapshot {entry.snapshotId.slice(0, 8)} · {entry.importMode} ·{" "}
+                {entry.organizationIds.length} organization IDs
+              </p>
+            ))}
+          </div>
+        ) : null
+      }
     />
   );
 }
