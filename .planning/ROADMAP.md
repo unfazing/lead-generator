@@ -92,7 +92,7 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: Implement durable Apollo `match` / `bulk_match` execution, throttling, and progress tracking
+- [x] 04-01: Implement durable Apollo `match` / `bulk_match` execution, throttling, and progress tracking
 - [ ] 04-02: Add resume-safe run state and actual-usage reconciliation for enrichment runs
 - [ ] 04-03: Enforce pre-enrichment dedupe and Apollo result-quality classification
 

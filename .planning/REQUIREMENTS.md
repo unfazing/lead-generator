@@ -38,7 +38,7 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Email Retrieval
 
 - [x] **EMAI-01**: User can start verified-email retrieval only from a reviewed people result set
-- [ ] **EMAI-02**: User can monitor retrieval progress and status from the frontend while a run is in progress
+- [x] **EMAI-02**: User can monitor retrieval progress and status from the frontend while a run is in progress
 - [ ] **EMAI-03**: User can resume or safely inspect an interrupted retrieval run without losing run state
 - [ ] **EMAI-04**: User can distinguish verified business-email results from non-verified or unusable results
 
@@ -95,7 +95,7 @@ Requirements for initial release. Each maps to roadmap phases.
 | COST-04 | Phase 4 | Pending |
 | COST-05 | Phase 4 | Pending |
 | EMAI-01 | Phase 3 | Complete |
-| EMAI-02 | Phase 4 | Pending |
+| EMAI-02 | Phase 4 | Complete |
 | EMAI-03 | Phase 4 | Pending |
 | EMAI-04 | Phase 4 | Pending |
 | EXPT-01 | Phase 5 | Pending |

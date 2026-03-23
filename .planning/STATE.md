@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_plan
-stopped_at: Phase 03.1 complete; next step is plan Phase 4
-last_updated: "2026-03-24T12:20:00+08:00"
+status: unknown
+stopped_at: Phase 4 context created; ready for `$gsd-plan-phase 4`
+last_updated: "2026-03-23T19:48:56.440Z"
 progress:
   total_phases: 6
   completed_phases: 4
-  total_plans: 12
-  completed_plans: 12
+  total_plans: 15
+  completed_plans: 13
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-03-23)
 
 **Core value:** Turn precise Apollo filters into verified-email exports quickly without wasting API credits.
-**Current focus:** Phase 4 — retrieval-execution-and-run-safety
+**Current focus:** Phase 04 — retrieval-execution-and-run-safety
 
 ## Current Position
 
-Phase: 4 (retrieval-execution-and-run-safety) — READY TO PLAN
-Plan: 0 of 3
+Phase: 04 (retrieval-execution-and-run-safety) — EXECUTING
+Plan: 1 of 3
 
 ## Performance Metrics
 
@@ -72,6 +72,7 @@ Recent decisions affecting current work:
 - [Phase 03.1]: Recipe authoring now happens inline inside `/search/company` and `/search/people`; `/recipes/*` remains only as compatibility redirects.
 - [Phase 03.1]: Shared snapshot viewers now power company and people review surfaces with common sort, filter, and export behavior.
 - [Phase 03.1]: Phase 03.1 is UAT-complete and the next active phase is Phase 4 retrieval execution.
+- [Phase 04]: Confirmed run plans now start retrieval by persisting a run first and letting a server-owned executor process batches asynchronously.
 
 ### Pending Todos
 
