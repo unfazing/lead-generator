@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { peopleExportColumnOptions } from "@/lib/exports/people-export-columns";
 import { companySearchPayloadSchema } from "@/lib/company-search/schema";
 import { peopleSearchPayloadSchema } from "@/lib/people-search/schema";
 
@@ -14,8 +15,15 @@ const legacyPeopleFiltersSchema = z.object({
   peopleDepartments: z.array(z.string().min(1)).default([]),
 });
 
+const peopleExportColumnSchema = z.enum(
+  peopleExportColumnOptions.map((option) => option.value) as [
+    string,
+    ...string[],
+  ],
+);
+
 export const exportSettingsSchema = z.object({
-  columns: z.array(z.string().min(1)).min(1),
+  columns: z.array(peopleExportColumnSchema).min(1),
 });
 
 export const recipeTypeSchema = z.enum(["company", "people"]);

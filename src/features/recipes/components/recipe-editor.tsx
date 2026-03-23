@@ -1,5 +1,6 @@
 import { saveRecipeAction } from "@/app/recipes/actions";
 import { MultiValueInput } from "@/features/recipes/components/multi-value-input";
+import { peopleExportColumnOptions } from "@/lib/exports/people-export-columns";
 import { employeeRangeOptions } from "@/lib/apollo/company-filter-definitions";
 import {
   peopleDepartmentFilterOptions,
@@ -28,6 +29,10 @@ type RecipeEditorProps =
     };
 
 function hasSelectedValue(values: readonly string[], value: string) {
+  return values.includes(value);
+}
+
+function hasSelectedExportColumn(values: readonly string[], value: string) {
   return values.includes(value);
 }
 
@@ -82,13 +87,28 @@ export function RecipeEditor(props: RecipeEditorProps) {
               />
             </div>
             {type === "people" ? (
-              <MultiValueInput
-                hint="Choose the CSV columns as individual values so the export shape stays easy to edit."
-                label="Export columns"
-                name="exportColumns"
-                placeholder="email"
-                values={props.draft.exportSettings.columns}
-              />
+              <div className="field full">
+                <label>Export columns</label>
+                <div className="option-grid">
+                  {peopleExportColumnOptions.map((option) => (
+                    <label key={option.value} className="option-pill">
+                      <input
+                        defaultChecked={hasSelectedExportColumn(
+                          props.draft.exportSettings.columns,
+                          option.value,
+                        )}
+                        name="exportColumns"
+                        type="checkbox"
+                        value={option.value}
+                      />
+                      <span>{option.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <span className="field-hint">
+                  Select from the available people fields the app can actually carry into export.
+                </span>
+              </div>
             ) : null}
             <div className="field full">
               <label htmlFor={`${type}-notes`}>Notes</label>

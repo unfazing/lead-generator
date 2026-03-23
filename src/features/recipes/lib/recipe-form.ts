@@ -7,6 +7,7 @@ import {
   type PeopleRecipeInput,
   type RecipeType,
 } from "@/lib/recipes/schema";
+import { defaultPeopleExportColumns } from "@/lib/exports/people-export-columns";
 
 function splitLines(value: FormDataEntryValue | null) {
   if (typeof value !== "string") {
@@ -60,7 +61,7 @@ export function getEmptyPeopleRecipeDraft(): PeopleRecipeInput {
       personDepartments: [],
     },
     exportSettings: {
-      columns: ["full_name", "title", "company_name", "email"],
+      columns: [...defaultPeopleExportColumns],
     },
   };
 }
