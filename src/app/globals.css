@@ -370,6 +370,11 @@ a {
   font-size: 0.88rem;
 }
 
+.chip-button {
+  cursor: pointer;
+  font: inherit;
+}
+
 .option-pill {
   cursor: pointer;
 }

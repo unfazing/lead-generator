@@ -1,11 +1,17 @@
+"use client";
+
+import type { OptionalCompanyColumn } from "@/lib/apollo/company-filter-definitions";
+
 type CompanyColumnPickerProps = {
-  allColumns: string[];
-  selectedColumns: string[];
+  allColumns: OptionalCompanyColumn[];
+  selectedColumns: OptionalCompanyColumn[];
+  onToggleColumn: (column: OptionalCompanyColumn) => void;
 };
 
 export function CompanyColumnPicker({
   allColumns,
   selectedColumns,
+  onToggleColumn,
 }: CompanyColumnPickerProps) {
   if (allColumns.length === 0) {
     return null;
@@ -19,15 +25,19 @@ export function CompanyColumnPicker({
           const active = selectedColumns.includes(column);
 
           return (
-            <span key={column} className={`chip${active ? " chip-active" : ""}`}>
+            <button
+              key={column}
+              className={`chip chip-button${active ? " chip-active" : ""}`}
+              onClick={() => onToggleColumn(column)}
+              type="button"
+            >
               {column}
-            </span>
+            </button>
           );
         })}
       </div>
       <p className="field-hint">
-        Optional columns come from stored snapshot data so preview inspection
-        does not trigger another Apollo call.
+        Toggle optional columns already present in the snapshot. This only changes the preview.
       </p>
     </details>
   );

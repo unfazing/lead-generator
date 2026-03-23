@@ -1,5 +1,4 @@
-import { CompanyColumnPicker } from "@/features/company-search/components/company-column-picker";
-import { CompanyResultsTable } from "@/features/company-search/components/company-results-table";
+import { CompanyResultsWorkspace } from "@/features/company-search/components/company-results-workspace";
 import { CompanySearchPanel } from "@/features/company-search/components/company-search-panel";
 import { CompanySearchWarning } from "@/features/company-search/components/company-search-warning";
 import { RecipeEditor } from "@/features/recipes/components/recipe-editor";
@@ -10,7 +9,6 @@ import {
 } from "@/features/recipes/lib/recipe-form";
 import { UsageSummary } from "@/features/usage/components/usage-summary";
 import { getApolloUsageSummary } from "@/features/usage/lib/apollo-usage";
-import { defaultOptionalCompanyColumns } from "@/lib/apollo/company-filter-definitions";
 import { listSnapshotsForRecipe } from "@/lib/db/repositories/company-snapshots";
 import {
   getRecipeById,
@@ -125,13 +123,7 @@ export default async function RecipesPage({ searchParams }: RecipesPageProps) {
             snapshot={activeSnapshot}
           />
           <CompanySearchWarning warnings={activeSnapshot?.result.warnings ?? []} />
-          <CompanyColumnPicker
-            allColumns={
-              activeSnapshot?.result.availableColumns ?? [...defaultOptionalCompanyColumns]
-            }
-            selectedColumns={activeSnapshot?.result.availableColumns ?? []}
-          />
-          <CompanyResultsTable snapshot={activeSnapshot} />
+          <CompanyResultsWorkspace snapshot={activeSnapshot} />
           <section className="card stack">
             <div className="workspace-header">
               <p className="eyebrow">Recipe creation</p>

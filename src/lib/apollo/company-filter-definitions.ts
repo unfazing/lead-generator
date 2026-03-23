@@ -110,3 +110,5 @@ export const defaultOptionalCompanyColumns = [
   "estimated_num_employees",
   "short_description",
 ] as const;
+
+export type OptionalCompanyColumn = (typeof defaultOptionalCompanyColumns)[number];

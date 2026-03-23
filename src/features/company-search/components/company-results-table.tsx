@@ -1,14 +1,14 @@
-import {
-  defaultCompanyPreviewColumns,
-  defaultOptionalCompanyColumns,
-} from "@/lib/apollo/company-filter-definitions";
 import type { CompanySnapshotRecord } from "@/lib/db/repositories/company-snapshots";
 
 type CompanyResultsTableProps = {
   snapshot: CompanySnapshotRecord | null;
+  selectedColumns: string[];
 };
 
-export function CompanyResultsTable({ snapshot }: CompanyResultsTableProps) {
+export function CompanyResultsTable({
+  snapshot,
+  selectedColumns,
+}: CompanyResultsTableProps) {
   if (!snapshot) {
     return (
       <div className="card empty-message">
@@ -17,13 +17,6 @@ export function CompanyResultsTable({ snapshot }: CompanyResultsTableProps) {
       </div>
     );
   }
-
-  const selectedColumns = [
-    ...defaultCompanyPreviewColumns,
-    ...defaultOptionalCompanyColumns.filter((column) =>
-      snapshot.result.availableColumns.includes(column),
-    ),
-  ];
 
   return (
     <div className="card">
