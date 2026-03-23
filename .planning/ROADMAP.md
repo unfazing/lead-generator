@@ -13,7 +13,7 @@ This roadmap turns Apollo Lead Finder into a focused, credit-aware workflow from
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Recipe and Usage Foundation** - Define reusable recipe state and expose baseline Apollo usage visibility. Completed 2026-03-23.
-- [ ] **Phase 2: Company Search and Snapshot Preview** - Let the user search Apollo companies, inspect results, and persist company snapshots safely.
+- [x] **Phase 2: Company Search and Snapshot Preview** - Let the user search Apollo companies, inspect results, and persist company snapshots safely. Completed 2026-03-23.
 - [ ] **Phase 3: People Discovery and Run Planning** - Turn reviewed companies into people previews and gated retrieval plans with estimated cost.
 - [ ] **Phase 4: Retrieval Execution and Run Safety** - Execute verified-email retrieval with monitoring, resumability, and spend protection.
 - [ ] **Phase 5: Verified Export and Repeatable Reruns** - Export trusted CSVs with provenance, dedupe, and recipe-driven replay.
@@ -46,9 +46,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: Implement Apollo company search service and normalized snapshot storage
-- [ ] 02-02: Build company preview table and pagination flow
-- [ ] 02-03: Add broad-search warnings and snapshot reuse behavior
+- [x] 02-01: Implement Apollo company search service and normalized snapshot storage
+- [x] 02-02: Build company preview table and pagination flow
+- [x] 02-03: Add broad-search warnings and snapshot reuse behavior
 
 ### Phase 3: People Discovery and Run Planning
 **Goal**: Users can turn reviewed company snapshots into people previews and an explicit verified-email retrieval plan with visible cost controls.
@@ -105,7 +105,7 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 2.2 -> 3 -> 3.1 -> 4 -> 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Recipe and Usage Foundation | 3/3 | Complete | 2026-03-23 |
-| 2. Company Search and Snapshot Preview | 0/3 | Not started | - |
+| 2. Company Search and Snapshot Preview | 3/3 | Complete | 2026-03-23 |
 | 3. People Discovery and Run Planning | 0/3 | Not started | - |
 | 4. Retrieval Execution and Run Safety | 0/3 | Not started | - |
 | 5. Verified Export and Repeatable Reruns | 0/2 | Not started | - |

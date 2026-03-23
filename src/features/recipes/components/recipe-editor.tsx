@@ -54,27 +54,71 @@ export function RecipeEditor({ recipe, draft }: RecipeEditorProps) {
             />
           </div>
           <div className="field">
-            <label htmlFor="companyKeywords">Company keywords</label>
-            <textarea
-              defaultValue={joinValues(draft.companyFilters.keywords)}
-              id="companyKeywords"
-              name="companyKeywords"
+            <label htmlFor="organizationName">Organization name</label>
+            <input
+              defaultValue={draft.companyFilters.organizationName}
+              id="organizationName"
+              name="organizationName"
+              placeholder="Acme, Apollo, Stripe"
             />
           </div>
           <div className="field">
-            <label htmlFor="companyLocations">Company locations</label>
-            <textarea
-              defaultValue={joinValues(draft.companyFilters.locations)}
-              id="companyLocations"
-              name="companyLocations"
+            <label htmlFor="organizationWebsite">Organization website</label>
+            <input
+              defaultValue={draft.companyFilters.organizationWebsite}
+              id="organizationWebsite"
+              name="organizationWebsite"
+              placeholder="example.com"
             />
           </div>
           <div className="field">
-            <label htmlFor="companyEmployeeRanges">Employee ranges</label>
+            <label htmlFor="qOrganizationKeywordTags">Company keywords</label>
             <textarea
-              defaultValue={joinValues(draft.companyFilters.employeeRanges)}
-              id="companyEmployeeRanges"
-              name="companyEmployeeRanges"
+              defaultValue={joinValues(draft.companyFilters.qOrganizationKeywordTags)}
+              id="qOrganizationKeywordTags"
+              name="qOrganizationKeywordTags"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="organizationLocations">Company locations</label>
+            <textarea
+              defaultValue={joinValues(draft.companyFilters.organizationLocations)}
+              id="organizationLocations"
+              name="organizationLocations"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="organizationNumEmployeesRanges">Employee ranges</label>
+            <textarea
+              defaultValue={joinValues(
+                draft.companyFilters.organizationNumEmployeesRanges,
+              )}
+              id="organizationNumEmployeesRanges"
+              name="organizationNumEmployeesRanges"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="organizationIndustryTagIds">Industry tag IDs</label>
+            <textarea
+              defaultValue={joinValues(draft.companyFilters.organizationIndustryTagIds)}
+              id="organizationIndustryTagIds"
+              name="organizationIndustryTagIds"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="organizationNotKeywordTags">Excluded keywords</label>
+            <textarea
+              defaultValue={joinValues(draft.companyFilters.organizationNotKeywordTags)}
+              id="organizationNotKeywordTags"
+              name="organizationNotKeywordTags"
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="organizationIds">Organization IDs</label>
+            <textarea
+              defaultValue={joinValues(draft.companyFilters.organizationIds)}
+              id="organizationIds"
+              name="organizationIds"
             />
           </div>
           <div className="field">

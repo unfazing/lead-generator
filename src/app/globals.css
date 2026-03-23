@@ -232,6 +232,85 @@ a {
   background: #fffdf8;
 }
 
+.table-shell {
+  overflow-x: auto;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.results-table th,
+.results-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.warning-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.warning-banner {
+  border-radius: 16px;
+  border: 1px solid rgba(176, 97, 14, 0.18);
+  background: rgba(255, 244, 228, 0.85);
+  padding: 14px 16px;
+}
+
+.warning-banner p {
+  margin: 6px 0 0;
+}
+
+.table-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.option-grid,
+.chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.option-pill,
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  background: #fffdf8;
+  font-size: 0.88rem;
+}
+
+.chip-active {
+  border-color: rgba(15, 118, 110, 0.35);
+  background: rgba(15, 118, 110, 0.08);
+}
+
+.column-picker-summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.subtle-card {
+  background: rgba(255, 250, 241, 0.65);
+}
+
+.workspace-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
 @media (max-width: 880px) {
   .workspace-grid,
   .field-grid {

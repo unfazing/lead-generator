@@ -16,10 +16,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Company Search
 
-- [ ] **COMP-01**: User can submit Apollo company-search filters from the frontend
-- [ ] **COMP-02**: User can view matched companies in a paginated preview table before moving to people search
-- [ ] **COMP-03**: User can persist company-search results as a local snapshot for later planning and reruns
-- [ ] **COMP-04**: User can see when a company search may be too broad and requires refinement before continuing
+- [x] **COMP-01**: User can submit Apollo company-search filters from the frontend
+- [x] **COMP-02**: User can view matched companies in a paginated preview table before moving to people search
+- [x] **COMP-03**: User can persist company-search results as a local snapshot for later planning and reruns
+- [x] **COMP-04**: User can see when a company search may be too broad and requires refinement before continuing
 
 ### People Search
 
@@ -83,10 +83,10 @@ Requirements for initial release. Each maps to roadmap phases.
 | RECP-02 | Phase 1 | Complete |
 | RECP-03 | Phase 1 | Complete |
 | RECP-04 | Phase 5 | Pending |
-| COMP-01 | Phase 2 | Pending |
-| COMP-02 | Phase 2 | Pending |
-| COMP-03 | Phase 2 | Pending |
-| COMP-04 | Phase 2 | Pending |
+| COMP-01 | Phase 2 | Complete |
+| COMP-02 | Phase 2 | Complete |
+| COMP-03 | Phase 2 | Complete |
+| COMP-04 | Phase 2 | Complete |
 | PEOP-01 | Phase 3 | Pending |
 | PEOP-02 | Phase 3 | Pending |
 | PEOP-03 | Phase 3 | Pending |
@@ -112,4 +112,4 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ---
 *Requirements defined: 2026-03-23*
-*Last updated: 2026-03-23 after Phase 1 execution*
+*Last updated: 2026-03-23 after Phase 2 execution*

@@ -16,9 +16,16 @@ export function getEmptyRecipeDraft(): RecipeInput {
     name: "",
     notes: "",
     companyFilters: {
-      keywords: [],
-      locations: [],
-      employeeRanges: [],
+      page: 1,
+      perPage: 25,
+      organizationName: "",
+      organizationWebsite: "",
+      organizationLocations: [],
+      organizationNumEmployeesRanges: [],
+      organizationIds: [],
+      qOrganizationKeywordTags: [],
+      organizationNotKeywordTags: [],
+      organizationIndustryTagIds: [],
     },
     peopleFilters: {
       titles: [],
@@ -50,9 +57,24 @@ export function parseRecipeFormData(formData: FormData) {
     name: formData.get("name"),
     notes: formData.get("notes") ?? "",
     companyFilters: {
-      keywords: splitLines(formData.get("companyKeywords")),
-      locations: splitLines(formData.get("companyLocations")),
-      employeeRanges: splitLines(formData.get("companyEmployeeRanges")),
+      page: 1,
+      perPage: 25,
+      organizationName: String(formData.get("organizationName") ?? ""),
+      organizationWebsite: String(formData.get("organizationWebsite") ?? ""),
+      organizationLocations: splitLines(formData.get("organizationLocations")),
+      organizationNumEmployeesRanges: splitLines(
+        formData.get("organizationNumEmployeesRanges"),
+      ),
+      organizationIds: splitLines(formData.get("organizationIds")),
+      qOrganizationKeywordTags: splitLines(
+        formData.get("qOrganizationKeywordTags"),
+      ),
+      organizationNotKeywordTags: splitLines(
+        formData.get("organizationNotKeywordTags"),
+      ),
+      organizationIndustryTagIds: splitLines(
+        formData.get("organizationIndustryTagIds"),
+      ),
     },
     peopleFilters: {
       titles: splitLines(formData.get("peopleTitles")),

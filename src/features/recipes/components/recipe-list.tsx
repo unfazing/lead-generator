@@ -34,7 +34,7 @@ export function RecipeList({ recipes, activeRecipeId }: RecipeListProps) {
             >
               <strong>{recipe.name}</strong>
               <span className="meta">
-                {recipe.companyFilters.keywords.length} company keywords •{" "}
+                {recipe.companyFilters.qOrganizationKeywordTags.length} company keywords •{" "}
                 {recipe.peopleFilters.titles.length} people titles
               </span>
               <span className="meta">

@@ -1,9 +1,13 @@
 import { z } from "zod";
+import { companySearchPayloadSchema } from "@/lib/company-search/schema";
+
+const legacyCompanyFiltersSchema = z.object({
+  keywords: z.array(z.string().min(1)).default([]),
+  locations: z.array(z.string().min(1)).default([]),
+  employeeRanges: z.array(z.string().min(1)).default([]),
+});
 
 export const recipeFiltersSchema = z.object({
-  companyKeywords: z.array(z.string().min(1)).default([]),
-  companyLocations: z.array(z.string().min(1)).default([]),
-  companyEmployeeRanges: z.array(z.string().min(1)).default([]),
   peopleTitles: z.array(z.string().min(1)).default([]),
   peopleSeniority: z.array(z.string().min(1)).default([]),
   peopleDepartments: z.array(z.string().min(1)).default([]),
@@ -17,11 +21,26 @@ export const recipeSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1).max(120),
   notes: z.string().max(500).default(""),
-  companyFilters: z.object({
-    keywords: recipeFiltersSchema.shape.companyKeywords,
-    locations: recipeFiltersSchema.shape.companyLocations,
-    employeeRanges: recipeFiltersSchema.shape.companyEmployeeRanges,
-  }),
+  companyFilters: z
+    .union([companySearchPayloadSchema, legacyCompanyFiltersSchema])
+    .transform((value) => {
+      if ("organizationLocations" in value) {
+        return companySearchPayloadSchema.parse(value);
+      }
+
+      return companySearchPayloadSchema.parse({
+        page: 1,
+        perPage: 25,
+        organizationName: "",
+        organizationWebsite: "",
+        organizationLocations: value.locations,
+        organizationNumEmployeesRanges: value.employeeRanges,
+        organizationIds: [],
+        qOrganizationKeywordTags: value.keywords,
+        organizationNotKeywordTags: [],
+        organizationIndustryTagIds: [],
+      });
+    }),
   peopleFilters: z.object({
     titles: recipeFiltersSchema.shape.peopleTitles,
     seniority: recipeFiltersSchema.shape.peopleSeniority,
