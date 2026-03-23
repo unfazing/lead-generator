@@ -11,7 +11,6 @@ import {
   releaseRetrievalRunLease,
   updateRetrievalRun,
 } from "@/lib/db/repositories/retrieval-runs";
-import { getRunPlanById } from "@/lib/db/repositories/run-plans";
 import {
   enrichPeopleBatch,
   type EnrichmentBatchResult,
@@ -21,36 +20,34 @@ import {
 const DEFAULT_BATCH_SIZE = 10;
 const DEFAULT_THROTTLE_MS = 50;
 
-export async function kickoffRetrievalRun(
-  runPlanId: string,
-  options?: { autoExecute?: boolean; selectedApolloIds?: string[] },
-) {
-  const plan = await getRunPlanById(runPlanId);
-
-  if (!plan) {
-    throw new Error("Run plan not found");
-  }
-
-  if (plan.status !== "ready") {
-    throw new Error("Only confirmed run plans can start retrieval");
-  }
-
-  const snapshot = await getPeopleSnapshotById(plan.peopleSnapshotId);
+export async function kickoffRetrievalRun(input: {
+  companyRecipeId: string;
+  peopleRecipeId: string;
+  companySnapshotId: string;
+  peopleSnapshotId: string;
+  maxContacts: number;
+  estimatedContacts: number;
+  estimateSummary: string;
+  estimateNote: string;
+  selectedApolloIds?: string[];
+  autoExecute?: boolean;
+}) {
+  const snapshot = await getPeopleSnapshotById(input.peopleSnapshotId);
 
   if (!snapshot) {
     throw new Error("People snapshot not found");
   }
 
-  const selectedApolloIds = options?.selectedApolloIds?.length
-    ? new Set(options.selectedApolloIds)
+  const selectedApolloIds = input.selectedApolloIds?.length
+    ? new Set(input.selectedApolloIds)
     : null;
   const eligibleRows = selectedApolloIds
     ? snapshot.result.rows.filter((row) => selectedApolloIds.has(row.apollo_id))
     : snapshot.result.rows;
-  const totalItems = Math.min(eligibleRows.length, plan.maxContacts);
-  const run = await createRetrievalRunFromPlan(plan, totalItems);
-  await seedRetrievalRunItems(run.id, eligibleRows, plan.maxContacts);
-  if (options?.autoExecute !== false) {
+  const totalItems = Math.min(eligibleRows.length, input.maxContacts);
+  const run = await createRetrievalRunFromPlan(input, totalItems);
+  await seedRetrievalRunItems(run.id, eligibleRows, input.maxContacts);
+  if (input.autoExecute !== false) {
     void executeRetrievalRun(run.id);
   }
   return run;

@@ -4,12 +4,10 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { executeRetrievalRun, kickoffRetrievalRun } from "@/lib/retrieval/execution";
 import { listRetrievalRunItems } from "@/lib/db/repositories/retrieval-run-items";
 import { getRetrievalRunById } from "@/lib/db/repositories/retrieval-runs";
-import { saveRunPlan } from "@/lib/db/repositories/run-plans";
 import { savePeopleSnapshot } from "@/lib/db/repositories/people-snapshots";
 
 const dataDir = path.join(process.cwd(), "data");
 const managedFiles = [
-  "run-plans.json",
   "people-snapshots.json",
   "retrieval-runs.json",
   "retrieval-run-items.json",
@@ -44,7 +42,7 @@ async function restoreManagedFiles() {
   }
 }
 
-async function buildReadyPlan(personCount: number) {
+async function buildRetrievalInput(personCount: number) {
   const peopleSnapshot = await savePeopleSnapshot(
     {
       companyRecipeId: "company-recipe-1",
@@ -129,7 +127,7 @@ async function buildReadyPlan(personCount: number) {
     },
   );
 
-  const plan = await saveRunPlan({
+  return {
     companyRecipeId: "company-recipe-1",
     peopleRecipeId: "people-recipe-1",
     companySnapshotId: "company-snapshot-1",
@@ -138,10 +136,7 @@ async function buildReadyPlan(personCount: number) {
     estimatedContacts: personCount,
     estimateSummary: `${personCount} contacts estimated`,
     estimateNote: "fixture",
-    status: "ready",
-    confirmedAt: new Date().toISOString(),
-  });
-  return plan;
+  };
 }
 
 describe("people enrichment execution", () => {
@@ -154,8 +149,8 @@ describe("people enrichment execution", () => {
   });
 
   it("kickoff from a confirmed plan creates a retrieval run and uses bulk_match for batches up to ten", async () => {
-    const plan = await buildReadyPlan(3);
-    const run = await kickoffRetrievalRun(plan.id, { autoExecute: false });
+    const input = await buildRetrievalInput(3);
+    const run = await kickoffRetrievalRun({ ...input, autoExecute: false });
     const modes: string[] = [];
 
     await executeRetrievalRun(run.id, {
@@ -182,8 +177,8 @@ describe("people enrichment execution", () => {
   });
 
   it("uses match for a single-item remainder batch", async () => {
-    const plan = await buildReadyPlan(11);
-    const run = await kickoffRetrievalRun(plan.id, { autoExecute: false });
+    const input = await buildRetrievalInput(11);
+    const run = await kickoffRetrievalRun({ ...input, autoExecute: false });
     const modes: string[] = [];
 
     await executeRetrievalRun(run.id, {
@@ -208,8 +203,9 @@ describe("people enrichment execution", () => {
   });
 
   it("can kickoff enrichment for only the selected Apollo ids", async () => {
-    const plan = await buildReadyPlan(5);
-    const run = await kickoffRetrievalRun(plan.id, {
+    const input = await buildRetrievalInput(5);
+    const run = await kickoffRetrievalRun({
+      ...input,
       autoExecute: false,
       selectedApolloIds: ["person-2", "person-4"],
     });
@@ -220,8 +216,8 @@ describe("people enrichment execution", () => {
   });
 
   it("persists each completed batch before the next batch starts", async () => {
-    const plan = await buildReadyPlan(12);
-    const run = await kickoffRetrievalRun(plan.id, { autoExecute: false });
+    const input = await buildRetrievalInput(12);
+    const run = await kickoffRetrievalRun({ ...input, autoExecute: false });
     const checkpoints: number[] = [];
 
     await executeRetrievalRun(run.id, {
@@ -246,8 +242,8 @@ describe("people enrichment execution", () => {
   });
 
   it("persists retry backoff when Apollo rate limits a batch", async () => {
-    const plan = await buildReadyPlan(2);
-    const run = await kickoffRetrievalRun(plan.id, { autoExecute: false });
+    const input = await buildRetrievalInput(2);
+    const run = await kickoffRetrievalRun({ ...input, autoExecute: false });
     let attempts = 0;
 
     await executeRetrievalRun(run.id, {

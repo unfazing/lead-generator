@@ -14,15 +14,13 @@ import {
   seedRetrievalRunItems,
   updateRetrievalRunItems,
 } from "@/lib/db/repositories/retrieval-run-items";
-import type { RunPlanRecord } from "@/lib/db/repositories/run-plans";
 
 const dataDir = path.join(process.cwd(), "data");
 const runsFile = path.join(dataDir, "retrieval-runs.json");
 const itemsFile = path.join(dataDir, "retrieval-run-items.json");
 const backupSuffix = ".bak.test";
 
-const plan: RunPlanRecord = {
-  id: "plan-1",
+const retrievalInput = {
   companyRecipeId: "company-recipe-1",
   peopleRecipeId: "people-recipe-1",
   companySnapshotId: "company-snapshot-1",
@@ -31,10 +29,6 @@ const plan: RunPlanRecord = {
   estimatedContacts: 3,
   estimateSummary: "3 contacts estimated",
   estimateNote: "fixture",
-  status: "ready",
-  confirmedAt: new Date().toISOString(),
-  createdAt: new Date().toISOString(),
-  updatedAt: new Date().toISOString(),
 };
 
 async function backupFile(filePath: string) {
@@ -72,7 +66,10 @@ describe("retrieval-runs repository", () => {
   });
 
   it("creates a durable retrieval run plus item rows without mutating the run-plan estimate", async () => {
-    const run = await createRetrievalRunFromPlan(plan, plan.maxContacts);
+    const run = await createRetrievalRunFromPlan(
+      retrievalInput,
+      retrievalInput.maxContacts,
+    );
     const items = await seedRetrievalRunItems(
       run.id,
       [
@@ -93,16 +90,16 @@ describe("retrieval-runs repository", () => {
           seniority: "founder",
         },
       ],
-      plan.maxContacts,
+      retrievalInput.maxContacts,
     );
 
     expect(run.totalItems).toBe(3);
     expect(items).toHaveLength(2);
-    expect(plan.estimatedContacts).toBe(3);
+    expect(retrievalInput.estimatedContacts).toBe(3);
   });
 
   it("persists batch counters, heartbeat state, and terminal item outcomes across reloads", async () => {
-    const run = await createRetrievalRunFromPlan(plan, 2);
+    const run = await createRetrievalRunFromPlan(retrievalInput, 2);
     await seedRetrievalRunItems(
       run.id,
       [
@@ -160,9 +157,9 @@ describe("retrieval-runs repository", () => {
   });
 
   it("prevents a second run from acquiring the active lease while one is still held", async () => {
-    const runA = await createRetrievalRunFromPlan(plan, 1);
+    const runA = await createRetrievalRunFromPlan(retrievalInput, 1);
     const runB = await createRetrievalRunFromPlan(
-      { ...plan, id: "plan-2", peopleSnapshotId: "people-snapshot-2" },
+      { ...retrievalInput, peopleSnapshotId: "people-snapshot-2" },
       1,
     );
 
@@ -182,7 +179,9 @@ describe("retrieval-runs repository", () => {
     await writeFile(runsFile, "{bad json", "utf8");
     await writeFile(itemsFile, "{bad json", "utf8");
 
-    const latestRun = await getLatestRetrievalRunForPeopleSnapshot(plan.peopleSnapshotId);
+    const latestRun = await getLatestRetrievalRunForPeopleSnapshot(
+      retrievalInput.peopleSnapshotId,
+    );
     const items = await listRetrievalRunItems("missing");
 
     expect(latestRun).toBeNull();

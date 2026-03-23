@@ -17,9 +17,6 @@ import {
   deletePeopleSnapshotsForCompanyRecipe,
   deletePeopleSnapshotsForRecipe,
 } from "@/lib/db/repositories/people-snapshots";
-import {
-  saveRunPlan,
-} from "@/lib/db/repositories/run-plans";
 import { kickoffRetrievalRun } from "@/lib/retrieval/execution";
 import {
   createCompanyRecipe,
@@ -267,7 +264,7 @@ export async function runPeopleSearchAction(formData: FormData) {
   };
 
   const result = await searchPeople(request);
-  const snapshot = await savePeopleSnapshot(
+  await savePeopleSnapshot(
     {
       companyRecipeId: primaryImport.companyRecipeId,
       companySnapshotId: primaryImport.snapshotId,
@@ -285,7 +282,7 @@ export async function runPeopleSearchAction(formData: FormData) {
   const query = buildSearchWorkspaceQuery({
     workflow: "people",
     peopleRecipeId,
-    peopleSnapshotId: snapshot.id,
+    retrievalRunId: null,
     sourceSnapshotIds,
   });
   redirect(`/search/people?${query}`);
@@ -381,7 +378,7 @@ export async function enrichSelectedPeopleAction(formData: FormData) {
   }
 
   const estimate = buildRunPlanEstimate(snapshot, selectedApolloIds.length);
-  const plan = await saveRunPlan({
+  const run = await kickoffRetrievalRun({
     companyRecipeId: snapshot.companyRecipeId,
     peopleRecipeId: snapshot.peopleRecipeId,
     companySnapshotId: snapshot.companySnapshotId,
@@ -390,10 +387,8 @@ export async function enrichSelectedPeopleAction(formData: FormData) {
     estimatedContacts: estimate.estimatedContacts,
     estimateSummary: estimate.estimateSummary,
     estimateNote: estimate.estimateNote,
-    status: "ready",
-    confirmedAt: new Date().toISOString(),
+    selectedApolloIds,
   });
-  const run = await kickoffRetrievalRun(plan.id, { selectedApolloIds });
 
   revalidatePath("/search");
   revalidatePath("/search/people");

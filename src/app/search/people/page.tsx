@@ -12,6 +12,7 @@ import {
 import type { CompanySnapshotRecord } from "@/lib/db/repositories/company-snapshots";
 import { listSnapshotsForRecipe } from "@/lib/db/repositories/company-snapshots";
 import { listPeopleSnapshotsForRecipe } from "@/lib/db/repositories/people-snapshots";
+import { listEnrichedPeopleEntriesForSnapshot } from "@/lib/db/repositories/retrieval-run-items";
 import {
   getLatestRetrievalRunForPeopleSnapshot,
   getRetrievalRunById,
@@ -63,13 +64,20 @@ export default async function PeopleSearchPage({ searchParams }: SearchPageProps
   const peopleSnapshots = peopleRecipe
     ? await listPeopleSnapshotsForRecipe(peopleRecipe.id)
     : [];
-  const initialPeopleSnapshotId =
-    activeRetrievalRun?.peopleSnapshotId ?? context.peopleSnapshotId ?? null;
+  const initialPeopleSnapshotId = activeRetrievalRun?.peopleSnapshotId ?? null;
   const retrievalRunsBySnapshotId = Object.fromEntries(
     await Promise.all(
       peopleSnapshots.map(async (snapshot) => [
         snapshot.id,
         await getLatestRetrievalRunForPeopleSnapshot(snapshot.id),
+      ]),
+    ),
+  );
+  const enrichedEntriesBySnapshotId = Object.fromEntries(
+    await Promise.all(
+      peopleSnapshots.map(async (snapshot) => [
+        snapshot.id,
+        await listEnrichedPeopleEntriesForSnapshot(snapshot.id),
       ]),
     ),
   );
@@ -173,6 +181,7 @@ export default async function PeopleSearchPage({ searchParams }: SearchPageProps
                 />
               )}
               <SavedPeopleSnapshotsPanel
+                enrichedEntriesBySnapshotId={enrichedEntriesBySnapshotId}
                 initialSnapshotId={initialPeopleSnapshotId}
                 retrievalRunsBySnapshotId={retrievalRunsBySnapshotId}
                 snapshots={peopleSnapshots}

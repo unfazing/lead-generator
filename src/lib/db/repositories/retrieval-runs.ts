@@ -5,7 +5,6 @@ import {
   readJsonFile,
   writeJsonFileAtomically,
 } from "@/lib/db/repositories/file-storage";
-import type { RunPlanRecord } from "@/lib/db/repositories/run-plans";
 
 export const retrievalRunStatusSchema = z.enum([
   "pending",
@@ -25,11 +24,14 @@ const retrievalRunLeaseSchema = z.object({
 
 export const retrievalRunRecordSchema = z.object({
   id: z.string().min(1),
-  runPlanId: z.string().min(1),
   peopleSnapshotId: z.string().min(1),
   companyRecipeId: z.string().min(1),
   peopleRecipeId: z.string().min(1),
   companySnapshotId: z.string().min(1),
+  maxContacts: z.number().int().positive(),
+  estimatedContacts: z.number().int().nonnegative(),
+  estimateSummary: z.string(),
+  estimateNote: z.string(),
   status: retrievalRunStatusSchema,
   totalItems: z.number().int().nonnegative(),
   processedItems: z.number().int().nonnegative(),
@@ -91,18 +93,30 @@ export async function getLatestRetrievalRunForPeopleSnapshot(
 }
 
 export async function createRetrievalRunFromPlan(
-  plan: RunPlanRecord,
+  input: {
+    companyRecipeId: string;
+    peopleRecipeId: string;
+    companySnapshotId: string;
+    peopleSnapshotId: string;
+    maxContacts: number;
+    estimatedContacts: number;
+    estimateSummary: string;
+    estimateNote: string;
+  },
   totalItems: number,
 ) {
   const records = await readRetrievalRuns();
   const now = new Date().toISOString();
   const run: RetrievalRunRecord = {
     id: randomUUID(),
-    runPlanId: plan.id,
-    peopleSnapshotId: plan.peopleSnapshotId,
-    companyRecipeId: plan.companyRecipeId,
-    peopleRecipeId: plan.peopleRecipeId,
-    companySnapshotId: plan.companySnapshotId,
+    peopleSnapshotId: input.peopleSnapshotId,
+    companyRecipeId: input.companyRecipeId,
+    peopleRecipeId: input.peopleRecipeId,
+    companySnapshotId: input.companySnapshotId,
+    maxContacts: input.maxContacts,
+    estimatedContacts: input.estimatedContacts,
+    estimateSummary: input.estimateSummary,
+    estimateNote: input.estimateNote,
     status: "pending",
     totalItems,
     processedItems: 0,

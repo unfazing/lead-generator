@@ -9,11 +9,14 @@ describe("retrieval-run-status-card", () => {
       <RetrievalRunStatusCard
         run={{
           id: "run-1",
-          runPlanId: "plan-1",
           peopleSnapshotId: "snapshot-1",
           companyRecipeId: "company-recipe-1",
           peopleRecipeId: "people-recipe-1",
           companySnapshotId: "company-snapshot-1",
+          maxContacts: 12,
+          estimatedContacts: 12,
+          estimateSummary: "12 contacts estimated",
+          estimateNote: "fixture",
           status: "cooldown",
           totalItems: 12,
           processedItems: 10,

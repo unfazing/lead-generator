@@ -3,18 +3,22 @@
 import { enrichSelectedPeopleAction } from "@/app/recipes/actions";
 import { useMemo, useState } from "react";
 import { PeopleResultsTable } from "@/features/people-search/components/people-results-table";
+import { EnrichedPeopleResults } from "@/features/retrieval-runs/components/enriched-people-results";
 import { RetrievalRunStatusCard } from "@/features/retrieval-runs/components/retrieval-run-status-card";
 import { SnapshotVersionSelector } from "@/features/search-workspace/components/snapshot-version-selector";
 import type { PeopleSnapshotRecord } from "@/lib/db/repositories/people-snapshots";
 import type { RetrievalRunRecord } from "@/lib/db/repositories/retrieval-runs";
+import type { EnrichedPeopleEntry } from "@/lib/db/repositories/retrieval-run-items";
 
 type SavedPeopleSnapshotsPanelProps = {
+  enrichedEntriesBySnapshotId: Record<string, EnrichedPeopleEntry[]>;
   initialSnapshotId?: string | null;
   retrievalRunsBySnapshotId: Record<string, RetrievalRunRecord | null>;
   snapshots: PeopleSnapshotRecord[];
 };
 
 export function SavedPeopleSnapshotsPanel({
+  enrichedEntriesBySnapshotId,
   initialSnapshotId = null,
   retrievalRunsBySnapshotId,
   snapshots,
@@ -34,6 +38,9 @@ export function SavedPeopleSnapshotsPanel({
   const activeRetrievalRun = activeSnapshot
     ? retrievalRunsBySnapshotId[activeSnapshot.id] ?? null
     : null;
+  const activeEnrichedEntries = activeSnapshot
+    ? enrichedEntriesBySnapshotId[activeSnapshot.id] ?? []
+    : [];
 
   return (
     <section className="card stack">
@@ -94,6 +101,7 @@ export function SavedPeopleSnapshotsPanel({
               }
             />
           ) : null}
+          <EnrichedPeopleResults entries={activeEnrichedEntries} />
           <RetrievalRunStatusCard run={activeRetrievalRun} />
         </div>
       )}

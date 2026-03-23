@@ -7,7 +7,6 @@ const routeQuerySchema = z.object({
   companyRecipeId: z.string().min(1).nullable(),
   peopleRecipeId: z.string().min(1).nullable(),
   companySnapshotId: z.string().min(1).nullable(),
-  peopleSnapshotId: z.string().min(1).nullable(),
   retrievalRunId: z.string().min(1).nullable(),
   sourceSnapshotIds: z.array(z.string().min(1)),
 });
@@ -45,7 +44,6 @@ function normalizeRouteQuery(params: SearchWorkspaceParams): ParsedQuery {
     companyRecipeId: readSingleParam(params, "companyRecipe"),
     peopleRecipeId: readSingleParam(params, "peopleRecipe"),
     companySnapshotId: readSingleParam(params, "snapshot"),
-    peopleSnapshotId: readSingleParam(params, "peopleSnapshot"),
     retrievalRunId: readSingleParam(params, "retrievalRun"),
     sourceSnapshotIds: [
       ...readMultiParam(params, "sourceSnapshot"),
@@ -61,7 +59,6 @@ function assertValidContext(
   if (workflow === "landing") {
     if (
       query.companySnapshotId ||
-      query.peopleSnapshotId ||
       query.retrievalRunId ||
       query.sourceSnapshotIds.length > 0
     ) {
@@ -73,7 +70,6 @@ function assertValidContext(
 
   if (workflow === "company") {
     if (
-      query.peopleSnapshotId ||
       query.retrievalRunId ||
       query.sourceSnapshotIds.length > 0
     ) {
@@ -85,10 +81,6 @@ function assertValidContext(
 
   if (query.companySnapshotId && query.sourceSnapshotIds.length > 0) {
     throw new Error("People workflow cannot mix snapshot and sourceSnapshot query params.");
-  }
-
-  if (query.peopleSnapshotId && !query.peopleRecipeId) {
-    throw new Error("People workflow requires a people recipe when loading a people snapshot.");
   }
 
   if (query.sourceSnapshotIds.length > 0 && !query.peopleRecipeId) {
@@ -122,10 +114,6 @@ export function buildSearchWorkspaceQuery(context: Partial<SearchWorkspaceContex
 
   if (context.companySnapshotId) {
     query.set("snapshot", context.companySnapshotId);
-  }
-
-  if (context.peopleSnapshotId) {
-    query.set("peopleSnapshot", context.peopleSnapshotId);
   }
 
   if (context.retrievalRunId) {

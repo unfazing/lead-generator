@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { getDataFilePath } from "@/lib/db/client";
 import type { PeoplePreviewRow } from "@/lib/apollo/people-search";
+import { listRetrievalRuns } from "@/lib/db/repositories/retrieval-runs";
 import {
   readJsonFile,
   writeJsonFileAtomically,
@@ -40,6 +41,10 @@ export const retrievalRunItemSchema = z.object({
 });
 
 export type RetrievalRunItemRecord = z.infer<typeof retrievalRunItemSchema>;
+export type EnrichedPeopleEntry = RetrievalRunItemRecord & {
+  peopleSnapshotId: string;
+  retrievalStatus: string;
+};
 
 const retrievalRunItemsFilePath = getDataFilePath("retrieval-run-items.json");
 const retrievalRunItemsSchema = retrievalRunItemSchema.array();
@@ -105,4 +110,47 @@ export async function updateRetrievalRunItems(
 
   await writeRetrievalRunItems([...unrelated, ...updated]);
   return updated;
+}
+
+export async function listEnrichedPeopleEntriesForSnapshot(
+  peopleSnapshotId: string,
+) {
+  const [runs, items] = await Promise.all([
+    listRetrievalRuns(),
+    readRetrievalRunItems(),
+  ]);
+  const runsForSnapshot = runs.filter((run) => run.peopleSnapshotId === peopleSnapshotId);
+  const runMap = new Map(runsForSnapshot.map((run) => [run.id, run]));
+  const latestByPerson = new Map<string, EnrichedPeopleEntry>();
+
+  for (const item of items) {
+    const run = runMap.get(item.runId);
+    if (!run || item.status !== "completed") {
+      continue;
+    }
+
+    const entry: EnrichedPeopleEntry = {
+      ...item,
+      peopleSnapshotId: run.peopleSnapshotId,
+      retrievalStatus: run.status,
+    };
+    const existing = latestByPerson.get(item.personApolloId);
+
+    if (!existing) {
+      latestByPerson.set(item.personApolloId, entry);
+      continue;
+    }
+
+    const existingTime = existing.completedAt ?? existing.updatedAt;
+    const nextTime = entry.completedAt ?? entry.updatedAt;
+    if (nextTime.localeCompare(existingTime) >= 0) {
+      latestByPerson.set(item.personApolloId, entry);
+    }
+  }
+
+  return Array.from(latestByPerson.values()).sort((left, right) =>
+    (right.completedAt ?? right.updatedAt).localeCompare(
+      left.completedAt ?? left.updatedAt,
+    ),
+  );
 }
