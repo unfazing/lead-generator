@@ -37,10 +37,12 @@ export function PeopleResultsTable({ snapshot }: PeopleResultsTableProps) {
   );
   const [showColumnControls, setShowColumnControls] = useState(false);
   const [showParams, setShowParams] = useState(false);
+  const [selectedPeopleIds, setSelectedPeopleIds] = useState<string[]>([]);
 
   useEffect(() => {
     setSelectedOptionalColumns(getInitialOptionalColumns(snapshot));
     setShowParams(false);
+    setSelectedPeopleIds([]);
   }, [snapshot]);
 
   if (!snapshot) {
@@ -71,6 +73,24 @@ export function PeopleResultsTable({ snapshot }: PeopleResultsTableProps) {
     );
   }
 
+  function handleTogglePerson(personId: string) {
+    setSelectedPeopleIds((current) =>
+      current.includes(personId)
+        ? current.filter((value) => value !== personId)
+        : [...current, personId],
+    );
+  }
+
+  const paramsForViewer = {
+    ...snapshot.recipeParams,
+    organizationIds:
+      snapshot.selectedCompanyIds.length > 0
+        ? snapshot.selectedCompanyIds
+        : snapshot.recipeParams.organizationIds,
+    selectedCompanyIds: snapshot.selectedCompanyIds,
+    selectionMode: snapshot.selectionMode,
+  };
+
   return (
     <SnapshotResultsTable
       columnPicker={
@@ -88,14 +108,16 @@ export function PeopleResultsTable({ snapshot }: PeopleResultsTableProps) {
         <SnapshotParamsViewer
           isVisible={showParams}
           onToggleVisibility={() => setShowParams((current) => !current)}
-          params={snapshot.recipeParams}
+          params={paramsForViewer}
         />
       }
       emptyMessage="No people snapshot yet. Run people search from the current company and people recipe pairing."
       metaDetail={`${snapshot.result.rows.length} people • source ${snapshot.result.source}`}
       metaLabel={snapshot.selectionMode === "all" ? "All companies" : "Selected companies"}
+      onToggleRow={handleTogglePerson}
       rows={snapshot.result.rows}
       selectedColumns={selectedColumns}
+      selectedRowIds={selectedPeopleIds}
       source={snapshot.result.source}
     />
   );

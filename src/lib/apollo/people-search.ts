@@ -105,6 +105,23 @@ function stringifyPeopleField(value: unknown): string | undefined {
   return String(value);
 }
 
+function getFullName(raw: Record<string, unknown>) {
+  const directName =
+    stringifyPeopleField(raw.name) ?? stringifyPeopleField(raw.full_name);
+
+  if (directName) {
+    return directName;
+  }
+
+  const firstName = stringifyPeopleField(raw.first_name);
+  const lastName =
+    stringifyPeopleField(raw.last_name) ??
+    stringifyPeopleField(raw.last_name_obfuscated);
+
+  const combined = [firstName, lastName].filter(Boolean).join(" ").trim();
+  return combined || "Unknown person";
+}
+
 function normalizePerson(raw: Record<string, unknown>): PeoplePreviewRow {
   const organization =
     typeof raw.organization === "object" && raw.organization !== null
@@ -113,7 +130,7 @@ function normalizePerson(raw: Record<string, unknown>): PeoplePreviewRow {
 
   const normalized: PeoplePreviewRow = {
     apollo_id: String(raw.id ?? raw.contact_id ?? "unknown"),
-    full_name: String(raw.name ?? raw.full_name ?? "Unknown person"),
+    full_name: getFullName(raw),
     title: String(raw.title ?? ""),
     company_name: String(
       raw.organization_name ?? organization.name ?? organization.primary_domain ?? "",
@@ -127,6 +144,10 @@ function normalizePerson(raw: Record<string, unknown>): PeoplePreviewRow {
   };
 
   for (const [key, value] of Object.entries(raw)) {
+    if (key === "organization") {
+      continue;
+    }
+
     if (normalized[key] !== undefined) {
       continue;
     }
