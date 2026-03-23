@@ -17,9 +17,11 @@ import {
   deletePeopleSnapshotsForRecipe,
 } from "@/lib/db/repositories/people-snapshots";
 import {
+  getRunPlanById,
   markRunPlanReady,
   saveRunPlan,
 } from "@/lib/db/repositories/run-plans";
+import { kickoffRetrievalRun } from "@/lib/retrieval/execution";
 import {
   createCompanyRecipe,
   createPeopleRecipe,
@@ -425,6 +427,32 @@ export async function confirmRunPlanAction(formData: FormData) {
       peopleRecipe: plan.peopleRecipeId,
       snapshot: plan.companySnapshotId,
       peopleSnapshot: plan.peopleSnapshotId,
+    }).toString()}`,
+  );
+}
+
+export async function startRetrievalRunAction(formData: FormData) {
+  const runPlanId = String(formData.get("runPlanId") ?? "");
+
+  if (!runPlanId) {
+    throw new Error("Run plan is required");
+  }
+
+  const plan = await getRunPlanById(runPlanId);
+
+  if (!plan) {
+    throw new Error("Run plan not found");
+  }
+
+  const run = await kickoffRetrievalRun(runPlanId);
+  revalidatePath("/search");
+  redirect(
+    `/search?${new URLSearchParams({
+      companyRecipe: plan.companyRecipeId,
+      peopleRecipe: plan.peopleRecipeId,
+      snapshot: plan.companySnapshotId,
+      peopleSnapshot: plan.peopleSnapshotId,
+      retrievalRun: run.id,
     }).toString()}`,
   );
 }

@@ -1,4 +1,4 @@
-import { confirmRunPlanAction } from "@/app/recipes/actions";
+import { confirmRunPlanAction, startRetrievalRunAction } from "@/app/recipes/actions";
 import type { RunPlanRecord } from "@/lib/db/repositories/run-plans";
 
 type RetrievalReadinessGateProps = {
@@ -10,14 +10,24 @@ export function RetrievalReadinessGate({
 }: RetrievalReadinessGateProps) {
   if (plan.status === "ready") {
     return (
-      <div className="subtle-card card stack">
-        <p className="meta">
-          Retrieval readiness confirmed {plan.confirmedAt ? formatStableDateTime(plan.confirmedAt) : ""}.
-        </p>
-        <p className="field-hint">
-          This plan is approved for later retrieval execution in Phase 4. No retrieval starts from this screen.
-        </p>
-      </div>
+      <>
+        <div className="subtle-card card stack">
+          <p className="meta">
+            Retrieval readiness confirmed {plan.confirmedAt ? formatStableDateTime(plan.confirmedAt) : ""}.
+          </p>
+          <p className="field-hint">
+            This plan is approved for retrieval execution. Kickoff persists a retrieval run first, then the server executor advances it in batches.
+          </p>
+        </div>
+        <form action={startRetrievalRunAction}>
+          <input type="hidden" name="runPlanId" value={plan.id} />
+          <div className="workspace-actions">
+            <button className="primary-button" type="submit">
+              Start retrieval run
+            </button>
+          </div>
+        </form>
+      </>
     );
   }
 

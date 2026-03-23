@@ -53,6 +53,11 @@ export async function getLatestRunPlanForPeopleSnapshot(peopleSnapshotId: string
   );
 }
 
+export async function getRunPlanById(runPlanId: string) {
+  const records = await readRunPlans();
+  return records.find((record) => record.id === runPlanId) ?? null;
+}
+
 export async function saveRunPlan(
   input: Omit<RunPlanRecord, "id" | "createdAt" | "updatedAt" | "confirmedAt" | "status">,
 ) {
