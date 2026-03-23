@@ -18,6 +18,44 @@ import {
 
 const typedRecipeCollectionSchema = recipeSchema.array();
 
+function normalizeOrganizationImports(
+  imports: PeopleRecipeOrganizationImport[],
+) {
+  const merged = new Map<string, PeopleRecipeOrganizationImport>();
+
+  for (const entry of imports) {
+    const existing = merged.get(entry.snapshotId);
+    const normalizedEntry = peopleRecipeOrganizationImportSchema.parse(entry);
+
+    if (!existing) {
+      merged.set(normalizedEntry.snapshotId, {
+        ...normalizedEntry,
+        organizationIds: Array.from(new Set(normalizedEntry.organizationIds)).sort(),
+        selectedCompanyIds: Array.from(
+          new Set(normalizedEntry.selectedCompanyIds),
+        ).sort(),
+      });
+      continue;
+    }
+
+    merged.set(normalizedEntry.snapshotId, {
+      ...normalizedEntry,
+      organizationIds: Array.from(
+        new Set([...existing.organizationIds, ...normalizedEntry.organizationIds]),
+      ).sort(),
+      selectedCompanyIds: Array.from(
+        new Set([...existing.selectedCompanyIds, ...normalizedEntry.selectedCompanyIds]),
+      ).sort(),
+      importedAt:
+        normalizedEntry.importedAt > existing.importedAt
+          ? normalizedEntry.importedAt
+          : existing.importedAt,
+    });
+  }
+
+  return [...merged.values()].sort((a, b) => a.snapshotId.localeCompare(b.snapshotId));
+}
+
 async function writeRecipes(recipes: Recipe[]) {
   await ensureDataDirectory();
   await writeFile(getRecipeDataFilePath(), JSON.stringify(recipes, null, 2), "utf8");
@@ -179,9 +217,7 @@ export async function applyOrganizationImportsToPeopleRecipe(
   recipeId: string,
   imports: PeopleRecipeOrganizationImport[],
 ) {
-  const normalizedImports = imports.map((entry) =>
-    peopleRecipeOrganizationImportSchema.parse(entry),
-  );
+  const normalizedImports = normalizeOrganizationImports(imports);
   const recipes = await readRecipes();
   const existingRecipe = recipes.find((recipe) => recipe.id === recipeId);
 
@@ -191,7 +227,7 @@ export async function applyOrganizationImportsToPeopleRecipe(
 
   const organizationIds = Array.from(
     new Set(normalizedImports.flatMap((entry) => entry.organizationIds)),
-  );
+  ).sort();
 
   const updatedRecipe = peopleRecipeSchema.parse({
     ...existingRecipe,

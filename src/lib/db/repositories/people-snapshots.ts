@@ -30,6 +30,18 @@ export type PeopleSnapshotRecord = {
 
 const snapshotFilePath = path.join(process.cwd(), "data", "people-snapshots.json");
 
+function normalizeOrganizationImports(imports: PeopleRecipeOrganizationImport[]) {
+  return peopleRecipeOrganizationImportSchema
+    .array()
+    .parse(imports)
+    .map((entry) => ({
+      ...entry,
+      organizationIds: Array.from(new Set(entry.organizationIds)).sort(),
+      selectedCompanyIds: Array.from(new Set(entry.selectedCompanyIds)).sort(),
+    }))
+    .sort((a, b) => a.snapshotId.localeCompare(b.snapshotId));
+}
+
 async function readSnapshots() {
   try {
     const contents = await readFile(snapshotFilePath, "utf8");
@@ -45,9 +57,9 @@ async function readSnapshots() {
       recipeParams: peopleSearchPayloadSchema.parse(
         record.recipeParams ?? record.result.request,
       ),
-      organizationImports: peopleRecipeOrganizationImportSchema
-        .array()
-        .parse(record.organizationImports ?? []),
+      organizationImports: normalizeOrganizationImports(
+        record.organizationImports ?? [],
+      ),
     }));
   } catch (error) {
     if (
@@ -96,6 +108,7 @@ export async function savePeopleSnapshot(
   const records = await readSnapshots();
   const now = new Date().toISOString();
   const recipeParams = peopleSearchPayloadSchema.parse(meta.recipeParams);
+  const organizationImports = normalizeOrganizationImports(meta.organizationImports);
   const existing = records.find(
     (record) =>
       record.signature === result.signature &&
@@ -110,7 +123,7 @@ export async function savePeopleSnapshot(
       updatedAt: now,
       selectedCompanyIds: meta.selectedCompanyIds,
       selectionMode: meta.selectionMode,
-      organizationImports: meta.organizationImports,
+      organizationImports,
       result,
     };
     await writeSnapshots(
@@ -127,7 +140,7 @@ export async function savePeopleSnapshot(
     recipeParams,
     selectionMode: meta.selectionMode,
     selectedCompanyIds: meta.selectedCompanyIds,
-    organizationImports: meta.organizationImports,
+    organizationImports,
     signature: result.signature,
     createdAt: now,
     updatedAt: now,
