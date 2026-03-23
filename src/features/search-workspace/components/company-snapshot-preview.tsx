@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   defaultCompanyPreviewColumns,
 } from "@/lib/apollo/company-filter-definitions";
@@ -11,6 +11,9 @@ import { SnapshotResultsTable } from "@/features/snapshots/components/snapshot-r
 
 type CompanySnapshotPreviewProps = {
   snapshot: CompanySnapshotRecord | null;
+  selectable?: boolean;
+  summarySlot?: ReactNode;
+  onSelectionChange?: (companyIds: string[]) => void;
 };
 
 function getInitialOptionalColumns(snapshot: CompanySnapshotRecord | null) {
@@ -26,17 +29,28 @@ function getInitialOptionalColumns(snapshot: CompanySnapshotRecord | null) {
   );
 }
 
-export function CompanySnapshotPreview({ snapshot }: CompanySnapshotPreviewProps) {
+export function CompanySnapshotPreview({
+  snapshot,
+  selectable = false,
+  summarySlot,
+  onSelectionChange,
+}: CompanySnapshotPreviewProps) {
   const [selectedOptionalColumns, setSelectedOptionalColumns] = useState<string[]>(
     getInitialOptionalColumns(snapshot),
   );
   const [showColumnControls, setShowColumnControls] = useState(false);
   const [showParams, setShowParams] = useState(false);
+  const [selectedCompanyIds, setSelectedCompanyIds] = useState<string[]>([]);
 
   useEffect(() => {
     setSelectedOptionalColumns(getInitialOptionalColumns(snapshot));
     setShowParams(false);
+    setSelectedCompanyIds([]);
   }, [snapshot]);
+
+  useEffect(() => {
+    onSelectionChange?.(selectedCompanyIds);
+  }, [onSelectionChange, selectedCompanyIds]);
 
   if (!snapshot) {
     return (
@@ -66,6 +80,14 @@ export function CompanySnapshotPreview({ snapshot }: CompanySnapshotPreviewProps
     );
   }
 
+  function handleToggleCompany(companyId: string) {
+    setSelectedCompanyIds((current) =>
+      current.includes(companyId)
+        ? current.filter((value) => value !== companyId)
+        : [...current, companyId],
+    );
+  }
+
   return (
     <SnapshotResultsTable
       columnPicker={
@@ -87,9 +109,12 @@ export function CompanySnapshotPreview({ snapshot }: CompanySnapshotPreviewProps
       emptyMessage="No company snapshot is loaded yet. Run a live search or reopen a stored snapshot."
       metaDetail={`${snapshot.result.rows.length} row(s) • page ${snapshot.result.page}`}
       metaLabel=""
+      onToggleRow={selectable ? handleToggleCompany : undefined}
       rows={snapshot.result.rows}
       selectedColumns={selectedColumns}
+      selectedRowIds={selectedCompanyIds}
       source={snapshot.result.source}
+      summarySlot={summarySlot}
     />
   );
 }

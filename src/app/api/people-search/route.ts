@@ -15,6 +15,7 @@ export async function POST(request: Request) {
       recipeParams: parsed,
       selectionMode: parsed.mode,
       selectedCompanyIds: parsed.selectedCompanyIds,
+      organizationImports: [],
     },
     result,
   );

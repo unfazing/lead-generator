@@ -15,6 +15,15 @@ const legacyPeopleFiltersSchema = z.object({
 
 export const recipeTypeSchema = z.enum(["company", "people"]);
 
+export const peopleRecipeOrganizationImportSchema = z.object({
+  snapshotId: z.string().min(1),
+  companyRecipeId: z.string().min(1),
+  importMode: z.enum(["selected", "all"]),
+  organizationIds: z.array(z.string().min(1)).default([]),
+  selectedCompanyIds: z.array(z.string().min(1)).default([]),
+  importedAt: z.string().datetime(),
+});
+
 export const companyRecipeSchema = z.object({
   id: z.string().min(1),
   type: z.literal("company"),
@@ -99,6 +108,7 @@ export const peopleRecipeSchema = z.object({
         organizationJobPostedAtRangeMax: undefined,
       });
     }),
+  organizationImports: peopleRecipeOrganizationImportSchema.array().default([]),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 });
@@ -118,6 +128,7 @@ export const peopleRecipeInputSchema = peopleRecipeSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+  organizationImports: true,
 });
 
 export const recipeInputSchema = z.discriminatedUnion("type", [
@@ -128,6 +139,9 @@ export const recipeInputSchema = z.discriminatedUnion("type", [
 export type RecipeType = z.infer<typeof recipeTypeSchema>;
 export type CompanyRecipe = z.infer<typeof companyRecipeSchema>;
 export type PeopleRecipe = z.infer<typeof peopleRecipeSchema>;
+export type PeopleRecipeOrganizationImport = z.infer<
+  typeof peopleRecipeOrganizationImportSchema
+>;
 export type Recipe = z.infer<typeof recipeSchema>;
 export type CompanyRecipeInput = z.infer<typeof companyRecipeInputSchema>;
 export type PeopleRecipeInput = z.infer<typeof peopleRecipeInputSchema>;

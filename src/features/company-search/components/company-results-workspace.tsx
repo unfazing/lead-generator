@@ -5,19 +5,12 @@ import {
   defaultCompanyPreviewColumns,
 } from "@/lib/apollo/company-filter-definitions";
 import type { CompanySnapshotRecord } from "@/lib/db/repositories/company-snapshots";
-import type { PeopleSnapshotRecord } from "@/lib/db/repositories/people-snapshots";
-import type { PeopleRecipe } from "@/lib/recipes/schema";
-import { PeopleResultsTable } from "@/features/people-search/components/people-results-table";
-import { PeopleSearchPanel } from "@/features/people-search/components/people-search-panel";
 import { SnapshotColumnPicker } from "@/features/snapshots/components/snapshot-column-picker";
 import { SnapshotParamsViewer } from "@/features/snapshots/components/snapshot-params-viewer";
 import { SnapshotResultsTable } from "@/features/snapshots/components/snapshot-results-table";
 
 type CompanyResultsWorkspaceProps = {
-  companyRecipeId: string | null;
   companySnapshot: CompanySnapshotRecord | null;
-  peopleRecipe: PeopleRecipe | null;
-  peopleSnapshot: PeopleSnapshotRecord | null;
 };
 
 function getInitialOptionalColumns(snapshot: CompanySnapshotRecord | null) {
@@ -34,10 +27,7 @@ function getInitialOptionalColumns(snapshot: CompanySnapshotRecord | null) {
 }
 
 export function CompanyResultsWorkspace({
-  companyRecipeId,
   companySnapshot,
-  peopleRecipe,
-  peopleSnapshot,
 }: CompanyResultsWorkspaceProps) {
   const [selectedOptionalColumns, setSelectedOptionalColumns] = useState<string[]>(
     getInitialOptionalColumns(companySnapshot),
@@ -83,7 +73,7 @@ export function CompanyResultsWorkspace({
   }
 
   return (
-    <section className="stack">
+    <section>
       {companySnapshot ? (
         <SnapshotResultsTable
           columnPicker={
@@ -119,13 +109,6 @@ export function CompanyResultsWorkspace({
           a snapshot for preview.
         </div>
       )}
-      <PeopleSearchPanel
-        companyRecipeId={companyRecipeId ?? ""}
-        companySnapshot={companySnapshot}
-        peopleRecipe={peopleRecipe}
-        selectedCompanyIds={selectedCompanyIds}
-      />
-      <PeopleResultsTable snapshot={peopleSnapshot} />
     </section>
   );
 }

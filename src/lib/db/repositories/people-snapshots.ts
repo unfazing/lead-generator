@@ -8,6 +8,10 @@ import {
   peopleSearchPayloadSchema,
   type PeopleSearchPayload,
 } from "@/lib/people-search/schema";
+import {
+  peopleRecipeOrganizationImportSchema,
+  type PeopleRecipeOrganizationImport,
+} from "@/lib/recipes/schema";
 
 export type PeopleSnapshotRecord = {
   id: string;
@@ -17,6 +21,7 @@ export type PeopleSnapshotRecord = {
   recipeParams: PeopleSearchPayload;
   selectionMode: PeopleSnapshotSelectionMode;
   selectedCompanyIds: string[];
+  organizationImports: PeopleRecipeOrganizationImport[];
   signature: string;
   createdAt: string;
   updatedAt: string;
@@ -31,6 +36,7 @@ async function readSnapshots() {
     const parsed = JSON.parse(contents) as Array<
       Omit<PeopleSnapshotRecord, "recipeParams"> & {
         recipeParams?: PeopleSearchPayload;
+        organizationImports?: PeopleRecipeOrganizationImport[];
       }
     >;
 
@@ -39,6 +45,9 @@ async function readSnapshots() {
       recipeParams: peopleSearchPayloadSchema.parse(
         record.recipeParams ?? record.result.request,
       ),
+      organizationImports: peopleRecipeOrganizationImportSchema
+        .array()
+        .parse(record.organizationImports ?? []),
     }));
   } catch (error) {
     if (
@@ -80,6 +89,7 @@ export async function savePeopleSnapshot(
     recipeParams: PeopleSearchPayload;
     selectionMode: PeopleSnapshotSelectionMode;
     selectedCompanyIds: string[];
+    organizationImports: PeopleRecipeOrganizationImport[];
   },
   result: PeopleSearchResult,
 ) {
@@ -100,6 +110,7 @@ export async function savePeopleSnapshot(
       updatedAt: now,
       selectedCompanyIds: meta.selectedCompanyIds,
       selectionMode: meta.selectionMode,
+      organizationImports: meta.organizationImports,
       result,
     };
     await writeSnapshots(
@@ -116,6 +127,7 @@ export async function savePeopleSnapshot(
     recipeParams,
     selectionMode: meta.selectionMode,
     selectedCompanyIds: meta.selectedCompanyIds,
+    organizationImports: meta.organizationImports,
     signature: result.signature,
     createdAt: now,
     updatedAt: now,

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { PeopleSearchPanel } from "@/features/people-search/components/people-search-panel";
-import { PeopleResultsTable } from "@/features/people-search/components/people-results-table";
 import { WorkspaceEmptyState } from "@/features/search-workspace/components/workspace-empty-state";
 import { WorkspaceStageNav } from "@/features/search-workspace/components/workspace-stage-nav";
 import {
@@ -9,7 +8,6 @@ import {
 } from "@/features/search-workspace/lib/workspace-route-state";
 import type { CompanySnapshotRecord } from "@/lib/db/repositories/company-snapshots";
 import { listSnapshotsForRecipe } from "@/lib/db/repositories/company-snapshots";
-import { listPeopleSnapshotsForContext } from "@/lib/db/repositories/people-snapshots";
 import { getRecipeById, listRecipesByType } from "@/lib/db/repositories/recipes";
 
 type SearchPageProps = {
@@ -48,17 +46,7 @@ export default async function PeopleSearchPage({ searchParams }: SearchPageProps
     })),
   );
 
-  const activeSourceSnapshot =
-    context.sourceSnapshotIds.length > 0
-      ? snapshotOptions.find((option) => option.snapshot.id === context.sourceSnapshotIds[0]) ?? null
-      : null;
-  const peopleSnapshots =
-    peopleRecipe && activeSourceSnapshot
-      ? await listPeopleSnapshotsForContext(peopleRecipe.id, activeSourceSnapshot.snapshot.id)
-      : [];
-  const activePeopleSnapshot = context.peopleSnapshotId
-    ? peopleSnapshots.find((snapshot) => snapshot.id === context.peopleSnapshotId) ?? null
-    : null;
+  const activeSourceSnapshotIds = context.sourceSnapshotIds;
 
   return (
     <main className="shell workspace-shell">
@@ -88,11 +76,8 @@ export default async function PeopleSearchPage({ searchParams }: SearchPageProps
               {peopleRecipes.map((recipe) => {
                 const href = `/search/people?${buildSearchWorkspaceQuery({
                   workflow: "people",
-                  companyRecipeId: activeSourceSnapshot?.recipeId ?? null,
                   peopleRecipeId: recipe.id,
-                  sourceSnapshotIds: activeSourceSnapshot
-                    ? [activeSourceSnapshot.snapshot.id]
-                    : [],
+                  sourceSnapshotIds: activeSourceSnapshotIds,
                 })}`;
 
                 return (
@@ -118,51 +103,6 @@ export default async function PeopleSearchPage({ searchParams }: SearchPageProps
           </section>
         </div>
         <div className="stack search-main">
-          <section className="card stack">
-            <div className="workspace-header">
-              <p className="eyebrow">Snapshot source</p>
-              <h2>Pick the company snapshot that feeds this people run.</h2>
-              <p>Source selection is explicit. Nothing loads until you choose a saved snapshot.</p>
-            </div>
-            {snapshotOptions.length === 0 ? (
-              <WorkspaceEmptyState
-                eyebrow="Snapshot source"
-                title="No company snapshots available yet."
-                description="Run a company search first, then come back here to use that snapshot as the source for people discovery."
-                primaryAction={{ href: "/search/company", label: "Go to company workflow" }}
-              />
-            ) : (
-              <div className="recipe-list">
-                {snapshotOptions.map((option) => {
-                  const href = `/search/people?${buildSearchWorkspaceQuery({
-                    workflow: "people",
-                    companyRecipeId: option.recipeId,
-                    peopleRecipeId: peopleRecipe?.id ?? null,
-                    sourceSnapshotIds: [option.snapshot.id],
-                  })}`;
-
-                  return (
-                    <Link
-                      key={option.snapshot.id}
-                      className={`recipe-list-item${
-                        option.snapshot.id === activeSourceSnapshot?.snapshot.id ? " active" : ""
-                      }`}
-                      href={href}
-                    >
-                      <span className="recipe-list-link">
-                        <strong>{option.recipeName}</strong>
-                        <span className="meta">
-                          {option.snapshot.result.rows.length} companies • updated{" "}
-                          {new Date(option.snapshot.updatedAt).toLocaleDateString()}
-                        </span>
-                        <span className="meta">Snapshot {option.snapshot.id.slice(0, 8)}</span>
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </section>
           {peopleRecipes.length === 0 ? (
             <WorkspaceEmptyState
               eyebrow="People workflow"
@@ -177,23 +117,20 @@ export default async function PeopleSearchPage({ searchParams }: SearchPageProps
               description="Select one saved people recipe from the sidebar before you run people search."
               primaryAction={{ href: "/recipes/people", label: "Manage people recipes" }}
             />
-          ) : !activeSourceSnapshot ? (
+          ) : snapshotOptions.length === 0 ? (
             <WorkspaceEmptyState
               eyebrow="People workflow"
-              title="Choose a source snapshot."
-              description="Pick one company snapshot above to define the organization IDs that this people workflow should search against."
-              secondaryAction={{ href: "/search/company", label: "Open company workflow" }}
+              title="No company snapshots available yet."
+              description="Company snapshots are the import source for people recipes. Create one in the company workflow first."
+              primaryAction={{ href: "/search/company", label: "Open company workflow" }}
             />
           ) : (
-            <>
-              <PeopleSearchPanel
-                companyRecipeId={activeSourceSnapshot.recipeId}
-                companySnapshot={activeSourceSnapshot.snapshot}
-                peopleRecipe={peopleRecipe}
-                selectedCompanyIds={[]}
-              />
-              <PeopleResultsTable snapshot={activePeopleSnapshot} />
-            </>
+            <PeopleSearchPanel
+              key={`${peopleRecipe.id}:${activeSourceSnapshotIds.join(",")}`}
+              activeSourceSnapshotIds={activeSourceSnapshotIds}
+              peopleRecipe={peopleRecipe}
+              snapshotOptions={snapshotOptions}
+            />
           )}
         </div>
       </div>

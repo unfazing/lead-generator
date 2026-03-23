@@ -83,12 +83,9 @@ export function PeopleResultsTable({ snapshot }: PeopleResultsTableProps) {
 
   const paramsForViewer = {
     ...snapshot.recipeParams,
-    organizationIds:
-      snapshot.selectedCompanyIds.length > 0
-        ? snapshot.selectedCompanyIds
-        : snapshot.recipeParams.organizationIds,
-    selectedCompanyIds: snapshot.selectedCompanyIds,
+    organizationIds: snapshot.recipeParams.organizationIds,
     selectionMode: snapshot.selectionMode,
+    organizationImports: snapshot.organizationImports,
   };
 
   return (

@@ -5,12 +5,14 @@ import {
   companyRecipeInputSchema,
   companyRecipeSchema,
   peopleRecipeInputSchema,
+  peopleRecipeOrganizationImportSchema,
   peopleRecipeSchema,
   recipeSchema,
   type CompanyRecipe,
   type CompanyRecipeInput,
   type PeopleRecipe,
   type PeopleRecipeInput,
+  type PeopleRecipeOrganizationImport,
   type Recipe,
 } from "@/lib/recipes/schema";
 
@@ -34,10 +36,15 @@ async function readRecipes() {
             typeof recipe === "object" &&
             "type" in recipe &&
             recipe.type === "people" &&
-            "exportSettings" in recipe
+            ("exportSettings" in recipe || !("organizationImports" in recipe))
           ) {
             const normalizedRecipe = { ...(recipe as Record<string, unknown>) };
-            delete normalizedRecipe.exportSettings;
+            if ("exportSettings" in normalizedRecipe) {
+              delete normalizedRecipe.exportSettings;
+            }
+            if (!("organizationImports" in normalizedRecipe)) {
+              normalizedRecipe.organizationImports = [];
+            }
             return normalizedRecipe;
           }
 
@@ -158,6 +165,41 @@ export async function updatePeopleRecipe(recipeId: string, input: PeopleRecipeIn
     ...recipeInput,
     id: recipeId,
     type: "people",
+    updatedAt: new Date().toISOString(),
+  });
+
+  await writeRecipes(
+    recipes.map((recipe) => (recipe.id === recipeId ? updatedRecipe : recipe)),
+  );
+
+  return updatedRecipe;
+}
+
+export async function applyOrganizationImportsToPeopleRecipe(
+  recipeId: string,
+  imports: PeopleRecipeOrganizationImport[],
+) {
+  const normalizedImports = imports.map((entry) =>
+    peopleRecipeOrganizationImportSchema.parse(entry),
+  );
+  const recipes = await readRecipes();
+  const existingRecipe = recipes.find((recipe) => recipe.id === recipeId);
+
+  if (!existingRecipe || existingRecipe.type !== "people") {
+    throw new Error("People recipe not found");
+  }
+
+  const organizationIds = Array.from(
+    new Set(normalizedImports.flatMap((entry) => entry.organizationIds)),
+  );
+
+  const updatedRecipe = peopleRecipeSchema.parse({
+    ...existingRecipe,
+    peopleFilters: {
+      ...existingRecipe.peopleFilters,
+      organizationIds,
+    },
+    organizationImports: normalizedImports,
     updatedAt: new Date().toISOString(),
   });
 

@@ -1,10 +1,13 @@
+import Link from "next/link";
 import { CompanySearchWarning } from "@/features/company-search/components/company-search-warning";
 import { CompanySearchPanel } from "@/features/company-search/components/company-search-panel";
 import { RecipeList } from "@/features/recipes/components/recipe-list";
-import { CompanySnapshotPreview } from "@/features/search-workspace/components/company-snapshot-preview";
 import { WorkspaceEmptyState } from "@/features/search-workspace/components/workspace-empty-state";
 import { WorkspaceStageNav } from "@/features/search-workspace/components/workspace-stage-nav";
-import { parseSearchWorkspaceContext } from "@/features/search-workspace/lib/workspace-route-state";
+import {
+  buildSearchWorkspaceQuery,
+  parseSearchWorkspaceContext,
+} from "@/features/search-workspace/lib/workspace-route-state";
 import { UsageSummary } from "@/features/usage/components/usage-summary";
 import { getApolloUsageSummary } from "@/features/usage/lib/apollo-usage";
 import { listSnapshotsForRecipe } from "@/lib/db/repositories/company-snapshots";
@@ -89,7 +92,45 @@ export default async function CompanySearchPage({ searchParams }: SearchPageProp
                 snapshot={activeSnapshot}
               />
               <CompanySearchWarning warnings={activeSnapshot?.result.warnings ?? []} />
-              <CompanySnapshotPreview snapshot={activeSnapshot} />
+              <section className="card stack">
+                <div className="workspace-header">
+                  <p className="eyebrow">Saved company snapshots</p>
+                  <h2>Open a company snapshot to review and select companies.</h2>
+                </div>
+                {snapshots.length === 0 ? (
+                  <div className="empty-message">
+                    No snapshots yet. Run a live company search or reopen a stored snapshot to create one.
+                  </div>
+                ) : (
+                  <div className="recipe-list">
+                    {snapshots.map((snapshot) => {
+                      const href = `/search/company/${snapshot.id}?${buildSearchWorkspaceQuery({
+                        workflow: "company",
+                        companyRecipeId: companyRecipe.id,
+                        peopleRecipeId: peopleRecipe?.id ?? null,
+                      })}`;
+
+                      return (
+                        <Link
+                          key={snapshot.id}
+                          className={`recipe-list-item${
+                            snapshot.id === activeSnapshot?.id ? " active" : ""
+                          }`}
+                          href={href}
+                        >
+                          <span className="recipe-list-link">
+                            <strong>{snapshot.result.rows.length} companies</strong>
+                            <span className="meta">
+                              Updated {new Date(snapshot.updatedAt).toLocaleDateString()}
+                            </span>
+                            <span className="meta">Snapshot {snapshot.id.slice(0, 8)}</span>
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
             </>
           )}
         </div>

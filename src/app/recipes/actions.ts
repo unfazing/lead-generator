@@ -2,9 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { searchCompanies, createCompanySearchSignature } from "@/lib/apollo/company-search";
 import { searchPeople } from "@/lib/apollo/people-search";
-import { getLatestSnapshotForSignature, saveCompanySnapshot } from "@/lib/db/repositories/company-snapshots";
+import {
+  getCompanySnapshotById,
+  getLatestSnapshotForSignature,
+  saveCompanySnapshot,
+} from "@/lib/db/repositories/company-snapshots";
 import { savePeopleSnapshot } from "@/lib/db/repositories/people-snapshots";
 import {
   markRunPlanReady,
@@ -15,6 +20,7 @@ import {
   createPeopleRecipe,
   deleteRecipe,
   getRecipeById,
+  applyOrganizationImportsToPeopleRecipe,
   updateCompanyRecipe,
   updatePeopleRecipe,
 } from "@/lib/db/repositories/recipes";
@@ -191,50 +197,53 @@ export async function runCompanySearchAction(formData: FormData) {
   redirect(`/search/company?${query}`);
 }
 
+const companyImportPlanEntrySchema = z.object({
+  snapshotId: z.string().min(1),
+  importMode: peopleSearchModeSchema,
+  selectedCompanyIds: z.array(z.string().min(1)).default([]),
+});
+
 export async function runPeopleSearchAction(formData: FormData) {
-  const companyRecipeId = formData.get("companyRecipeId");
   const peopleRecipeId = formData.get("peopleRecipeId");
-  const companySnapshotId = formData.get("companySnapshotId");
 
-  if (
-    typeof companyRecipeId !== "string" ||
-    !companyRecipeId ||
-    typeof peopleRecipeId !== "string" ||
-    !peopleRecipeId ||
-    typeof companySnapshotId !== "string" ||
-    !companySnapshotId
-  ) {
-    throw new Error("Company recipe, people recipe, and company snapshot are required");
+  if (typeof peopleRecipeId !== "string" || !peopleRecipeId) {
+    throw new Error("People recipe is required");
   }
-
-  const mode = peopleSearchModeSchema.parse(formData.get("mode"));
-  const selectedCompanyIds = formData.getAll("selectedCompanyIds").map(String);
 
   const peopleRecipe = await getRecipeById(peopleRecipeId);
   if (!peopleRecipe || peopleRecipe.type !== "people") {
     throw new Error("Selected recipe is not a people recipe");
   }
 
+  if (peopleRecipe.organizationImports.length === 0) {
+    throw new Error("Apply one or more company snapshots to the people recipe before running search");
+  }
+
   const payload = peopleSearchPayloadSchema.parse(peopleRecipe.peopleFilters);
+  const primaryImport = peopleRecipe.organizationImports[0];
+  const sourceSnapshotIds = peopleRecipe.organizationImports.map(
+    (entry) => entry.snapshotId,
+  );
 
   const request = {
     ...payload,
-    companyRecipeId,
-    companySnapshotId,
+    companyRecipeId: primaryImport.companyRecipeId,
+    companySnapshotId: primaryImport.snapshotId,
     peopleRecipeId,
-    mode,
-    selectedCompanyIds,
+    mode: primaryImport.importMode,
+    selectedCompanyIds: [],
   };
 
   const result = await searchPeople(request);
   const snapshot = await savePeopleSnapshot(
     {
-      companyRecipeId,
-      companySnapshotId,
+      companyRecipeId: primaryImport.companyRecipeId,
+      companySnapshotId: primaryImport.snapshotId,
       peopleRecipeId,
       recipeParams: payload,
-      selectionMode: mode,
-      selectedCompanyIds,
+      selectionMode: primaryImport.importMode,
+      selectedCompanyIds: payload.organizationIds,
+      organizationImports: peopleRecipe.organizationImports,
     },
     result,
   );
@@ -243,11 +252,79 @@ export async function runPeopleSearchAction(formData: FormData) {
   revalidatePath("/search/people");
   const query = buildSearchWorkspaceQuery({
     workflow: "people",
-    companyRecipeId,
     peopleRecipeId,
     peopleSnapshotId: snapshot.id,
-    sourceSnapshotIds: [companySnapshotId],
+    sourceSnapshotIds,
   });
+  redirect(`/search/people?${query}`);
+}
+
+export async function applyCompaniesToPeopleRecipeAction(formData: FormData) {
+  const peopleRecipeId = formData.get("peopleRecipeId");
+  const importPlanRaw = formData.get("importPlan");
+
+  if (typeof peopleRecipeId !== "string" || !peopleRecipeId) {
+    throw new Error("People recipe is required");
+  }
+
+  if (typeof importPlanRaw !== "string" || !importPlanRaw) {
+    throw new Error("Choose at least one company snapshot to import");
+  }
+
+  const parsedPlan = z.array(companyImportPlanEntrySchema).parse(JSON.parse(importPlanRaw));
+
+  const imports = await Promise.all(
+    parsedPlan.map(async (entry) => {
+      const snapshot = await getCompanySnapshotById(entry.snapshotId);
+
+      if (!snapshot) {
+        throw new Error("Selected company snapshot was not found");
+      }
+
+      const availableCompanyIds = snapshot.result.rows
+        .map((row) => row.apollo_id)
+        .filter((value) => value && value !== "unknown");
+
+      const organizationIds =
+        entry.importMode === "all"
+          ? availableCompanyIds
+          : availableCompanyIds.filter((companyId) =>
+              entry.selectedCompanyIds.includes(companyId),
+            );
+
+      if (entry.importMode === "selected" && organizationIds.length === 0) {
+        throw new Error(
+          "Selected-company imports need at least one company checked in the snapshot table",
+        );
+      }
+
+      return {
+        snapshotId: snapshot.id,
+        companyRecipeId: snapshot.recipeId,
+        importMode: entry.importMode,
+        organizationIds,
+        selectedCompanyIds:
+          entry.importMode === "selected" ? organizationIds : [],
+        importedAt: new Date().toISOString(),
+      };
+    }),
+  );
+
+  const updatedRecipe = await applyOrganizationImportsToPeopleRecipe(
+    peopleRecipeId,
+    imports,
+  );
+
+  revalidatePath("/recipes/people");
+  revalidatePath("/search");
+  revalidatePath("/search/people");
+
+  const query = buildSearchWorkspaceQuery({
+    workflow: "people",
+    peopleRecipeId: updatedRecipe.id,
+    sourceSnapshotIds: imports.map((entry) => entry.snapshotId),
+  });
+
   redirect(`/search/people?${query}`);
 }
 
