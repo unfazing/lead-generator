@@ -68,14 +68,14 @@ Plans:
 
 ### Phase 03.1: Rework the search flow (INSERTED)
 
-**Goal:** Users can work through separate company-search and people-search workflows, using first-class company snapshots to update people recipes with organization IDs and provenance before explicitly running people search.
-**Requirements**: [RECP-04, COMP-02, COMP-03, COMP-04, PEOP-01, PEOP-02, PEOP-03, PEOP-04]
+**Goal:** Users can work through separate company-search and people-search workflows, using first-class company snapshots to update people recipes with organization IDs and provenance before explicitly reviewing people snapshots.
+**Requirements**: [COMP-02, COMP-03, COMP-04, PEOP-01, PEOP-02, PEOP-03, PEOP-04]
 **Depends on:** Phase 3
 **Plans:** 2/3 plans executed
 
 Plans:
 - [x] 03.1-01-PLAN.md — Split `/search` into instructions-first company and people workflow entry routes with no implicit defaults
-- [ ] 03.1-02-PLAN.md — Make company search produce first-class snapshots and let people search import organization IDs from company snapshots into people recipes with provenance
+- [x] 03.1-02-PLAN.md — Make company search produce first-class snapshots and let people search import organization IDs from company snapshots into people recipes with provenance
 - [ ] 03.1-03-PLAN.md — Add explicit people search execution and people snapshot review stages, then sync roadmap metadata
 
 ### Phase 4: Retrieval Execution and Run Safety
