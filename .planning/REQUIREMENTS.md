@@ -11,7 +11,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [x] **RECP-01**: User can create a saved recipe with Apollo company-search filters
 - [x] **RECP-02**: User can add person-search filters to a saved recipe
-- [ ] **RECP-04**: User can load an existing recipe and rerun it without re-entering filters
+- [x] **RECP-04**: User can load an existing recipe and rerun it without re-entering filters
 
 ### Company Search
 
@@ -80,7 +80,7 @@ Requirements for initial release. Each maps to roadmap phases.
 |-------------|-------|--------|
 | RECP-01 | Phase 1 | Complete |
 | RECP-02 | Phase 1 | Complete |
-| RECP-04 | Phase 5 | Pending |
+| RECP-04 | Phase 5 | Complete |
 | COMP-01 | Phase 2 | Complete |
 | COMP-02 | Phase 2 | Complete |
 | COMP-03 | Phase 2 | Complete |

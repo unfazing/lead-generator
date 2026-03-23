@@ -68,15 +68,15 @@ Plans:
 
 ### Phase 03.1: Rework the search flow (INSERTED)
 
-**Goal:** Users move through the Apollo search workspace as explicit stages from recipe pairing to company review, people review, and run planning without implicit defaults or stacked downstream panels.
-**Requirements**: [RECP-04, COMP-02, COMP-03, COMP-04, PEOP-01, PEOP-02, PEOP-03, PEOP-04, COST-02, COST-03, EMAI-01]
+**Goal:** Users can work through separate company-search and people-search workflows, using first-class company snapshots to update people recipes with organization IDs and provenance before explicitly running people search.
+**Requirements**: [RECP-04, COMP-02, COMP-03, COMP-04, PEOP-01, PEOP-02, PEOP-03, PEOP-04]
 **Depends on:** Phase 3
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 
 Plans:
-- [ ] 03.1-01-PLAN.md — Define route contracts and replace the stacked `/search` page with instructions-first entry plus explicit company stage
-- [ ] 03.1-02-PLAN.md — Split company review, people search setup, and people review into snapshot-addressed stages
-- [ ] 03.1-03-PLAN.md — Isolate run planning behind reviewed people snapshot context and sync roadmap metadata
+- [x] 03.1-01-PLAN.md — Split `/search` into instructions-first company and people workflow entry routes with no implicit defaults
+- [ ] 03.1-02-PLAN.md — Make company search produce first-class snapshots and let people search import organization IDs from company snapshots into people recipes with provenance
+- [ ] 03.1-03-PLAN.md — Add explicit people search execution and people snapshot review stages, then sync roadmap metadata
 
 ### Phase 4: Retrieval Execution and Run Safety
 **Goal**: Users can run verified-email retrieval safely, monitor progress live, and recover from interruptions without losing trustworthy cost and quality state.

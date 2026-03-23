@@ -2,16 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_plan
-stopped_at: Phase 3 complete; next step is discuss/plan Phase 4
-last_updated: "2026-03-23T11:35:00.000Z"
-last_activity: 2026-03-23
+status: unknown
+stopped_at: Completed 03.1-01-PLAN.md
+last_updated: "2026-03-23T15:18:33.111Z"
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 3
-  total_plans: 9
-  completed_plans: 9
-  percent: 60
+  total_plans: 12
+  completed_plans: 10
 ---
 
 # Project State
@@ -21,16 +19,12 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-03-23)
 
 **Core value:** Turn precise Apollo filters into verified-email exports quickly without wasting API credits.
-**Current focus:** Retrieval Execution and Run Safety
+**Current focus:** Phase 03.1 — rework-the-search-flow
 
 ## Current Position
 
-Phase: 4 of 5 (retrieval execution and run safety)
-Plan: 0 of 0 in current phase
-Status: Ready to discuss and plan
-Last activity: 2026-03-23 — Completed Phase 3 people discovery and run planning
-
-Progress: [██████░░░░] 60%
+Phase: 03.1 (rework-the-search-flow) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -53,6 +47,8 @@ Progress: [██████░░░░] 60%
 - Last 5 plans: 32m, 18m, 27m, 35m, 24m
 - Trend: Improving
 
+| Phase 03.1 P01 | 12min | 2 tasks | 9 files |
+
 ## Accumulated Context
 
 ### Decisions
@@ -66,10 +62,16 @@ Recent decisions affecting current work:
 - Phase 2: Reuse matching company snapshots by default and require an explicit action for fresh company search.
 - Phase 3: People search runs from a reviewed company snapshot in either selected-company or all-company mode, never as an automatic follow-on.
 - Phase 3: Verified-email retrieval readiness requires a persisted people snapshot, a saved run plan, and explicit confirmation.
+- [Phase 03.1]: Search workspace routes now read only explicit recipe and snapshot IDs from the URL; they never auto-select the first saved record.
+- [Phase 03.1]: Company and people search now enter through separate routes so server actions can redirect back into the correct workflow context.
 
 ### Pending Todos
 
 None yet.
+
+### Roadmap Evolution
+
+- Phase 03.1 inserted after Phase 3: Rework the search flow (URGENT)
 
 ### Blockers/Concerns
 
@@ -78,6 +80,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-23 19:35
-Stopped at: Phase 3 execution complete; next step is discuss/plan Phase 4
+Last session: 2026-03-23T15:18:33.107Z
+Stopped at: Completed 03.1-01-PLAN.md
 Resume file: None
