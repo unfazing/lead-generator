@@ -25,6 +25,12 @@ describe("retrieval-run-status-card", () => {
             requeued: 0,
             unresolved: 2,
           },
+          preflight: {
+            pendingCallCount: 6,
+            reusedVerifiedCount: 3,
+            reusedUnusableCount: 1,
+            dedupedWithinRunCount: 2,
+          },
           estimate: {
             maxContacts: 12,
             estimatedContacts: 12,
@@ -56,6 +62,9 @@ describe("retrieval-run-status-card", () => {
             successfulItems: 8,
             failedItems: 2,
             reusedItems: 4,
+            dedupedItems: 2,
+            reusedVerifiedItems: 3,
+            reusedUnusableItems: 1,
             newlyEnrichedItems: 6,
             apolloRequestedItems: 6,
             pendingItems: 2,

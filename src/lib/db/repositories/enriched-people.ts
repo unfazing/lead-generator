@@ -5,16 +5,13 @@ import {
   readJsonFile,
   writeJsonFileAtomically,
 } from "@/lib/db/repositories/file-storage";
+import { retrievalOutcomeQualities } from "@/lib/retrieval/quality";
 
 export const enrichedPersonRecordSchema = z.object({
   personApolloId: z.string().min(1),
   email: z.string().nullable(),
   emailStatus: z.string().nullable(),
-  quality: z.enum([
-    "verified_business_email",
-    "unverified_email",
-    "unavailable",
-  ]),
+  quality: z.enum(retrievalOutcomeQualities),
   error: z.string().nullable(),
   apolloPerson: z.record(z.string(), z.unknown()).nullable(),
   sourceRunId: z.string().min(1),

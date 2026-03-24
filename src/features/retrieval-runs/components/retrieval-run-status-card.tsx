@@ -104,8 +104,16 @@ export function RetrievalRunStatusCard({
       </div>
       <div className="stats-grid">
         <div className="stat-tile">
+          <span className="meta">Pending Apollo calls</span>
+          <strong>{summary.preflight.pendingCallCount}</strong>
+        </div>
+        <div className="stat-tile">
           <span className="meta">Reused from cache</span>
           <strong>{run.reusedItems}</strong>
+        </div>
+        <div className="stat-tile">
+          <span className="meta">Deduped in run</span>
+          <strong>{summary.preflight.dedupedWithinRunCount}</strong>
         </div>
         <div className="stat-tile">
           <span className="meta">Sent to Apollo</span>
@@ -114,6 +122,16 @@ export function RetrievalRunStatusCard({
         <div className="stat-tile">
           <span className="meta">New enrichments</span>
           <strong>{run.newlyEnrichedItems}</strong>
+        </div>
+      </div>
+      <div className="stats-grid">
+        <div className="stat-tile">
+          <span className="meta">Reused verified</span>
+          <strong>{summary.preflight.reusedVerifiedCount}</strong>
+        </div>
+        <div className="stat-tile">
+          <span className="meta">Reused unusable</span>
+          <strong>{summary.preflight.reusedUnusableCount}</strong>
         </div>
       </div>
       <RetrievalRunUsageSummary summary={summary} />

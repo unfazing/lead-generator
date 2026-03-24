@@ -130,6 +130,9 @@ describe("retrieval-runs repository", () => {
       successfulItems: 1,
       failedItems: 1,
       reusedItems: 1,
+      reusedVerifiedItems: 1,
+      reusedUnusableItems: 0,
+      dedupedItems: 0,
       newlyEnrichedItems: 1,
       apolloRequestedItems: 1,
       pendingItems: 0,
@@ -142,8 +145,14 @@ describe("retrieval-runs repository", () => {
     await updateRetrievalRunItems(run.id, (current) =>
       current.map((item, index) => ({
         ...item,
+        disposition: index === 0 ? "reused_verified" : "reused_unusable",
+        executionStatus: "completed",
+        outcomeQuality:
+          index === 0 ? "verified_business_email" : "email_unavailable",
+        reusedFromRunId: "prior-run",
+        providerPayload: null,
         status: "completed",
-        quality: index === 0 ? "verified_business_email" : "unavailable",
+        quality: index === 0 ? "verified_business_email" : "email_unavailable",
         email: index === 0 ? "avery@acme.com" : null,
         emailStatus: index === 0 ? "verified" : "unavailable",
         completedAt: new Date().toISOString(),
@@ -159,7 +168,9 @@ describe("retrieval-runs repository", () => {
     expect(persistedRun?.newlyEnrichedItems).toBe(1);
     expect(persistedRun?.apolloRequestedItems).toBe(1);
     expect(persistedRun?.lastHeartbeatAt).toBeTruthy();
-    expect(persistedItems.every((item) => item.status === "completed")).toBe(true);
+    expect(persistedItems.every((item) => item.executionStatus === "completed")).toBe(
+      true,
+    );
   });
 
   it("prevents a second run from acquiring the active lease while one is still held", async () => {

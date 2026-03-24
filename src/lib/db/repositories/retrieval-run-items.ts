@@ -7,19 +7,23 @@ import {
   readJsonFile,
   writeJsonFileAtomically,
 } from "@/lib/db/repositories/file-storage";
+import { retrievalOutcomeQualities } from "@/lib/retrieval/quality";
 
-export const retrievalRunItemStatusSchema = z.enum([
+export const retrievalRunItemExecutionStatusSchema = z.enum([
   "pending",
   "processing",
   "completed",
   "failed",
 ]);
 
-export const retrievalRunItemQualitySchema = z.enum([
-  "verified_business_email",
-  "unverified_email",
-  "unavailable",
+export const retrievalRunItemDispositionSchema = z.enum([
+  "pending_call",
+  "reused_verified",
+  "reused_unusable",
+  "deduped_within_run",
 ]);
+
+export const retrievalRunItemQualitySchema = z.enum(retrievalOutcomeQualities);
 
 export const retrievalRunItemSchema = z.object({
   id: z.string().min(1),
@@ -28,7 +32,12 @@ export const retrievalRunItemSchema = z.object({
   fullName: z.string(),
   companyName: z.string(),
   title: z.string(),
-  status: retrievalRunItemStatusSchema,
+  disposition: retrievalRunItemDispositionSchema,
+  executionStatus: retrievalRunItemExecutionStatusSchema,
+  outcomeQuality: retrievalRunItemQualitySchema.nullable(),
+  reusedFromRunId: z.string().nullable(),
+  providerPayload: z.record(z.string(), z.unknown()).nullable(),
+  status: retrievalRunItemExecutionStatusSchema,
   quality: retrievalRunItemQualitySchema.nullable(),
   email: z.string().nullable(),
   emailStatus: z.string().nullable(),
@@ -64,36 +73,45 @@ export async function listRetrievalRunItems(runId: string) {
 
 export async function listRetrievalRunItemsByStatuses(
   runId: string,
-  statuses: RetrievalRunItemRecord["status"][],
+  statuses: RetrievalRunItemRecord["executionStatus"][],
 ) {
   const statusSet = new Set(statuses);
   const records = await listRetrievalRunItems(runId);
-  return records.filter((record) => statusSet.has(record.status));
+  return records.filter((record) => statusSet.has(record.executionStatus));
 }
 
-export async function seedRetrievalRunItems(
+export async function createRetrievalRunItems(
   runId: string,
-  rows: PeoplePreviewRow[],
-  maxContacts: number,
+  items: Array<
+    Pick<
+      RetrievalRunItemRecord,
+      | "personApolloId"
+      | "fullName"
+      | "companyName"
+      | "title"
+      | "disposition"
+      | "executionStatus"
+      | "outcomeQuality"
+      | "reusedFromRunId"
+      | "providerPayload"
+      | "email"
+      | "emailStatus"
+      | "error"
+      | "attemptCount"
+      | "lastAttemptedAt"
+      | "completedAt"
+    >
+  >,
 ) {
   const records = await readRetrievalRunItems();
   const now = new Date().toISOString();
-  const seeded = rows.slice(0, maxContacts).map((row) =>
+  const seeded = items.map((item) =>
     retrievalRunItemSchema.parse({
       id: randomUUID(),
       runId,
-      personApolloId: row.apollo_id,
-      fullName: row.full_name,
-      companyName: row.company_name,
-      title: row.title,
-      status: "pending",
-      quality: null,
-      email: null,
-      emailStatus: null,
-      error: null,
-      attemptCount: 0,
-      lastAttemptedAt: null,
-      completedAt: null,
+      ...item,
+      status: item.executionStatus,
+      quality: item.outcomeQuality,
       createdAt: now,
       updatedAt: now,
     }),
@@ -101,6 +119,33 @@ export async function seedRetrievalRunItems(
 
   await writeRetrievalRunItems([...records, ...seeded]);
   return seeded;
+}
+
+export async function seedRetrievalRunItems(
+  runId: string,
+  rows: PeoplePreviewRow[],
+  maxContacts: number,
+) {
+  return createRetrievalRunItems(
+    runId,
+    rows.slice(0, maxContacts).map((row) => ({
+      personApolloId: row.apollo_id,
+      fullName: row.full_name,
+      companyName: row.company_name,
+      title: row.title,
+      disposition: "pending_call",
+      executionStatus: "pending",
+      outcomeQuality: null,
+      reusedFromRunId: null,
+      providerPayload: null,
+      email: null,
+      emailStatus: null,
+      error: null,
+      attemptCount: 0,
+      lastAttemptedAt: null,
+      completedAt: null,
+    })),
+  );
 }
 
 export async function updateRetrievalRunItems(
@@ -113,6 +158,8 @@ export async function updateRetrievalRunItems(
   const updated = updater(runItems).map((item) =>
     retrievalRunItemSchema.parse({
       ...item,
+      status: item.executionStatus,
+      quality: item.outcomeQuality,
       updatedAt: new Date().toISOString(),
     }),
   );
@@ -134,7 +181,7 @@ export async function listEnrichedPeopleEntriesForSnapshot(
 
   for (const item of items) {
     const run = runMap.get(item.runId);
-    if (!run || item.status !== "completed") {
+    if (!run || item.executionStatus !== "completed") {
       continue;
     }
 

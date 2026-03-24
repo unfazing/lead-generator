@@ -28,6 +28,12 @@ export type RetrievalRunResumeSummary = {
     requeued: number;
     unresolved: number;
   };
+  preflight: {
+    pendingCallCount: number;
+    reusedVerifiedCount: number;
+    reusedUnusableCount: number;
+    dedupedWithinRunCount: number;
+  };
 };
 
 export type RetrievalRunSummary = RetrievalRunResumeSummary & {
@@ -71,10 +77,10 @@ export async function buildRetrievalRunResumeSummary(runId: string) {
   }
 
   const visibleStatus = deriveRetrievalRunStatus(run);
-  const completed = items.filter((item) => item.status === "completed");
-  const failed = items.filter((item) => item.status === "failed");
-  const processing = items.filter((item) => item.status === "processing");
-  const pending = items.filter((item) => item.status === "pending");
+  const completed = items.filter((item) => item.executionStatus === "completed");
+  const failed = items.filter((item) => item.executionStatus === "failed");
+  const processing = items.filter((item) => item.executionStatus === "processing");
+  const pending = items.filter((item) => item.executionStatus === "pending");
   const reusable = completed.filter((item) => item.emailStatus === "reused").length;
 
   return {
@@ -96,6 +102,14 @@ export async function buildRetrievalRunResumeSummary(runId: string) {
       requeued: visibleStatus === "interrupted" ? processing.length : 0,
       unresolved: pending.length + processing.length + failed.length,
     },
+    preflight: {
+      pendingCallCount: items.filter((item) => item.disposition === "pending_call").length,
+      reusedVerifiedCount: items.filter((item) => item.disposition === "reused_verified").length,
+      reusedUnusableCount: items.filter((item) => item.disposition === "reused_unusable").length,
+      dedupedWithinRunCount: items.filter(
+        (item) => item.disposition === "deduped_within_run",
+      ).length,
+    },
   } satisfies RetrievalRunResumeSummary;
 }
 
@@ -115,7 +129,10 @@ export async function buildRetrievalRunSummary(
     },
     actual: {
       processedContacts: resume.run.processedItems,
-      attemptedContacts: resume.run.apolloRequestedItems + resume.run.reusedItems,
+      attemptedContacts:
+        resume.run.apolloRequestedItems +
+        resume.run.reusedItems +
+        resume.run.dedupedItems,
       remainingContacts: resume.progress.remaining,
       reusedContacts: resume.run.reusedItems,
       newEnrichments: resume.run.newlyEnrichedItems,

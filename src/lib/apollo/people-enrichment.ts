@@ -1,4 +1,5 @@
 import { env } from "@/lib/env";
+import { normalizeApolloOutcome, type RetrievalOutcomeQuality } from "@/lib/retrieval/quality";
 
 export type EnrichmentTarget = {
   personApolloId: string;
@@ -11,7 +12,7 @@ export type EnrichmentOutcome = {
   personApolloId: string;
   email: string | null;
   emailStatus: string | null;
-  quality: "verified_business_email" | "unverified_email" | "unavailable";
+  quality: RetrievalOutcomeQuality;
   error: string | null;
   apolloPerson: Record<string, unknown> | null;
 };
@@ -36,19 +37,20 @@ function normalizeOutcome(
   const email = typeof payload?.email === "string" ? payload.email : null;
   const emailStatus =
     typeof payload?.email_status === "string" ? payload.email_status : null;
-  const quality =
-    email && emailStatus === "verified"
-      ? "verified_business_email"
-      : email
-        ? "unverified_email"
-        : "unavailable";
+  const error = payload ? null : "Apollo returned no matching person";
+  const quality = normalizeApolloOutcome({
+    email,
+    emailStatus,
+    error,
+    hasPerson: payload !== null,
+  });
 
   return {
     personApolloId: target.personApolloId,
     email,
     emailStatus,
     quality,
-    error: payload ? null : "Apollo returned no matching person",
+    error,
     apolloPerson: payload,
   };
 }
@@ -64,7 +66,7 @@ function buildFixtureBatchResult(targets: EnrichmentTarget[]): EnrichmentBatchRe
           ? `${target.fullName.toLowerCase().replace(/\s+/g, ".")}@example.com`
           : null,
       emailStatus: index % 2 === 0 ? "verified" : "unavailable",
-      quality: index % 2 === 0 ? "verified_business_email" : "unavailable",
+      quality: index % 2 === 0 ? "verified_business_email" : "email_unavailable",
       error: index % 2 === 0 ? null : "No verified business email found",
       apolloPerson:
         index % 2 === 0

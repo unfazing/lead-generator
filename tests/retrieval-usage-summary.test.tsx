@@ -165,6 +165,9 @@ describe("retrieval-usage-summary", () => {
       successfulItems: 3,
       failedItems: 2,
       reusedItems: 2,
+      reusedVerifiedItems: 2,
+      reusedUnusableItems: 0,
+      dedupedItems: 0,
       newlyEnrichedItems: 3,
       apolloRequestedItems: 3,
       pendingItems: 1,
@@ -201,6 +204,9 @@ describe("retrieval-usage-summary", () => {
       successfulItems: 1,
       failedItems: 1,
       reusedItems: 1,
+      reusedVerifiedItems: 1,
+      reusedUnusableItems: 0,
+      dedupedItems: 0,
       newlyEnrichedItems: 1,
       apolloRequestedItems: 1,
       pendingItems: 1,
@@ -213,6 +219,11 @@ describe("retrieval-usage-summary", () => {
         if (index === 0) {
           return {
             ...item,
+            disposition: "pending_call",
+            executionStatus: "completed",
+            outcomeQuality: "verified_business_email",
+            reusedFromRunId: null,
+            providerPayload: null,
             status: "completed",
             quality: "verified_business_email",
             email: "person-1@example.com",
@@ -224,8 +235,13 @@ describe("retrieval-usage-summary", () => {
         if (index === 1) {
           return {
             ...item,
+            disposition: "pending_call",
+            executionStatus: "completed",
+            outcomeQuality: "email_unavailable",
+            reusedFromRunId: null,
+            providerPayload: null,
             status: "completed",
-            quality: "unavailable",
+            quality: "email_unavailable",
             email: null,
             emailStatus: "unavailable",
             completedAt: new Date().toISOString(),
@@ -235,12 +251,14 @@ describe("retrieval-usage-summary", () => {
         if (index === 2) {
           return {
             ...item,
+            executionStatus: "pending",
             status: "pending",
           };
         }
 
         return {
           ...item,
+          executionStatus: "processing",
           status: "processing",
           error: "interrupted in flight",
         };
@@ -273,6 +291,9 @@ describe("retrieval-usage-summary", () => {
       successfulItems: 6,
       failedItems: 2,
       reusedItems: 3,
+      reusedVerifiedItems: 3,
+      reusedUnusableItems: 0,
+      dedupedItems: 0,
       newlyEnrichedItems: 5,
       apolloRequestedItems: 5,
       pendingItems: 0,

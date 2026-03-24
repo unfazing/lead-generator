@@ -193,6 +193,11 @@ describe("retrieval resume", () => {
         if (index === 0) {
           return {
             ...item,
+            disposition: "pending_call",
+            executionStatus: "completed",
+            outcomeQuality: "verified_business_email",
+            reusedFromRunId: null,
+            providerPayload: null,
             status: "completed",
             quality: "verified_business_email",
             email: "person-1@example.com",
@@ -204,8 +209,13 @@ describe("retrieval resume", () => {
         if (index === 1) {
           return {
             ...item,
+            disposition: "pending_call",
+            executionStatus: "completed",
+            outcomeQuality: "email_unavailable",
+            reusedFromRunId: null,
+            providerPayload: null,
             status: "completed",
-            quality: "unavailable",
+            quality: "email_unavailable",
             email: null,
             emailStatus: "unavailable",
             error: "no verified email",
@@ -216,6 +226,7 @@ describe("retrieval resume", () => {
         if (index === 2) {
           return {
             ...item,
+            executionStatus: "failed",
             status: "failed",
             error: "temporary Apollo error",
           };
@@ -223,6 +234,7 @@ describe("retrieval resume", () => {
 
         return {
           ...item,
+          executionStatus: "processing",
           status: "processing",
           error: "batch interrupted",
         };
@@ -275,7 +287,7 @@ describe("retrieval resume", () => {
     expect(items.find((item) => item.id === itemIds[1])?.emailStatus).toBe(
       "unavailable",
     );
-    expect(items.every((item) => item.status === "completed")).toBe(true);
+    expect(items.every((item) => item.executionStatus === "completed")).toBe(true);
   });
 
   it("exposes prior progress and remaining work before continuing a persisted run", async () => {
@@ -288,6 +300,11 @@ describe("retrieval resume", () => {
         index < 2
           ? {
               ...item,
+              disposition: "pending_call",
+              executionStatus: "completed",
+              outcomeQuality: "verified_business_email",
+              reusedFromRunId: null,
+              providerPayload: null,
               status: "completed",
               quality: "verified_business_email",
               email: `${item.personApolloId}@example.com`,

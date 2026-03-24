@@ -4,8 +4,8 @@ import {
   upsertEnrichedPeople,
 } from "@/lib/db/repositories/enriched-people";
 import {
+  createRetrievalRunItems,
   listRetrievalRunItems,
-  seedRetrievalRunItems,
   updateRetrievalRunItems,
 } from "@/lib/db/repositories/retrieval-run-items";
 import {
@@ -17,6 +17,8 @@ import {
   updateRetrievalRun,
 } from "@/lib/db/repositories/retrieval-runs";
 import { buildRetrievalRunResumeSummary } from "@/lib/retrieval/run-summary";
+import { buildRetrievalPreflight } from "@/lib/retrieval/preflight";
+import { isVerifiedBusinessEmailQuality } from "@/lib/retrieval/quality";
 import {
   enrichPeopleBatch,
   type EnrichmentBatchResult,
@@ -50,9 +52,26 @@ export async function kickoffRetrievalRun(input: {
   const eligibleRows = selectedApolloIds
     ? snapshot.result.rows.filter((row) => selectedApolloIds.has(row.apollo_id))
     : snapshot.result.rows;
-  const totalItems = Math.min(eligibleRows.length, input.maxContacts);
+  const preflight = await buildRetrievalPreflight(eligibleRows, input.maxContacts);
+  const totalItems = preflight.items.length;
   const run = await createRetrievalRunFromPlan(input, totalItems);
-  await seedRetrievalRunItems(run.id, eligibleRows, input.maxContacts);
+  await createRetrievalRunItems(run.id, preflight.items);
+  await updateRetrievalRun(run.id, (current) => ({
+    ...current,
+    processedItems:
+      preflight.counts.reusedVerifiedCount +
+      preflight.counts.reusedUnusableCount +
+      preflight.counts.dedupedWithinRunCount,
+    successfulItems: preflight.counts.reusedVerifiedCount,
+    failedItems: preflight.counts.reusedUnusableCount,
+    reusedItems:
+      preflight.counts.reusedVerifiedCount + preflight.counts.reusedUnusableCount,
+    dedupedItems: preflight.counts.dedupedWithinRunCount,
+    reusedVerifiedItems: preflight.counts.reusedVerifiedCount,
+    reusedUnusableItems: preflight.counts.reusedUnusableCount,
+    pendingItems: preflight.counts.pendingCallCount,
+    lastCheckpointAt: new Date().toISOString(),
+  }));
   if (input.autoExecute !== false) {
     void executeRetrievalRun(run.id);
   }
@@ -74,7 +93,7 @@ async function sleep(ms: number) {
 
 async function applyExistingEnrichedPeople(runId: string) {
   const pendingItems = (await listRetrievalRunItems(runId)).filter(
-    (item) => item.status === "pending",
+    (item) => item.executionStatus === "pending",
   );
   const enrichedByApolloId = await getEnrichedPeopleByApolloIds(
     pendingItems.map((item) => item.personApolloId),
@@ -99,6 +118,13 @@ async function applyExistingEnrichedPeople(runId: string) {
       const enriched = enrichedByApolloId.get(item.personApolloId)!;
       return {
         ...item,
+        disposition: isVerifiedBusinessEmailQuality(enriched.quality)
+          ? "reused_verified"
+          : "reused_unusable",
+        executionStatus: "completed",
+        outcomeQuality: enriched.quality,
+        reusedFromRunId: enriched.sourceRunId,
+        providerPayload: enriched.apolloPerson,
         status: "completed",
         quality: enriched.quality,
         email: enriched.email,
@@ -111,7 +137,7 @@ async function applyExistingEnrichedPeople(runId: string) {
 
   const successfulItems = reusedItems.filter((item) => {
     const enriched = enrichedByApolloId.get(item.personApolloId)!;
-    return enriched.quality === "verified_business_email";
+    return isVerifiedBusinessEmailQuality(enriched.quality);
   }).length;
 
   await updateRetrievalRun(runId, (current) => ({
@@ -120,6 +146,9 @@ async function applyExistingEnrichedPeople(runId: string) {
     successfulItems: current.successfulItems + successfulItems,
     failedItems: current.failedItems + (reusedItems.length - successfulItems),
     reusedItems: current.reusedItems + reusedItems.length,
+    reusedVerifiedItems: current.reusedVerifiedItems + successfulItems,
+    reusedUnusableItems:
+      current.reusedUnusableItems + (reusedItems.length - successfulItems),
     pendingItems: Math.max(current.pendingItems - reusedItems.length, 0),
     lastCheckpointAt: completedAt,
     lastHeartbeatAt: completedAt,
@@ -138,7 +167,10 @@ async function requeueInterruptedItems(runId: string) {
   const items = await listRetrievalRunItems(runId);
   const interruptedIds = new Set(
     items
-      .filter((item) => item.status === "processing" || item.status === "failed")
+      .filter(
+        (item) =>
+          item.executionStatus === "processing" || item.executionStatus === "failed",
+      )
       .map((item) => item.id),
   );
 
@@ -151,8 +183,9 @@ async function requeueInterruptedItems(runId: string) {
       interruptedIds.has(item.id)
         ? {
             ...item,
+            executionStatus: "pending",
             status: "pending",
-            error: item.status === "failed" ? item.error : null,
+            error: item.executionStatus === "failed" ? item.error : null,
           }
         : item,
     ),
@@ -209,7 +242,7 @@ export async function executeRetrievalRun(
       }
 
       const pending = (await listRetrievalRunItems(runId)).filter(
-        (item) => item.status === "pending",
+        (item) => item.executionStatus === "pending",
       );
 
       if (pending.length === 0) {
@@ -233,6 +266,7 @@ export async function executeRetrievalRun(
           batchIds.has(item.id)
             ? {
                 ...item,
+                executionStatus: "processing",
                 status: "processing",
                 attemptCount: item.attemptCount + 1,
                 lastAttemptedAt: startedAt,
@@ -263,7 +297,9 @@ export async function executeRetrievalRun(
         const retryAfter = new Date(Date.now() + result.retryAfterMs).toISOString();
         await updateRetrievalRunItems(runId, (items) =>
           items.map((item) =>
-            batchIds.has(item.id) ? { ...item, status: "pending" } : item,
+            batchIds.has(item.id)
+              ? { ...item, executionStatus: "pending", status: "pending" }
+              : item,
           ),
         );
         await updateRetrievalRun(runId, (current) => ({
@@ -296,6 +332,9 @@ export async function executeRetrievalRun(
 
           return {
             ...item,
+            executionStatus: "completed",
+            outcomeQuality: outcome.quality,
+            providerPayload: outcome.apolloPerson,
             status: "completed",
             quality: outcome.quality,
             email: outcome.email,
@@ -308,7 +347,7 @@ export async function executeRetrievalRun(
       await upsertEnrichedPeople(runId, result.outcomes);
 
       const succeeded = result.outcomes.filter(
-        (outcome) => outcome.quality === "verified_business_email",
+        (outcome) => isVerifiedBusinessEmailQuality(outcome.quality),
       ).length;
       const failed = result.outcomes.length - succeeded;
 
@@ -326,7 +365,11 @@ export async function executeRetrievalRun(
         lastCheckpointAt: completedAt,
       }));
 
-      if ((await listRetrievalRunItems(runId)).some((item) => item.status === "pending")) {
+      if (
+        (await listRetrievalRunItems(runId)).some(
+          (item) => item.executionStatus === "pending",
+        )
+      ) {
         await wait(throttleMs);
       }
     }

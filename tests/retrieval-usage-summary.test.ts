@@ -78,8 +78,15 @@ describe("retrieval usage summary", () => {
         index < 4
           ? {
               ...item,
+              disposition: index < 3 ? "reused_verified" : "reused_unusable",
+              executionStatus: "completed",
+              outcomeQuality:
+                index < 3 ? "verified_business_email" : "email_unavailable",
+              reusedFromRunId: "prior-run",
+              providerPayload: null,
               status: "completed",
-              quality: index < 3 ? "verified_business_email" : "unavailable",
+              quality:
+                index < 3 ? "verified_business_email" : "email_unavailable",
               email: index < 3 ? `${item.personApolloId}@example.com` : null,
               emailStatus: index < 3 ? "verified" : "unavailable",
               completedAt: new Date().toISOString(),
@@ -95,6 +102,9 @@ describe("retrieval usage summary", () => {
       successfulItems: 3,
       failedItems: 1,
       reusedItems: 1,
+      reusedVerifiedItems: 1,
+      reusedUnusableItems: 0,
+      dedupedItems: 0,
       newlyEnrichedItems: 3,
       apolloRequestedItems: 3,
       pendingItems: 2,
