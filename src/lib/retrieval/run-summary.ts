@@ -11,8 +11,10 @@ export type RetrievalRunVisibleStatus =
 
 export type RetrievalRunResumeSummary = {
   runId: string;
+  run: RetrievalRunRecord;
   runStatus: RetrievalRunVisibleStatus;
   lastHeartbeatAt: string | null;
+  lastCheckpointAt: string | null;
   progress: {
     total: number;
     processed: number;
@@ -25,6 +27,25 @@ export type RetrievalRunResumeSummary = {
     pending: number;
     requeued: number;
     unresolved: number;
+  };
+};
+
+export type RetrievalRunSummary = RetrievalRunResumeSummary & {
+  run: RetrievalRunRecord;
+  estimate: {
+    maxContacts: number;
+    estimatedContacts: number;
+    estimateSummary: string;
+    estimateNote: string;
+  };
+  actual: {
+    processedContacts: number;
+    attemptedContacts: number;
+    remainingContacts: number;
+    reusedContacts: number;
+    newEnrichments: number;
+    missingContacts: number;
+    creditsConsumed: number | null;
   };
 };
 
@@ -58,15 +79,17 @@ export async function buildRetrievalRunResumeSummary(runId: string) {
 
   return {
     runId: run.id,
+    run,
     runStatus: visibleStatus,
     lastHeartbeatAt: run.lastHeartbeatAt,
+    lastCheckpointAt: run.lastCheckpointAt,
     progress: {
       total: run.totalItems,
       processed: run.processedItems,
       remaining: Math.max(run.totalItems - run.processedItems, 0),
       completed: completed.length,
       failed: failed.length,
-      reusable,
+      reusable: run.reusedItems || reusable,
     },
     resumeTargets: {
       pending: pending.length,
@@ -74,4 +97,30 @@ export async function buildRetrievalRunResumeSummary(runId: string) {
       unresolved: pending.length + processing.length + failed.length,
     },
   } satisfies RetrievalRunResumeSummary;
+}
+
+export async function buildRetrievalRunSummary(
+  runId: string,
+): Promise<RetrievalRunSummary> {
+  const resume = await buildRetrievalRunResumeSummary(runId);
+
+  return {
+    ...resume,
+    run: resume.run,
+    estimate: {
+      maxContacts: resume.run.maxContacts,
+      estimatedContacts: resume.run.estimatedContacts,
+      estimateSummary: resume.run.estimateSummary,
+      estimateNote: resume.run.estimateNote,
+    },
+    actual: {
+      processedContacts: resume.run.processedItems,
+      attemptedContacts: resume.run.apolloRequestedItems + resume.run.reusedItems,
+      remainingContacts: resume.progress.remaining,
+      reusedContacts: resume.run.reusedItems,
+      newEnrichments: resume.run.newlyEnrichedItems,
+      missingContacts: resume.run.failedItems,
+      creditsConsumed: resume.run.apolloRequestedItems,
+    },
+  };
 }

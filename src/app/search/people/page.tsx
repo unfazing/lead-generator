@@ -18,6 +18,7 @@ import {
   getRetrievalRunById,
 } from "@/lib/db/repositories/retrieval-runs";
 import { getRecipeById, listRecipesByType } from "@/lib/db/repositories/recipes";
+import { buildRetrievalRunSummary } from "@/lib/retrieval/run-summary";
 
 type SearchPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -69,7 +70,10 @@ export default async function PeopleSearchPage({ searchParams }: SearchPageProps
     await Promise.all(
       peopleSnapshots.map(async (snapshot) => [
         snapshot.id,
-        await getLatestRetrievalRunForPeopleSnapshot(snapshot.id),
+        await (async () => {
+          const run = await getLatestRetrievalRunForPeopleSnapshot(snapshot.id);
+          return run ? buildRetrievalRunSummary(run.id) : null;
+        })(),
       ]),
     ),
   );

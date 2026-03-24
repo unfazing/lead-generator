@@ -7,13 +7,13 @@ import { EnrichedPeopleResults } from "@/features/retrieval-runs/components/enri
 import { RetrievalRunStatusCard } from "@/features/retrieval-runs/components/retrieval-run-status-card";
 import { SnapshotVersionSelector } from "@/features/search-workspace/components/snapshot-version-selector";
 import type { PeopleSnapshotRecord } from "@/lib/db/repositories/people-snapshots";
-import type { RetrievalRunRecord } from "@/lib/db/repositories/retrieval-runs";
 import type { EnrichedPeopleEntry } from "@/lib/db/repositories/retrieval-run-items";
+import type { RetrievalRunSummary } from "@/lib/retrieval/run-summary";
 
 type SavedPeopleSnapshotsPanelProps = {
   enrichedEntriesBySnapshotId: Record<string, EnrichedPeopleEntry[]>;
   initialSnapshotId?: string | null;
-  retrievalRunsBySnapshotId: Record<string, RetrievalRunRecord | null>;
+  retrievalRunsBySnapshotId: Record<string, RetrievalRunSummary | null>;
   snapshots: PeopleSnapshotRecord[];
 };
 
@@ -102,7 +102,7 @@ export function SavedPeopleSnapshotsPanel({
             />
           ) : null}
           <EnrichedPeopleResults entries={activeEnrichedEntries} />
-          <RetrievalRunStatusCard run={activeRetrievalRun} />
+          <RetrievalRunStatusCard initialSummary={activeRetrievalRun} />
         </div>
       )}
     </section>
