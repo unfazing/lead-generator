@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Recipe and Usage Foundation** - Define reusable recipe state and expose baseline Apollo usage visibility. Completed 2026-03-23.
 - [x] **Phase 2: Company Search and Snapshot Preview** - Let the user search Apollo companies, inspect results, and persist company snapshots safely. Completed 2026-03-23.
 - [x] **Phase 3: People Discovery and Run Planning** - Turn reviewed companies into people previews and gated retrieval plans with estimated cost. Completed 2026-03-23.
-- [ ] **Phase 4: Retrieval Execution and Run Safety** - Execute Apollo `match` / `bulk_match` verified-email enrichment with monitoring, resumability, and spend protection.
+- [x] **Phase 4: Retrieval Execution and Run Safety** - Execute Apollo `match` / `bulk_match` verified-email enrichment with monitoring, resumability, and spend protection. Completed 2026-03-24.
 - [ ] **Phase 5: Verified Export and Repeatable Reruns** - Export trusted CSVs with provenance, dedupe, and recipe-driven replay.
 
 ## Phase Details
@@ -94,7 +94,7 @@ Plans:
 Plans:
 - [x] 04-01: Implement durable Apollo `match` / `bulk_match` execution, throttling, and progress tracking
 - [x] 04-02: Add resume-safe run state and actual-usage reconciliation for enrichment runs
-- [ ] 04-03: Enforce pre-enrichment dedupe and Apollo result-quality classification
+- [x] 04-03: Enforce pre-enrichment dedupe and Apollo result-quality classification
 
 ### Phase 5: Verified Export and Repeatable Reruns
 **Goal**: Users can export trusted verified-email CSVs and rerun successful workflows without rebuilding setup or re-exporting duplicates.
@@ -121,5 +121,5 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 2.2 -> 3 -> 3.1 -> 4 -> 5
 | 2. Company Search and Snapshot Preview | 3/3 | Complete | 2026-03-23 |
 | 3. People Discovery and Run Planning | 3/3 | Complete | 2026-03-23 |
 | 03.1. Rework the search flow | 3/3 | Complete | 2026-03-24 |
-| 4. Retrieval Execution and Run Safety | 0/3 | Not started | - |
+| 4. Retrieval Execution and Run Safety | 3/3 | Complete | 2026-03-24 |
 | 5. Verified Export and Repeatable Reruns | 0/2 | Not started | - |
