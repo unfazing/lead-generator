@@ -1,5 +1,9 @@
 import { getPeopleSnapshotById } from "@/lib/db/repositories/people-snapshots";
 import {
+  getEnrichedPeopleByApolloIds,
+  upsertEnrichedPeople,
+} from "@/lib/db/repositories/enriched-people";
+import {
   listRetrievalRunItems,
   seedRetrievalRunItems,
   updateRetrievalRunItems,
@@ -66,6 +70,61 @@ async function sleep(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function applyExistingEnrichedPeople(runId: string) {
+  const pendingItems = (await listRetrievalRunItems(runId)).filter(
+    (item) => item.status === "pending",
+  );
+  const enrichedByApolloId = await getEnrichedPeopleByApolloIds(
+    pendingItems.map((item) => item.personApolloId),
+  );
+  const reusedItems = pendingItems.filter((item) =>
+    enrichedByApolloId.has(item.personApolloId),
+  );
+
+  if (reusedItems.length === 0) {
+    return 0;
+  }
+
+  const reusedIds = new Set(reusedItems.map((item) => item.id));
+  const completedAt = new Date().toISOString();
+
+  await updateRetrievalRunItems(runId, (items) =>
+    items.map((item) => {
+      if (!reusedIds.has(item.id)) {
+        return item;
+      }
+
+      const enriched = enrichedByApolloId.get(item.personApolloId)!;
+      return {
+        ...item,
+        status: "completed",
+        quality: enriched.quality,
+        email: enriched.email,
+        emailStatus: enriched.emailStatus,
+        error: enriched.error,
+        completedAt,
+      };
+    }),
+  );
+
+  const successfulItems = reusedItems.filter((item) => {
+    const enriched = enrichedByApolloId.get(item.personApolloId)!;
+    return enriched.quality === "verified_business_email";
+  }).length;
+
+  await updateRetrievalRun(runId, (current) => ({
+    ...current,
+    processedItems: current.processedItems + reusedItems.length,
+    successfulItems: current.successfulItems + successfulItems,
+    failedItems: current.failedItems + (reusedItems.length - successfulItems),
+    pendingItems: Math.max(current.pendingItems - reusedItems.length, 0),
+    lastCheckpointAt: completedAt,
+    lastHeartbeatAt: completedAt,
+  }));
+
+  return reusedItems.length;
+}
+
 export async function executeRetrievalRun(
   runId: string,
   options?: {
@@ -87,6 +146,11 @@ export async function executeRetrievalRun(
       const run = await getRetrievalRunById(runId);
       if (!run) {
         throw new Error("Retrieval run not found");
+      }
+
+      const reusedCount = await applyExistingEnrichedPeople(runId);
+      if (reusedCount > 0) {
+        continue;
       }
 
       const pending = (await listRetrievalRunItems(runId)).filter(
@@ -185,6 +249,7 @@ export async function executeRetrievalRun(
           };
         }),
       );
+      await upsertEnrichedPeople(runId, result.outcomes);
 
       const succeeded = result.outcomes.filter(
         (outcome) => outcome.quality === "verified_business_email",

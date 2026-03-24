@@ -2,12 +2,14 @@ import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { executeRetrievalRun, kickoffRetrievalRun } from "@/lib/retrieval/execution";
+import { listEnrichedPeople } from "@/lib/db/repositories/enriched-people";
 import { listRetrievalRunItems } from "@/lib/db/repositories/retrieval-run-items";
 import { getRetrievalRunById } from "@/lib/db/repositories/retrieval-runs";
 import { savePeopleSnapshot } from "@/lib/db/repositories/people-snapshots";
 
 const dataDir = path.join(process.cwd(), "data");
 const managedFiles = [
+  "enriched-people.json",
   "people-snapshots.json",
   "retrieval-runs.json",
   "retrieval-run-items.json",
@@ -279,5 +281,57 @@ describe("people enrichment execution", () => {
     expect(persisted?.retryCount).toBe(1);
     expect(persisted?.completedAt).toBeTruthy();
     expect(items.every((item) => item.status === "completed")).toBe(true);
+  });
+
+  it("reuses people already present in the central enriched-people store and skips re-enrichment", async () => {
+    const input = await buildRetrievalInput(2);
+    const firstRun = await kickoffRetrievalRun({ ...input, autoExecute: false });
+    let firstExecutionCalls = 0;
+
+    await executeRetrievalRun(firstRun.id, {
+      enrichBatch: async (targets) => {
+        firstExecutionCalls += 1;
+        return {
+          type: "completed",
+          mode: targets.length === 1 ? "match" : "bulk_match",
+          outcomes: targets.map((target) => ({
+            personApolloId: target.personApolloId,
+            email: `${target.personApolloId}@example.com`,
+            emailStatus: "verified",
+            quality: "verified_business_email",
+            error: null,
+          })),
+        };
+      },
+      wait: async () => {},
+    });
+
+    expect(firstExecutionCalls).toBe(1);
+    expect((await listEnrichedPeople()).map((entry) => entry.personApolloId)).toEqual([
+      "person-1",
+      "person-2",
+    ]);
+
+    const secondRun = await kickoffRetrievalRun({ ...input, autoExecute: false });
+    let secondExecutionCalls = 0;
+
+    await executeRetrievalRun(secondRun.id, {
+      enrichBatch: async () => {
+        secondExecutionCalls += 1;
+        return {
+          type: "completed",
+          mode: "bulk_match",
+          outcomes: [],
+        };
+      },
+      wait: async () => {},
+    });
+
+    const secondRunItems = await listRetrievalRunItems(secondRun.id);
+    const persistedSecondRun = await getRetrievalRunById(secondRun.id);
+
+    expect(secondExecutionCalls).toBe(0);
+    expect(secondRunItems.every((item) => item.status === "completed")).toBe(true);
+    expect(persistedSecondRun?.processedItems).toBe(2);
   });
 });
