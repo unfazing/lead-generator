@@ -129,6 +129,9 @@ describe("retrieval-runs repository", () => {
       processedItems: 2,
       successfulItems: 1,
       failedItems: 1,
+      reusedItems: 1,
+      newlyEnrichedItems: 1,
+      apolloRequestedItems: 1,
       pendingItems: 0,
       processingItems: 0,
       currentBatchSize: 2,
@@ -152,6 +155,9 @@ describe("retrieval-runs repository", () => {
 
     expect(persistedRun?.processedItems).toBe(2);
     expect(persistedRun?.batchCount).toBe(1);
+    expect(persistedRun?.reusedItems).toBe(1);
+    expect(persistedRun?.newlyEnrichedItems).toBe(1);
+    expect(persistedRun?.apolloRequestedItems).toBe(1);
     expect(persistedRun?.lastHeartbeatAt).toBeTruthy();
     expect(persistedItems.every((item) => item.status === "completed")).toBe(true);
   });

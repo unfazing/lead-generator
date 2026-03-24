@@ -45,6 +45,20 @@ export function RetrievalRunStatusCard({
           <strong>{run.apiRequestCount}</strong>
         </div>
       </div>
+      <div className="stats-grid">
+        <div className="stat-tile">
+          <span className="meta">Reused from cache</span>
+          <strong>{run.reusedItems}</strong>
+        </div>
+        <div className="stat-tile">
+          <span className="meta">Sent to Apollo</span>
+          <strong>{run.apolloRequestedItems}</strong>
+        </div>
+        <div className="stat-tile">
+          <span className="meta">New enrichments</span>
+          <strong>{run.newlyEnrichedItems}</strong>
+        </div>
+      </div>
       <div className="subtle-card card stack">
         <p className="meta">Last checkpoint</p>
         <p>{run.lastCheckpointAt ? formatStableDateTime(run.lastCheckpointAt) : "Not yet persisted"}</p>

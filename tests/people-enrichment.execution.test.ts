@@ -377,5 +377,8 @@ describe("people enrichment execution", () => {
     expect(secondExecutionCalls).toBe(0);
     expect(secondRunItems.every((item) => item.status === "completed")).toBe(true);
     expect(persistedSecondRun?.processedItems).toBe(2);
+    expect(persistedSecondRun?.reusedItems).toBe(2);
+    expect(persistedSecondRun?.apolloRequestedItems).toBe(0);
+    expect(persistedSecondRun?.newlyEnrichedItems).toBe(0);
   });
 });
