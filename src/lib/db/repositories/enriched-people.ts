@@ -16,6 +16,7 @@ export const enrichedPersonRecordSchema = z.object({
     "unavailable",
   ]),
   error: z.string().nullable(),
+  apolloPerson: z.record(z.string(), z.unknown()).nullable(),
   sourceRunId: z.string().min(1),
   enrichedAt: z.string().min(1),
   createdAt: z.string().min(1),
@@ -72,6 +73,7 @@ export async function upsertEnrichedPeople(
       emailStatus: outcome.emailStatus,
       quality: outcome.quality,
       error: outcome.error,
+      apolloPerson: outcome.apolloPerson,
       sourceRunId: runId,
       enrichedAt: now,
       createdAt:

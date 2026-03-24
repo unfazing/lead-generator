@@ -13,6 +13,7 @@ export type EnrichmentOutcome = {
   emailStatus: string | null;
   quality: "verified_business_email" | "unverified_email" | "unavailable";
   error: string | null;
+  apolloPerson: Record<string, unknown> | null;
 };
 
 export type EnrichmentBatchResult =
@@ -48,6 +49,7 @@ function normalizeOutcome(
     emailStatus,
     quality,
     error: payload ? null : "Apollo returned no matching person",
+    apolloPerson: payload,
   };
 }
 
@@ -64,6 +66,17 @@ function buildFixtureBatchResult(targets: EnrichmentTarget[]): EnrichmentBatchRe
       emailStatus: index % 2 === 0 ? "verified" : "unavailable",
       quality: index % 2 === 0 ? "verified_business_email" : "unavailable",
       error: index % 2 === 0 ? null : "No verified business email found",
+      apolloPerson:
+        index % 2 === 0
+          ? {
+              id: target.personApolloId,
+              name: target.fullName,
+              title: target.title,
+              organization_name: target.companyName,
+              email: `${target.fullName.toLowerCase().replace(/\s+/g, ".")}@example.com`,
+              email_status: "verified",
+            }
+          : null,
     })),
   };
 }

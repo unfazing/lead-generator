@@ -167,6 +167,14 @@ describe("people enrichment execution", () => {
             emailStatus: "verified",
             quality: "verified_business_email",
             error: null,
+            apolloPerson: {
+              id: target.personApolloId,
+              name: target.fullName,
+              title: target.title,
+              organization_name: target.companyName,
+              email: `${target.personApolloId}@example.com`,
+              email_status: "verified",
+            },
           })),
         };
       },
@@ -195,6 +203,14 @@ describe("people enrichment execution", () => {
             emailStatus: "verified",
             quality: "verified_business_email",
             error: null,
+            apolloPerson: {
+              id: target.personApolloId,
+              name: target.fullName,
+              title: target.title,
+              organization_name: target.companyName,
+              email: `${target.personApolloId}@example.com`,
+              email_status: "verified",
+            },
           })),
         };
       },
@@ -232,6 +248,14 @@ describe("people enrichment execution", () => {
           emailStatus: "verified",
           quality: "verified_business_email",
           error: null,
+          apolloPerson: {
+            id: target.personApolloId,
+            name: target.fullName,
+            title: target.title,
+            organization_name: target.companyName,
+            email: `${target.personApolloId}@example.com`,
+            email_status: "verified",
+          },
         })),
       }),
       wait: async () => {
@@ -269,6 +293,14 @@ describe("people enrichment execution", () => {
             emailStatus: "verified",
             quality: "verified_business_email",
             error: null,
+            apolloPerson: {
+              id: target.personApolloId,
+              name: target.fullName,
+              title: target.title,
+              organization_name: target.companyName,
+              email: `${target.personApolloId}@example.com`,
+              email_status: "verified",
+            },
           })),
         };
       },
@@ -300,6 +332,14 @@ describe("people enrichment execution", () => {
             emailStatus: "verified",
             quality: "verified_business_email",
             error: null,
+            apolloPerson: {
+              id: target.personApolloId,
+              name: target.fullName,
+              title: target.title,
+              organization_name: target.companyName,
+              email: `${target.personApolloId}@example.com`,
+              email_status: "verified",
+            },
           })),
         };
       },
@@ -311,6 +351,10 @@ describe("people enrichment execution", () => {
       "person-1",
       "person-2",
     ]);
+    expect((await listEnrichedPeople())[0]?.apolloPerson).toMatchObject({
+      id: "person-1",
+      email: "person-1@example.com",
+    });
 
     const secondRun = await kickoffRetrievalRun({ ...input, autoExecute: false });
     let secondExecutionCalls = 0;
