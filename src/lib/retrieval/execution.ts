@@ -12,9 +12,11 @@ import {
   acquireRetrievalRunLease,
   createRetrievalRunFromPlan,
   getRetrievalRunById,
+  isRetrievalRunStale,
   releaseRetrievalRunLease,
   updateRetrievalRun,
 } from "@/lib/db/repositories/retrieval-runs";
+import { buildRetrievalRunResumeSummary } from "@/lib/retrieval/run-summary";
 import {
   enrichPeopleBatch,
   type EnrichmentBatchResult,
@@ -126,6 +128,56 @@ async function applyExistingEnrichedPeople(runId: string) {
   return reusedItems.length;
 }
 
+async function requeueInterruptedItems(runId: string) {
+  const run = await getRetrievalRunById(runId);
+
+  if (!run || !isRetrievalRunStale(run)) {
+    return 0;
+  }
+
+  const items = await listRetrievalRunItems(runId);
+  const interruptedIds = new Set(
+    items
+      .filter((item) => item.status === "processing" || item.status === "failed")
+      .map((item) => item.id),
+  );
+
+  if (interruptedIds.size === 0) {
+    return 0;
+  }
+
+  await updateRetrievalRunItems(runId, (current) =>
+    current.map((item) =>
+      interruptedIds.has(item.id)
+        ? {
+            ...item,
+            status: "pending",
+            error: item.status === "failed" ? item.error : null,
+          }
+        : item,
+    ),
+  );
+
+  await updateRetrievalRun(runId, (current) => ({
+    ...current,
+    status: "pending",
+    pendingItems: current.pendingItems + interruptedIds.size,
+    processingItems: 0,
+    currentBatchSize: 0,
+    lease: null,
+    retryAfter: null,
+    cooldownUntil: null,
+    lastError: current.lastError,
+    lastCheckpointAt: new Date().toISOString(),
+  }));
+
+  return interruptedIds.size;
+}
+
+export async function getRetrievalRunResumeSummary(runId: string) {
+  return buildRetrievalRunResumeSummary(runId);
+}
+
 export async function executeRetrievalRun(
   runId: string,
   options?: {
@@ -139,6 +191,8 @@ export async function executeRetrievalRun(
   const throttleMs = options?.throttleMs ?? DEFAULT_THROTTLE_MS;
   const enrichBatch = options?.enrichBatch ?? enrichPeopleBatch;
   const wait = options?.wait ?? sleep;
+
+  await requeueInterruptedItems(runId);
 
   await acquireRetrievalRunLease(runId, `executor:${runId}`);
 

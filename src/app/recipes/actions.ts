@@ -17,7 +17,12 @@ import {
   deletePeopleSnapshotsForCompanyRecipe,
   deletePeopleSnapshotsForRecipe,
 } from "@/lib/db/repositories/people-snapshots";
-import { kickoffRetrievalRun } from "@/lib/retrieval/execution";
+import { getRetrievalRunById } from "@/lib/db/repositories/retrieval-runs";
+import {
+  executeRetrievalRun,
+  getRetrievalRunResumeSummary,
+  kickoffRetrievalRun,
+} from "@/lib/retrieval/execution";
 import {
   createCompanyRecipe,
   createPeopleRecipe,
@@ -62,8 +67,6 @@ export async function saveRecipeAction(formData: FormData) {
         : await createPeopleRecipe(recipeInput);
   }
 
-  revalidatePath("/recipes/company");
-  revalidatePath("/recipes/people");
   revalidatePath("/search");
   revalidatePath("/search/company");
   revalidatePath("/search/people");
@@ -98,11 +101,9 @@ export async function saveRecipeAction(formData: FormData) {
       `${returnBasePath}${query.size > 0 ? `?${query.toString()}` : ""}`,
     );
   }
-
   query.set("editorMode", "edit");
-
   redirect(
-    `${recipe.type === "company" ? "/recipes/company" : "/recipes/people"}${
+    `${recipe.type === "company" ? "/search/company" : "/search/people"}${
       query.size > 0 ? `?${query.toString()}` : ""
     }`,
   );
@@ -128,8 +129,6 @@ export async function deleteRecipeAction(formData: FormData) {
     await deletePeopleSnapshotsForRecipe(recipeId);
   }
 
-  revalidatePath("/recipes/company");
-  revalidatePath("/recipes/people");
   revalidatePath("/search");
   revalidatePath("/search/company");
   revalidatePath("/search/people");
@@ -155,14 +154,7 @@ export async function deleteRecipeAction(formData: FormData) {
   if (typeof returnBasePath === "string" && returnBasePath.startsWith("/search")) {
     redirect(returnBasePath);
   }
-
-  query.set("editorMode", "new");
-
-  redirect(
-    `${recipeType === "company" ? "/recipes/company" : "/recipes/people"}${
-      query.size > 0 ? `?${query.toString()}` : ""
-    }`,
-  );
+  redirect(recipeType === "company" ? "/search/company" : "/search/people");
 }
 
 export async function runCompanySearchAction(formData: FormData) {
@@ -344,7 +336,6 @@ export async function applyCompaniesToPeopleRecipeAction(formData: FormData) {
     imports,
   );
 
-  revalidatePath("/recipes/people");
   revalidatePath("/search");
   revalidatePath("/search/people");
 
@@ -397,6 +388,38 @@ export async function enrichSelectedPeopleAction(formData: FormData) {
       companyRecipe: snapshot.companyRecipeId,
       peopleRecipe: snapshot.peopleRecipeId,
       snapshot: snapshot.companySnapshotId,
+      retrievalRun: run.id,
+    }).toString()}`,
+  );
+}
+
+export async function resumeRetrievalRunAction(formData: FormData) {
+  const runId = String(formData.get("runId") ?? "");
+
+  if (!runId) {
+    throw new Error("Retrieval run is required");
+  }
+
+  const summary = await getRetrievalRunResumeSummary(runId);
+  const run = await getRetrievalRunById(runId);
+
+  if (!run) {
+    throw new Error("Retrieval run not found");
+  }
+
+  if (summary.resumeTargets.unresolved === 0) {
+    throw new Error("This retrieval run has no remaining work to resume");
+  }
+
+  void executeRetrievalRun(runId);
+
+  revalidatePath("/search");
+  revalidatePath("/search/people");
+  redirect(
+    `/search/people?${new URLSearchParams({
+      companyRecipe: run.companyRecipeId,
+      peopleRecipe: run.peopleRecipeId,
+      snapshot: run.companySnapshotId,
       retrievalRun: run.id,
     }).toString()}`,
   );

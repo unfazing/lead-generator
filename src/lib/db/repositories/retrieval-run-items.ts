@@ -62,6 +62,15 @@ export async function listRetrievalRunItems(runId: string) {
   return records.filter((record) => record.runId === runId);
 }
 
+export async function listRetrievalRunItemsByStatuses(
+  runId: string,
+  statuses: RetrievalRunItemRecord["status"][],
+) {
+  const statusSet = new Set(statuses);
+  const records = await listRetrievalRunItems(runId);
+  return records.filter((record) => statusSet.has(record.status));
+}
+
 export async function seedRetrievalRunItems(
   runId: string,
   rows: PeoplePreviewRow[],

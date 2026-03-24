@@ -63,6 +63,39 @@ export const retrievalRunRecordSchema = z.object({
 export type RetrievalRunStatus = z.infer<typeof retrievalRunStatusSchema>;
 export type RetrievalRunRecord = z.infer<typeof retrievalRunRecordSchema>;
 
+export const ACTIVE_RETRIEVAL_RUN_STATUSES = ["active", "cooldown", "retrying"] as const;
+
+export function isRetrievalRunStale(
+  run: Pick<RetrievalRunRecord, "status" | "lastHeartbeatAt" | "lease">,
+  now = Date.now(),
+  staleAfterMs = 60_000,
+) {
+  if (
+    run.status !== "active" &&
+    run.status !== "cooldown" &&
+    run.status !== "retrying"
+  ) {
+    return false;
+  }
+
+  const heartbeatAt = run.lastHeartbeatAt
+    ? new Date(run.lastHeartbeatAt).getTime()
+    : Number.NaN;
+  const leaseExpiry = run.lease?.expiresAt
+    ? new Date(run.lease.expiresAt).getTime()
+    : Number.NaN;
+  const latestSignal = Math.max(
+    Number.isFinite(heartbeatAt) ? heartbeatAt : 0,
+    Number.isFinite(leaseExpiry) ? leaseExpiry : 0,
+  );
+
+  if (latestSignal === 0) {
+    return true;
+  }
+
+  return now - latestSignal > staleAfterMs;
+}
+
 const retrievalRunsFilePath = getDataFilePath("retrieval-runs.json");
 const retrievalRunsSchema = retrievalRunRecordSchema.array();
 
