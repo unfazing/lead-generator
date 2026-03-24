@@ -2,7 +2,9 @@
 
 import React from "react";
 import { useMemo, useState } from "react";
+import { RetrievalRunResultsTable } from "@/features/retrieval-runs/components/retrieval-run-results-table";
 import type { EnrichedPeopleEntry } from "@/lib/db/repositories/retrieval-run-items";
+import { isVerifiedBusinessEmailQuality } from "@/lib/retrieval/quality";
 
 export function EnrichedPeopleResults({
   entries,
@@ -15,7 +17,7 @@ export function EnrichedPeopleResults({
     () =>
       showAllOutcomes
         ? entries
-        : entries.filter((entry) => entry.quality === "verified_business_email"),
+        : entries.filter((entry) => isVerifiedBusinessEmailQuality(entry.outcomeQuality)),
     [entries, showAllOutcomes],
   );
 
@@ -44,44 +46,8 @@ export function EnrichedPeopleResults({
           No verified business-email results have been stored for this snapshot yet.
         </div>
       ) : (
-        <div className="table-shell">
-          <table className="results-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Title</th>
-                <th>Company</th>
-                <th>Email</th>
-                <th>Quality</th>
-                <th>Completed</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visibleEntries.map((entry) => (
-                <tr key={entry.id}>
-                  <td>{entry.fullName}</td>
-                  <td>{entry.title || "—"}</td>
-                  <td>{entry.companyName || "—"}</td>
-                  <td>{entry.email || "—"}</td>
-                  <td>{entry.quality ?? "pending"}</td>
-                  <td>{entry.completedAt ? formatStableDateTime(entry.completedAt) : "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <RetrievalRunResultsTable entries={visibleEntries} />
       )}
     </section>
   );
-}
-
-function formatStableDateTime(value: string) {
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "UTC",
-  }).format(new Date(value));
 }
