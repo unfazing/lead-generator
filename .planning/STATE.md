@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Phase 4 context created; ready for `$gsd-plan-phase 4`
-last_updated: "2026-03-23T19:48:56.440Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-03-24T13:53:07.962Z"
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 15
-  completed_plans: 13
+  completed_plans: 14
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: `.planning/PROJECT.md` (updated 2026-03-23)
 ## Current Position
 
 Phase: 04 (retrieval-execution-and-run-safety) — EXECUTING
-Plan: 1 of 3
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -50,6 +50,7 @@ Plan: 1 of 3
 | Phase 03.1 P01 | 12min | 2 tasks | 9 files |
 | Phase 03.1 P02 | 14min | 2 tasks | 13 files |
 | Phase 03.1 P03 | 7min | 2 tasks | 5 files |
+| Phase 04 P02 | 16min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Recent decisions affecting current work:
 - [Phase 03.1]: Shared snapshot viewers now power company and people review surfaces with common sort, filter, and export behavior.
 - [Phase 03.1]: Phase 03.1 is UAT-complete and the next active phase is Phase 4 retrieval execution.
 - [Phase 04]: Confirmed run plans now start retrieval by persisting a run first and letting a server-owned executor process batches asynchronously.
+- [Phase 04]: Visible interrupted retrieval state is derived from persisted heartbeat and lease data rather than client timers.
+- [Phase 04]: Resume requeues only unresolved retrieval items and never replays completed contacts.
+- [Phase 04]: Estimate-versus-actual retrieval usage is served from a polling summary route so plan estimates remain immutable and auditable.
 
 ### Pending Todos
 
@@ -89,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T12:20:00+08:00
-Stopped at: Phase 4 context created; ready for `$gsd-plan-phase 4`
+Last session: 2026-03-24T13:53:07.930Z
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None

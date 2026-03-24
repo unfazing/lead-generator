@@ -32,14 +32,14 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **COST-01**: User can see current Apollo API or credit usage data in the frontend
 - [x] **COST-02**: User can see an estimated credit cost before starting verified-email retrieval
 - [x] **COST-03**: User can configure run limits or stop conditions that cap how many contacts are processed
-- [ ] **COST-04**: User can compare estimated usage with actual usage after a run completes
+- [x] **COST-04**: User can compare estimated usage with actual usage after a run completes
 - [ ] **COST-05**: User can avoid unnecessary repeat processing through dedupe or reuse checks before enrichment starts
 
 ### Email Retrieval
 
 - [x] **EMAI-01**: User can start verified-email retrieval only from a reviewed people result set
 - [x] **EMAI-02**: User can monitor retrieval progress and status from the frontend while a run is in progress
-- [ ] **EMAI-03**: User can resume or safely inspect an interrupted retrieval run without losing run state
+- [x] **EMAI-03**: User can resume or safely inspect an interrupted retrieval run without losing run state
 - [ ] **EMAI-04**: User can distinguish verified business-email results from non-verified or unusable results
 
 ### Export
@@ -92,11 +92,11 @@ Requirements for initial release. Each maps to roadmap phases.
 | COST-01 | Phase 1 | Complete |
 | COST-02 | Phase 3 | Complete |
 | COST-03 | Phase 3 | Complete |
-| COST-04 | Phase 4 | Pending |
+| COST-04 | Phase 4 | Complete |
 | COST-05 | Phase 4 | Pending |
 | EMAI-01 | Phase 3 | Complete |
 | EMAI-02 | Phase 4 | Complete |
-| EMAI-03 | Phase 4 | Pending |
+| EMAI-03 | Phase 4 | Complete |
 | EMAI-04 | Phase 4 | Pending |
 | EXPT-01 | Phase 5 | Pending |
 | EXPT-02 | Phase 5 | Pending |
