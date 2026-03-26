@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { SnapshotColumnPicker } from "@/features/snapshots/components/snapshot-column-picker";
 import { SnapshotParamsViewer } from "@/features/snapshots/components/snapshot-params-viewer";

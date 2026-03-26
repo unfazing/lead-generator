@@ -21,7 +21,12 @@ describe("enriched-people-results", () => {
             executionStatus: "completed",
             outcomeQuality: "verified_business_email",
             reusedFromRunId: null,
-            providerPayload: null,
+            providerPayload: {
+              linkedin_url: "https://linkedin.com/in/avery-ng",
+              organization: {
+                name: "Acme Holdings",
+              },
+            },
             status: "completed",
             quality: "verified_business_email",
             email: "avery@acme.com",
@@ -40,5 +45,7 @@ describe("enriched-people-results", () => {
     expect(markup).toContain("Stored enrichment outcomes for this snapshot");
     expect(markup).toContain("avery@acme.com");
     expect(markup).toContain("Avery Ng");
+    expect(markup).toContain("linkedin_url");
+    expect(markup).toContain("organization.name");
   });
 });

@@ -78,10 +78,6 @@ export function RecipeList({
       params.set("companyRecipe", pairedRecipeId);
     }
 
-    if (basePath.startsWith("/recipes")) {
-      params.set("editorMode", "new");
-    }
-
     return buildHref(params);
   }
 
@@ -100,16 +96,12 @@ export function RecipeList({
       }
     }
 
-    if (basePath.startsWith("/recipes")) {
-      params.set("editorMode", "edit");
-    }
-
     return buildHref(params);
   }
 
   function getEditorHref(recipeId: string) {
     const resolvedEditorBasePath =
-      editorBasePath ?? (type === "company" ? "/recipes/company" : "/recipes/people");
+      editorBasePath ?? (type === "company" ? "/search/company" : "/search/people");
     const params = new URLSearchParams();
 
     if (type === "company") {

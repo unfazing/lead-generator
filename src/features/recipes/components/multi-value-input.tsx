@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type KeyboardEvent } from "react";
+import { useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
 import { InfoTip } from "@/features/ui/components/info-tip";
 
 type MultiValueInputProps = {
@@ -9,6 +9,8 @@ type MultiValueInputProps = {
   hint?: string;
   placeholder?: string;
   values: string[];
+  actions?: ReactNode;
+  onValuesChange?: (values: string[]) => void;
 };
 
 function normalizeToken(value: string) {
@@ -21,6 +23,8 @@ export function MultiValueInput({
   hint,
   placeholder,
   values,
+  actions,
+  onValuesChange,
 }: MultiValueInputProps) {
   const [items, setItems] = useState(values);
   const [draft, setDraft] = useState("");
@@ -29,6 +33,10 @@ export function MultiValueInput({
     setItems(values);
     setDraft("");
   }, [values]);
+
+  useEffect(() => {
+    onValuesChange?.(items);
+  }, [items, onValuesChange]);
 
   function addToken(rawValue: string) {
     const nextValues = rawValue
@@ -69,6 +77,7 @@ export function MultiValueInput({
           content={hint ?? "Add one value at a time. Press Enter or comma to create a value."}
           label={`${label} help`}
         />
+        {actions}
       </label>
       <div className="token-input">
         {items.map((value) => (

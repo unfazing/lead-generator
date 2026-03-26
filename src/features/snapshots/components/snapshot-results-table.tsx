@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import React, { type ReactNode } from "react";
 
 type SnapshotResultsTableProps<Row extends { apollo_id: string }> = {
   emptyMessage: string;

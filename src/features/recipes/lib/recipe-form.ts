@@ -20,10 +20,14 @@ function splitLines(value: FormDataEntryValue | null) {
 }
 
 function getMultiValueEntries(formData: FormData, key: string) {
-  return formData
-    .getAll(key)
-    .flatMap((value) => splitLines(value))
-    .filter(Boolean);
+  return Array.from(
+    new Set(
+      formData
+        .getAll(key)
+        .flatMap((value) => splitLines(value))
+        .filter(Boolean),
+    ),
+  );
 }
 
 function getOptionalInteger(formData: FormData, key: string) {

@@ -21,7 +21,9 @@ describe("retrieval-results-table", () => {
             executionStatus: "completed",
             outcomeQuality: "email_unavailable",
             reusedFromRunId: null,
-            providerPayload: null,
+            providerPayload: {
+              linkedin_url: "https://linkedin.com/in/taylor-ong",
+            },
             status: "completed",
             quality: "email_unavailable",
             email: null,
@@ -46,7 +48,11 @@ describe("retrieval-results-table", () => {
             executionStatus: "completed",
             outcomeQuality: "verified_business_email",
             reusedFromRunId: "prior-run",
-            providerPayload: null,
+            providerPayload: {
+              organization: {
+                name: "Acme Corp",
+              },
+            },
             status: "completed",
             quality: "verified_business_email",
             email: "avery@acme.com",
@@ -65,6 +71,8 @@ describe("retrieval-results-table", () => {
     expect(markup.indexOf("Avery Ng")).toBeLessThan(markup.indexOf("Taylor Ong"));
     expect(markup).toContain("Verified business email");
     expect(markup).toContain("Email unavailable");
-    expect(markup).not.toContain("email_status");
+    expect(markup).toContain("email_status");
+    expect(markup).toContain("organization.name");
+    expect(markup).toContain("linkedin_url");
   });
 });

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { deleteRecipeAction, saveRecipeAction } from "@/app/recipes/actions";
+import { CompanyListImporter } from "@/features/recipes/components/company-list-importer";
 import { MultiValueInput } from "@/features/recipes/components/multi-value-input";
 import { InfoTip } from "@/features/ui/components/info-tip";
 import { employeeRangeOptions } from "@/lib/apollo/company-filter-definitions";
@@ -66,6 +67,12 @@ export function RecipeEditor(props: RecipeEditorProps) {
     returnSourceSnapshotIds = [],
   } = props;
   const [isDirty, setIsDirty] = useState(false);
+  const [organizationName, setOrganizationName] = useState(
+    props.type === "company" ? props.draft.companyFilters.organizationName : "",
+  );
+  const [organizationDomains, setOrganizationDomains] = useState(
+    props.type === "company" ? props.draft.companyFilters.qOrganizationDomainsList : [],
+  );
 
   useEffect(() => {
     window.__recipeEditorDirty = isDirty;
@@ -173,10 +180,14 @@ export function RecipeEditor(props: RecipeEditorProps) {
               <div className="field">
                 <label htmlFor="organizationName">Organization name</label>
                 <input
-                  defaultValue={props.draft.companyFilters.organizationName}
                   id="organizationName"
                   name="organizationName"
+                  onChange={(event) => {
+                    setOrganizationName(event.target.value);
+                    setIsDirty(true);
+                  }}
                   placeholder="Acme, Apollo, Stripe"
+                  value={organizationName}
                 />
               </div>
               <div className="field">
@@ -189,11 +200,22 @@ export function RecipeEditor(props: RecipeEditorProps) {
                 />
               </div>
               <MultiValueInput
+                actions={
+                  <CompanyListImporter
+                    onImport={(domains) => {
+                      setOrganizationDomains((current) =>
+                        Array.from(new Set([...current, ...domains])),
+                      );
+                      setIsDirty(true);
+                    }}
+                  />
+                }
                 hint="Add one employer domain at a time without www or @."
                 label="Organization domains"
                 name="qOrganizationDomainsList"
+                onValuesChange={setOrganizationDomains}
                 placeholder="apollo.io"
-                values={props.draft.companyFilters.qOrganizationDomainsList}
+                values={organizationDomains}
               />
               <MultiValueInput
                 hint="Add one location at a time for cleaner geographic targeting."
