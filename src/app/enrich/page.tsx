@@ -1,10 +1,27 @@
 import Link from "next/link";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { ContactBatchList } from "@/features/enrich/components/contact-batch-list";
+import { ContactBatchPanel } from "@/features/enrich/components/contact-batch-panel";
 import { WorkspaceEmptyState } from "@/features/search-workspace/components/workspace-empty-state";
 import {
+  createContactBatch,
+  deleteContactBatch,
+  getContactBatchById,
   listContactBatches,
+  updateContactBatch,
   type ContactBatchRecord,
 } from "@/lib/db/repositories/contact-batches";
-import { listContactBatchMembersWithCoverage } from "@/lib/db/repositories/contact-batch-members";
+import {
+  deleteContactBatchMembers,
+  listContactBatchMembersWithCoverage,
+} from "@/lib/db/repositories/contact-batch-members";
+import { getEnrichedPeopleByApolloIds } from "@/lib/db/repositories/enriched-people";
+
+type EnrichPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
 
 type BatchSummary = {
   batch: ContactBatchRecord;
@@ -12,6 +29,19 @@ type BatchSummary = {
   alreadyEnrichedMembers: number;
   lastAddedFromSnapshot: string | null;
 };
+
+const batchFormSchema = z.object({
+  name: z.string().trim().min(1, "Batch name is required"),
+  notes: z.string().default(""),
+});
+
+function getSingleParam(
+  params: Record<string, string | string[] | undefined>,
+  key: string,
+) {
+  const value = params[key];
+  return typeof value === "string" ? value : Array.isArray(value) ? value[0] : null;
+}
 
 async function buildBatchSummary(batch: ContactBatchRecord): Promise<BatchSummary> {
   const members = await listContactBatchMembersWithCoverage(batch.id);
@@ -27,10 +57,73 @@ async function buildBatchSummary(batch: ContactBatchRecord): Promise<BatchSummar
   };
 }
 
-export default async function EnrichPage() {
+async function createBatchAction(formData: FormData) {
+  "use server";
+
+  const parsed = batchFormSchema.parse({
+    name: formData.get("name"),
+    notes: formData.get("notes"),
+  });
+
+  const created = await createContactBatch(parsed);
+  revalidatePath("/enrich");
+  redirect(`/enrich?batch=${created.id}`);
+}
+
+async function updateBatchAction(formData: FormData) {
+  "use server";
+
+  const batchId = String(formData.get("batchId") ?? "");
+  if (!batchId) {
+    throw new Error("Contact batch is required");
+  }
+
+  const parsed = batchFormSchema.parse({
+    name: formData.get("name"),
+    notes: formData.get("notes"),
+  });
+
+  await updateContactBatch(batchId, (batch) => ({
+    ...batch,
+    name: parsed.name,
+    notes: parsed.notes,
+  }));
+
+  revalidatePath("/enrich");
+  redirect(`/enrich?batch=${batchId}`);
+}
+
+async function deleteBatchAction(formData: FormData) {
+  "use server";
+
+  const batchId = String(formData.get("batchId") ?? "");
+  if (!batchId) {
+    throw new Error("Contact batch is required");
+  }
+
+  await deleteContactBatchMembers(batchId);
+  await deleteContactBatch(batchId);
+
+  revalidatePath("/enrich");
+  redirect("/enrich");
+}
+
+export default async function EnrichPage({ searchParams }: EnrichPageProps) {
+  const params = searchParams ? await searchParams : {};
+  const selectedBatchId = getSingleParam(params, "batch");
   const batches = await listContactBatches();
   const summaries = await Promise.all(batches.map(buildBatchSummary));
-  const activeBatch = summaries[0] ?? null;
+  const activeBatchSummary =
+    summaries.find((summary) => summary.batch.id === selectedBatchId) ?? summaries[0] ?? null;
+  const activeBatch = activeBatchSummary
+    ? await getContactBatchById(activeBatchSummary.batch.id)
+    : null;
+  const activeMembers = activeBatch
+    ? await listContactBatchMembersWithCoverage(activeBatch.id)
+    : [];
+  const enrichedByApolloId = await getEnrichedPeopleByApolloIds(
+    activeMembers.map((member) => member.personApolloId),
+  );
 
   return (
     <main className="shell workspace-shell">
@@ -38,7 +131,11 @@ export default async function EnrichPage() {
         <div className="workspace-header">
           <p className="eyebrow">Enrichment workflow</p>
           <h1>Work from contact batches instead of people snapshots.</h1>
-          <p>Contact batches are mutable saved groupings keyed by Apollo person ID. They can accumulate members from multiple people snapshots while the global enriched-people store stays append-only.</p>
+          <p>
+            Contact batches are the operator workspace for verified-email retrieval.
+            They stay mutable, dedupe by Apollo person ID, and show whether the global
+            enriched-people store already covers each member.
+          </p>
           <div className="workspace-actions">
             <Link className="secondary-button" href="/search/people">
               Browse people snapshots
@@ -49,73 +146,35 @@ export default async function EnrichPage() {
           </div>
         </div>
       </section>
-      {summaries.length === 0 ? (
-        <WorkspaceEmptyState
-          eyebrow="Enrichment workflow"
-          title="No contact batches created yet."
-          description="Phase 04.1 establishes the batch and store foundations first. Use saved people snapshots as future add sources, then manage enrichment from this route."
-          primaryAction={{ href: "/search/people", label: "Open people workflow" }}
-          secondaryAction={{ href: "/enrich/store", label: "View enriched-people store" }}
-        />
-      ) : (
-        <div className="workspace-grid workspace-grid-wide search-grid">
-          <section className="card stack search-sidebar">
-            <div className="workspace-header">
-              <p className="eyebrow">Contact batches</p>
-              <h2>Saved enrichment worksets</h2>
-              <p>Each batch dedupes by Apollo person ID and preserves all contributing snapshot provenance.</p>
-            </div>
-            <div className="stack">
-              {summaries.map((summary) => (
-                <article key={summary.batch.id} className="card stack">
-                  <div className="workspace-header">
-                    <h3>{summary.batch.name}</h3>
-                    <p>{summary.batch.notes || "No notes yet."}</p>
-                  </div>
-                  <div className="stats-grid">
-                    <div className="stat-tile">
-                      <span className="meta">Members</span>
-                      <strong>{summary.totalMembers}</strong>
-                    </div>
-                    <div className="stat-tile">
-                      <span className="meta">Already in global store</span>
-                      <strong>{summary.alreadyEnrichedMembers}</strong>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-          <section className="card stack search-main">
-            <div className="workspace-header">
-              <p className="eyebrow">Current foundation</p>
-              <h2>{activeBatch?.batch.name ?? "Contact batch overview"}</h2>
-              <p>This route is now the durable home for enrichment. Later plans can layer add-from-snapshot controls, member removal, run execution, and batch-scoped result views on top of this persisted model.</p>
-            </div>
-            {activeBatch ? (
-              <>
-                <div className="stats-grid">
-                  <div className="stat-tile">
-                    <span className="meta">Unique members</span>
-                    <strong>{activeBatch.totalMembers}</strong>
-                  </div>
-                  <div className="stat-tile">
-                    <span className="meta">Skipped by global store</span>
-                    <strong>{activeBatch.alreadyEnrichedMembers}</strong>
-                  </div>
-                  <div className="stat-tile">
-                    <span className="meta">Latest source snapshot</span>
-                    <strong>{activeBatch.lastAddedFromSnapshot ?? "None yet"}</strong>
-                  </div>
-                </div>
-                <div className="empty-message">
-                  Enrichment execution remains server-enforced: any Apollo person ID already present in the global enriched-people store is skipped before Apollo calls, regardless of which batch later references it.
-                </div>
-              </>
-            ) : null}
-          </section>
+      <div className="workspace-grid workspace-grid-wide search-grid">
+        <div className="stack search-sidebar">
+          <ContactBatchList
+            activeBatchId={activeBatch?.id ?? null}
+            batches={summaries}
+            createAction={createBatchAction}
+            deleteAction={deleteBatchAction}
+            updateAction={updateBatchAction}
+          />
         </div>
-      )}
+        <div className="stack search-main">
+          {activeBatch ? (
+            <ContactBatchPanel
+              batch={activeBatch}
+              enrichedByApolloId={enrichedByApolloId}
+              members={activeMembers}
+              summary={activeBatchSummary}
+            />
+          ) : summaries.length === 0 ? (
+            <WorkspaceEmptyState
+              eyebrow="Enrichment workflow"
+              title="No contact batches created yet."
+              description="Create a contact batch here, then use saved people snapshots as source material for adding members into that batch."
+              primaryAction={{ href: "/search/people", label: "Open people workflow" }}
+              secondaryAction={{ href: "/enrich/store", label: "View enriched-people store" }}
+            />
+          ) : null}
+        </div>
+      </div>
     </main>
   );
 }
