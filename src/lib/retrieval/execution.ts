@@ -1,5 +1,6 @@
 import { getPeopleSnapshotById } from "@/lib/db/repositories/people-snapshots";
 import {
+  getAlreadyEnrichedApolloIds,
   getEnrichedPeopleByApolloIds,
   upsertEnrichedPeople,
 } from "@/lib/db/repositories/enriched-people";
@@ -95,16 +96,17 @@ async function applyExistingEnrichedPeople(runId: string) {
   const pendingItems = (await listRetrievalRunItems(runId)).filter(
     (item) => item.executionStatus === "pending",
   );
-  const enrichedByApolloId = await getEnrichedPeopleByApolloIds(
-    pendingItems.map((item) => item.personApolloId),
-  );
-  const reusedItems = pendingItems.filter((item) =>
-    enrichedByApolloId.has(item.personApolloId),
-  );
+  const pendingApolloIds = pendingItems.map((item) => item.personApolloId);
+  const existingApolloIds = await getAlreadyEnrichedApolloIds(pendingApolloIds);
 
-  if (reusedItems.length === 0) {
+  if (existingApolloIds.size === 0) {
     return 0;
   }
+
+  const enrichedByApolloId = await getEnrichedPeopleByApolloIds([...existingApolloIds]);
+  const reusedItems = pendingItems.filter((item) =>
+    existingApolloIds.has(item.personApolloId),
+  );
 
   const reusedIds = new Set(reusedItems.map((item) => item.id));
   const completedAt = new Date().toISOString();

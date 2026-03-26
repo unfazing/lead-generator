@@ -34,7 +34,8 @@ async function writeEnrichedPeople(records: EnrichedPersonRecord[]) {
 }
 
 export async function listEnrichedPeople() {
-  return readEnrichedPeople();
+  const records = await readEnrichedPeople();
+  return records.sort((left, right) => right.createdAt.localeCompare(left.createdAt));
 }
 
 export async function getEnrichedPeopleByApolloIds(personApolloIds: string[]) {
@@ -51,6 +52,10 @@ export async function getEnrichedPeopleByApolloIds(personApolloIds: string[]) {
   );
 }
 
+export async function getAlreadyEnrichedApolloIds(personApolloIds: string[]) {
+  return new Set((await getEnrichedPeopleByApolloIds(personApolloIds)).keys());
+}
+
 export async function upsertEnrichedPeople(
   runId: string,
   outcomes: EnrichmentOutcome[],
@@ -62,8 +67,15 @@ export async function upsertEnrichedPeople(
   const records = await readEnrichedPeople();
   const now = new Date().toISOString();
   const next = [...records];
+  const existingByApolloId = new Map(
+    records.map((record) => [record.personApolloId, record]),
+  );
 
   for (const outcome of outcomes) {
+    if (existingByApolloId.has(outcome.personApolloId)) {
+      continue;
+    }
+
     const record: EnrichedPersonRecord = enrichedPersonRecordSchema.parse({
       personApolloId: outcome.personApolloId,
       email: outcome.email,
@@ -73,22 +85,15 @@ export async function upsertEnrichedPeople(
       apolloPerson: outcome.apolloPerson,
       sourceRunId: runId,
       enrichedAt: now,
-      createdAt:
-        records.find((entry) => entry.personApolloId === outcome.personApolloId)?.createdAt ??
-        now,
+      createdAt: now,
       updatedAt: now,
     });
-    const index = next.findIndex(
-      (entry) => entry.personApolloId === outcome.personApolloId,
-    );
-
-    if (index >= 0) {
-      next[index] = record;
-    } else {
-      next.push(record);
-    }
+    next.push(record);
+    existingByApolloId.set(record.personApolloId, record);
   }
 
   await writeEnrichedPeople(next);
-  return outcomes.map((outcome) => next.find((entry) => entry.personApolloId === outcome.personApolloId)!);
+  return outcomes
+    .map((outcome) => existingByApolloId.get(outcome.personApolloId))
+    .filter((record): record is EnrichedPersonRecord => Boolean(record));
 }
