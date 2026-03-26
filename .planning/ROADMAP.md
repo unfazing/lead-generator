@@ -16,6 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Company Search and Snapshot Preview** - Let the user search Apollo companies, inspect results, and persist company snapshots safely. Completed 2026-03-23.
 - [x] **Phase 3: People Discovery and Run Planning** - Turn reviewed companies into people previews and gated retrieval plans with estimated cost. Completed 2026-03-23.
 - [x] **Phase 4: Retrieval Execution and Run Safety** - Execute Apollo `match` / `bulk_match` verified-email enrichment with monitoring, resumability, and spend protection. Completed 2026-03-24.
+- [ ] **Phase 04.1: Contact Batch Enrichment Workflow (INSERTED)** - Introduce reusable contact batches above people snapshots so enrichment can accumulate across multiple source snapshots while reusing the global enriched-people store.
 - [ ] **Phase 5: Verified Export and Repeatable Reruns** - Export trusted CSVs with provenance, dedupe, and recipe-driven replay.
 
 ## Phase Details
@@ -96,6 +97,17 @@ Plans:
 - [x] 04-02: Add resume-safe run state and actual-usage reconciliation for enrichment runs
 - [x] 04-03: Enforce pre-enrichment dedupe and Apollo result-quality classification
 
+### Phase 04.1: Contact Batch Enrichment Workflow (INSERTED)
+**Goal**: Users can curate independent contact batches from one or more people snapshots, enrich only not-yet-enriched people via the central enriched-people store, and inspect both batch-level and global enrichment results clearly.
+**Depends on**: Phase 4
+**Requirements**: [PEOP-04, COST-05, EMAI-01, EMAI-02, EMAI-04]
+**Plans**: 3 plans
+
+Plans:
+- [ ] 04.1-01: Add contact-batch persistence, membership provenance, and global enriched-store viewing
+- [ ] 04.1-02: Build `/enrich` workflow for managing contact batches and adding people from saved people snapshots
+- [ ] 04.1-03: Run batch enrichment against only globally unenriched people and surface batch/global result states
+
 ### Phase 5: Verified Export and Repeatable Reruns
 **Goal**: Users can export trusted verified-email CSVs and rerun successful workflows without rebuilding setup or re-exporting duplicates.
 **Depends on**: Phase 4
@@ -113,7 +125,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 2.1 -> 2.2 -> 3 -> 3.1 -> 4 -> 5
+Phases execute in numeric order: 1 -> 2 -> 2.1 -> 2.2 -> 3 -> 3.1 -> 4 -> 4.1 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -122,4 +134,5 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 2.2 -> 3 -> 3.1 -> 4 -> 5
 | 3. People Discovery and Run Planning | 3/3 | Complete | 2026-03-23 |
 | 03.1. Rework the search flow | 3/3 | Complete | 2026-03-24 |
 | 4. Retrieval Execution and Run Safety | 3/3 | Complete | 2026-03-24 |
+| 04.1. Contact Batch Enrichment Workflow | 0/3 | Not started | - |
 | 5. Verified Export and Repeatable Reruns | 0/2 | Not started | - |

@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-03-24T14:05:05.000Z"
+status: ready_to_execute
+stopped_at: Planned 04.1 contact batch enrichment workflow
+last_updated: "2026-03-27T00:00:00.000Z"
 progress:
-  total_phases: 6
+  total_phases: 7
   completed_phases: 5
-  total_plans: 15
+  total_plans: 18
   completed_plans: 15
 ---
 
@@ -19,12 +19,12 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-03-23)
 
 **Core value:** Turn precise Apollo filters into verified-email exports quickly without wasting API credits.
-**Current focus:** Phase 05 — verified-export-and-repeatable-reruns
+**Current focus:** Phase 04.1 — contact-batch-enrichment-workflow
 
 ## Current Position
 
-Phase: 05 (verified-export-and-repeatable-reruns) — READY
-Plan: 1 of 2
+Phase: 04.1 (contact-batch-enrichment-workflow) — READY TO EXECUTE
+Plan: 1 of 3
 
 ## Performance Metrics
 
@@ -80,6 +80,9 @@ Recent decisions affecting current work:
 - [Phase 04]: Estimate-versus-actual retrieval usage is served from a polling summary route so plan estimates remain immutable and auditable.
 - [Phase 04]: Retrieval kickoff now persists preflight dedupe and reuse dispositions before Apollo calls.
 - [Phase 04]: Apollo enrichment results are normalized into internal quality categories for verified, unverified, unavailable, no-match, and provider-error outcomes.
+- [Phase 04.1]: Enrichment is moving out of the people workflow into independent contact batches that can accumulate members from multiple people snapshots.
+- [Phase 04.1]: Contact batches are mutable groupings above the append-only central enriched-people store; global enriched people are never deleted or re-enriched.
+- [Phase 04.1]: Batch enrichment must always skip Apollo calls for any Apollo person ID already present in the central enriched-people store, including unusable prior outcomes.
 
 ### Pending Todos
 
@@ -88,6 +91,7 @@ None yet.
 ### Roadmap Evolution
 
 - Phase 03.1 inserted after Phase 3: Rework the search flow (URGENT)
+- Phase 04.1 inserted after Phase 4: Contact batch enrichment workflow (URGENT)
 
 ### Blockers/Concerns
 
@@ -96,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T13:53:07.930Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-03-27T00:00:00.000Z
+Stopped at: Planned 04.1 contact batch enrichment workflow
 Resume file: None
