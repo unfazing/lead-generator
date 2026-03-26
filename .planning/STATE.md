@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: ready_to_execute
-stopped_at: Planned 04.1 contact batch enrichment workflow
-last_updated: "2026-03-27T00:00:00.000Z"
+status: unknown
+stopped_at: Completed 04.1-contact-batch-enrichment-workflow-01-PLAN.md
+last_updated: "2026-03-26T23:54:41.867Z"
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 18
-  completed_plans: 15
+  completed_plans: 16
 ---
 
 # Project State
@@ -23,8 +23,8 @@ See: `.planning/PROJECT.md` (updated 2026-03-23)
 
 ## Current Position
 
-Phase: 04.1 (contact-batch-enrichment-workflow) — READY TO EXECUTE
-Plan: 1 of 3
+Phase: 04.1 (contact-batch-enrichment-workflow) — EXECUTING
+Plan: 2 of 3
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ Plan: 1 of 3
 | Phase 03.1 P03 | 7min | 2 tasks | 5 files |
 | Phase 04 P02 | 16min | 2 tasks | 13 files |
 | Phase 04 P03 | 11min | 2 tasks | 17 files |
+| Phase 04.1-contact-batch-enrichment-workflow P01 | 5min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,7 @@ Recent decisions affecting current work:
 - [Phase 04.1]: Enrichment is moving out of the people workflow into independent contact batches that can accumulate members from multiple people snapshots.
 - [Phase 04.1]: Contact batches are mutable groupings above the append-only central enriched-people store; global enriched people are never deleted or re-enriched.
 - [Phase 04.1]: Batch enrichment must always skip Apollo calls for any Apollo person ID already present in the central enriched-people store, including unusable prior outcomes.
+- [Phase 04.1]: Contact batches now persist independently from recipes and dedupe membership by Apollo person ID while merging source snapshot provenance.
 
 ### Pending Todos
 
@@ -100,6 +102,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T00:00:00.000Z
-Stopped at: Planned 04.1 contact batch enrichment workflow
+Last session: 2026-03-26T23:54:41.862Z
+Stopped at: Completed 04.1-contact-batch-enrichment-workflow-01-PLAN.md
 Resume file: None
