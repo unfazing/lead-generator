@@ -60,7 +60,7 @@ export function SnapshotParamsViewer({
             onClick={onToggleVisibility}
             type="button"
           >
-            {isVisible ? "Hide" : "Show"}
+            {isVisible ? "▴" : "▾"}
           </button>
         </div>
       </div>

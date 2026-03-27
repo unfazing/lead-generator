@@ -112,6 +112,31 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               </Link>
             </div>
           </section>
+          <section className="card stack">
+            <div className="workspace-header">
+              <p className="eyebrow">Enrich workflow</p>
+              <h2>Build contact batches and enrich only what is still missing.</h2>
+              <p>Work from reusable contact batches, add people from saved people snapshots, and rely on the global enriched-people store to avoid duplicate Apollo spend.</p>
+            </div>
+            <div className="stats-grid">
+              <div className="stat-tile">
+                <span className="meta">Batch workspace</span>
+                <strong>Contact batches</strong>
+              </div>
+              <div className="stat-tile">
+                <span className="meta">Global reuse rule</span>
+                <strong>Skip enriched</strong>
+              </div>
+            </div>
+            <div className="workspace-actions">
+              <Link className="primary-button" href="/enrich">
+                Open enrich workflow
+              </Link>
+              <Link className="secondary-button" href="/enriched-people">
+                View enriched store
+              </Link>
+            </div>
+          </section>
         </div>
         {companyRecipes.length === 0 && peopleRecipes.length === 0 ? (
           <WorkspaceEmptyState

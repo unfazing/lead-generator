@@ -1,13 +1,14 @@
 import Link from "next/link";
 
 type WorkspaceStageNavProps = {
-  current: "landing" | "company" | "people";
+  current: "landing" | "company" | "people" | "enrich";
 };
 
 const navItems = [
   { href: "/search", key: "landing", label: "Search home" },
   { href: "/search/company", key: "company", label: "Company workflow" },
   { href: "/search/people", key: "people", label: "People workflow" },
+  { href: "/enrich", key: "enrich", label: "Enrich workflow" },
 ] as const;
 
 export function WorkspaceStageNav({ current }: WorkspaceStageNavProps) {

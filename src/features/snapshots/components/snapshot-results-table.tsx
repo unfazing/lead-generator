@@ -16,6 +16,7 @@ type SnapshotResultsTableProps<Row extends { apollo_id: string }> = {
   sortColumn?: string | null;
   sortDirection?: "asc" | "desc";
   onToggleSort?: (column: string) => void;
+  pagination?: ReactNode;
 };
 
 export function SnapshotResultsTable<Row extends { apollo_id: string }>({
@@ -34,6 +35,7 @@ export function SnapshotResultsTable<Row extends { apollo_id: string }>({
   sortColumn = null,
   sortDirection = "asc",
   onToggleSort,
+  pagination,
 }: SnapshotResultsTableProps<Row>) {
   if (rows.length === 0 && !metaDetail) {
     return <div className="card empty-message">{emptyMessage}</div>;
@@ -109,6 +111,7 @@ export function SnapshotResultsTable<Row extends { apollo_id: string }>({
           </tbody>
         </table>
       </div>
+      {pagination ? pagination : null}
     </div>
   );
 }

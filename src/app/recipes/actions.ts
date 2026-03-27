@@ -12,7 +12,6 @@ import {
   deleteCompanySnapshotsForRecipe,
 } from "@/lib/db/repositories/company-snapshots";
 import {
-  createContactBatch,
   getContactBatchById,
   updateContactBatch,
 } from "@/lib/db/repositories/contact-batches";
@@ -234,20 +233,11 @@ const companyImportPlanEntrySchema = z.object({
   selectedCompanyIds: z.array(z.string().min(1)).default([]),
 });
 
-const addSnapshotPeopleToBatchSchema = z.discriminatedUnion("destinationMode", [
-  z.object({
-    destinationMode: z.literal("existing"),
-    batchId: z.string().min(1),
-    newBatchName: z.string().optional(),
-    newBatchNotes: z.string().optional(),
-  }),
-  z.object({
-    destinationMode: z.literal("new"),
-    batchId: z.string().optional(),
-    newBatchName: z.string().trim().min(1, "Batch name is required"),
-    newBatchNotes: z.string().default(""),
-  }),
-]);
+const addSnapshotPeopleToBatchSchema = z.object({
+  destinationMode: z.literal("existing"),
+  batchId: z.string().min(1),
+  mode: z.enum(["selected", "all"]),
+});
 
 const enrichBatchSchema = z.object({
   batchId: z.string().min(1),
@@ -433,15 +423,11 @@ export async function addSnapshotPeopleToBatchAction(formData: FormData) {
   }
 
   const selectedApolloIds = z.array(z.string().min(1)).parse(JSON.parse(selectedApolloIdsRaw));
-  if (selectedApolloIds.length === 0) {
-    throw new Error("Select at least one person before adding to a batch");
-  }
 
   const destination = addSnapshotPeopleToBatchSchema.parse({
     destinationMode: formData.get("destinationMode"),
     batchId: formData.get("batchId"),
-    newBatchName: formData.get("newBatchName"),
-    newBatchNotes: formData.get("newBatchNotes"),
+    mode: formData.get("mode"),
   });
 
   const snapshot = await getPeopleSnapshotById(peopleSnapshotId);
@@ -450,21 +436,20 @@ export async function addSnapshotPeopleToBatchAction(formData: FormData) {
   }
 
   const selectedApolloIdSet = new Set(selectedApolloIds);
-  const selectedRows = snapshot.result.rows.filter((row) =>
-    selectedApolloIdSet.has(row.apollo_id),
-  );
+  const selectedRows =
+    destination.mode === "all"
+      ? snapshot.result.rows
+      : snapshot.result.rows.filter((row) => selectedApolloIdSet.has(row.apollo_id));
 
   if (selectedRows.length === 0) {
-    throw new Error("Selected people were not found in this snapshot");
+    throw new Error(
+      destination.mode === "all"
+        ? "This snapshot has no people to add"
+        : "Selected people were not found in this snapshot",
+    );
   }
 
-  const batch =
-    destination.destinationMode === "new"
-      ? await createContactBatch({
-          name: destination.newBatchName,
-          notes: destination.newBatchNotes,
-        })
-      : { id: destination.batchId };
+  const batch = { id: destination.batchId };
 
   await upsertContactBatchMembers(
     batch.id,
@@ -487,13 +472,11 @@ export async function addSnapshotPeopleToBatchAction(formData: FormData) {
     })),
   );
 
-  if (destination.destinationMode === "existing") {
-    await updateContactBatch(batch.id, (existing) => ({ ...existing }));
-  }
+  await updateContactBatch(batch.id, (existing) => ({ ...existing }));
 
   revalidatePath("/enrich");
   revalidatePath("/search/people");
-  redirect(`/enrich?batch=${batch.id}&sourceSnapshot=${snapshot.id}`);
+  redirect(`/enrich?batch=${batch.id}`);
 }
 
 export async function enrichContactBatchAction(formData: FormData) {

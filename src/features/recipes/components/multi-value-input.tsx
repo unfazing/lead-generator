@@ -4,13 +4,14 @@ import { useEffect, useState, type KeyboardEvent, type ReactNode } from "react";
 import { InfoTip } from "@/features/ui/components/info-tip";
 
 type MultiValueInputProps = {
-  name: string;
+  name?: string;
   label: string;
   hint?: string;
   placeholder?: string;
   values: string[];
   actions?: ReactNode;
   onValuesChange?: (values: string[]) => void;
+  persistHiddenInputs?: boolean;
 };
 
 function normalizeToken(value: string) {
@@ -25,6 +26,7 @@ export function MultiValueInput({
   values,
   actions,
   onValuesChange,
+  persistHiddenInputs = true,
 }: MultiValueInputProps) {
   const [items, setItems] = useState(values);
   const [draft, setDraft] = useState("");
@@ -86,7 +88,7 @@ export function MultiValueInput({
             <button type="button" onClick={() => removeToken(value)} aria-label={`Remove ${value}`}>
               ×
             </button>
-            <input type="hidden" name={name} value={value} />
+            {persistHiddenInputs && name ? <input type="hidden" name={name} value={value} /> : null}
           </span>
         ))}
         <input

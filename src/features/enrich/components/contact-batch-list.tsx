@@ -10,6 +10,7 @@ type BatchSummary = {
 
 type ContactBatchListProps = {
   activeBatchId: string | null;
+  showingStore?: boolean;
   batches: BatchSummary[];
   createAction: (formData: FormData) => Promise<void>;
   updateAction: (formData: FormData) => Promise<void>;
@@ -18,6 +19,7 @@ type ContactBatchListProps = {
 
 export function ContactBatchList({
   activeBatchId,
+  showingStore = false,
   batches,
   createAction,
   updateAction,
@@ -28,13 +30,11 @@ export function ContactBatchList({
       <div className="recipe-rail-header">
         <div className="workspace-header">
           <p className="eyebrow">Contact batches</p>
-          <h2>Saved enrichment worksets</h2>
-          <p>Pick a batch, then manage members and enrichment from the main pane.</p>
         </div>
         <span className="badge">{batches.length} saved</span>
       </div>
       <details className="filter-details">
-        <summary className="filter-details-summary">
+        <summary className="primary-button recipe-rail-action filter-details-summary">
           <span>New contact batch</span>
         </summary>
         <form action={createAction} className="field-grid filter-details-body">
@@ -58,6 +58,12 @@ export function ContactBatchList({
         </form>
       </details>
       <div className="recipe-list">
+        <article className={`recipe-list-item${showingStore ? " active" : ""}`}>
+          <Link className="recipe-list-link" href={showingStore ? "/enrich" : "/enrich?view=store"}>
+            <strong>Enriched people store</strong>
+            <span className="meta">Append-only global results</span>
+          </Link>
+        </article>
         {batches.length === 0 ? (
           <div className="empty-message recipe-empty-state">
             No contact batches yet. Create one here, then populate it from saved
@@ -74,17 +80,16 @@ export function ContactBatchList({
             >
               <Link
                 className="recipe-list-link"
-                href={`/enrich?batch=${summary.batch.id}`}
+                href={
+                  isActive ? "/enrich" : `/enrich?batch=${summary.batch.id}`
+                }
               >
                 <strong>{summary.batch.name}</strong>
-                <span className="meta">{summary.batch.notes || "No notes yet."}</span>
                 <span className="meta">
                   {summary.totalMembers} members • {summary.alreadyEnrichedMembers} already
                   covered
                 </span>
-                <span className="meta">
-                  Latest snapshot {summary.lastAddedFromSnapshot?.slice(0, 8) ?? "none"}
-                </span>
+                <span className="meta">{formatStableDate(summary.batch.updatedAt)}</span>
               </Link>
               <div className="recipe-list-actions">
                 <details className="filter-details">
@@ -129,4 +134,13 @@ export function ContactBatchList({
       </div>
     </section>
   );
+}
+
+function formatStableDate(value: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(value));
 }

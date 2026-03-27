@@ -9,12 +9,10 @@ import {
   peopleFilterDefinitions,
 } from "@/lib/apollo/people-filter-definitions";
 import { CompanySnapshotPreview } from "@/features/search-workspace/components/company-snapshot-preview";
+import { RecipeSnapshotChooser } from "@/features/search-workspace/components/recipe-snapshot-chooser";
 import { InfoTip } from "@/features/ui/components/info-tip";
 import type { CompanySnapshotRecord } from "@/lib/db/repositories/company-snapshots";
-import type {
-  PeopleRecipe,
-  PeopleRecipeOrganizationImport,
-} from "@/lib/recipes/schema";
+import type { PeopleRecipe, PeopleRecipeOrganizationImport } from "@/lib/recipes/schema";
 
 type SnapshotOption = {
   recipeId: string;
@@ -29,7 +27,6 @@ type SnapshotRecipeGroup = {
 };
 
 type PeopleSearchPanelProps = {
-  activeSourceSnapshotIds: string[];
   peopleRecipe: PeopleRecipe | null;
   snapshotGroups: SnapshotRecipeGroup[];
 };
@@ -37,7 +34,6 @@ type PeopleSearchPanelProps = {
 type ImportMode = "selected" | "all";
 
 type SnapshotSelectionState = {
-  enabled: boolean;
   importMode: ImportMode;
   selectedCompanyIds: string[];
 };
@@ -94,7 +90,6 @@ function areStringArraysEqual(left: string[], right: string[]) {
 
 function getInitialSelectionState(
   snapshotOptions: SnapshotOption[],
-  _activeSourceSnapshotIds: string[],
   imports: PeopleRecipeOrganizationImport[],
 ) {
   const importMap = new Map(imports.map((entry) => [entry.snapshotId, entry]));
@@ -103,7 +98,6 @@ function getInitialSelectionState(
     snapshotOptions.map((option) => [
       option.snapshot.id,
       {
-        enabled: false,
         importMode: importMap.get(option.snapshot.id)?.importMode ?? "all",
         selectedCompanyIds:
           importMap.get(option.snapshot.id)?.selectedCompanyIds ?? [],
@@ -116,10 +110,6 @@ function getImportSummary(
   snapshotOption: SnapshotOption,
   state: SnapshotSelectionState,
 ) {
-  if (!state.enabled) {
-    return "Not included in the next import.";
-  }
-
   if (state.importMode === "all") {
     return `All ${snapshotOption.snapshot.result.rows.length} companies will be added to this recipe.`;
   }
@@ -134,7 +124,6 @@ function getImportSummary(
 }
 
 export function PeopleSearchPanel({
-  activeSourceSnapshotIds,
   peopleRecipe,
   snapshotGroups,
 }: PeopleSearchPanelProps) {
@@ -164,11 +153,11 @@ export function PeopleSearchPanel({
   const [activeSnapshotIds, setActiveSnapshotIds] = useState(() =>
     getInitialActiveSnapshotIds(snapshotGroups),
   );
-  const [showSnapshotChooser, setShowSnapshotChooser] = useState<Record<string, boolean>>({});
+  const [selectedRecipeIds, setSelectedRecipeIds] = useState<string[]>([]);
+  const [expandedRecipeIds, setExpandedRecipeIds] = useState<string[]>([]);
   const [selectionState, setSelectionState] = useState(() =>
     getInitialSelectionState(
       snapshotOptions,
-      activeSourceSnapshotIds,
       organizationImports,
     ),
   );
@@ -181,9 +170,19 @@ export function PeopleSearchPanel({
     );
   }
 
-  const enabledSnapshots = snapshotOptions.filter(
-    (option) => selectionState[option.snapshot.id]?.enabled,
-  );
+  const enabledSnapshots = snapshotGroups
+    .filter((group) => selectedRecipeIds.includes(group.recipeId))
+    .map((group) => {
+      const activeSnapshotId =
+        activeSnapshotIds[group.recipeId] ?? group.snapshots[0]?.snapshot.id;
+      return (
+        group.snapshots.find((entry) => entry.snapshot.id === activeSnapshotId) ??
+        group.snapshots[0]
+      );
+    })
+    .filter(
+      (option): option is SnapshotOption => Boolean(option),
+    );
   const importPlan = enabledSnapshots.map((option) => ({
     snapshotId: option.snapshot.id,
     importMode: selectionState[option.snapshot.id]?.importMode ?? "all",
@@ -194,7 +193,6 @@ export function PeopleSearchPanel({
     (entry) =>
       entry.importMode === "selected" && entry.selectedCompanyIds.length === 0,
   );
-  const currentOrganizationCount = peopleRecipe.peopleFilters.organizationIds.length;
   const selectedSnapshotCount = enabledSnapshots.length;
   const selectedCompanyCount = importPlan.reduce(
     (sum, entry) => sum + entry.selectedCompanyIds.length,
@@ -220,25 +218,21 @@ export function PeopleSearchPanel({
   function updateSnapshotState(
     snapshotId: string,
     updater: (current: {
-      enabled: boolean;
       importMode: ImportMode;
       selectedCompanyIds: string[];
     }) => {
-      enabled: boolean;
       importMode: ImportMode;
       selectedCompanyIds: string[];
     },
   ) {
     setSelectionState((current) => {
       const previousState = current[snapshotId] ?? {
-        enabled: false,
         importMode: "all" as const,
         selectedCompanyIds: [],
       };
       const nextState = updater(previousState);
 
       if (
-        previousState.enabled === nextState.enabled &&
         previousState.importMode === nextState.importMode &&
         areStringArraysEqual(
           previousState.selectedCompanyIds,
@@ -264,13 +258,6 @@ export function PeopleSearchPanel({
             [recipeId]: snapshotId,
           },
     );
-  }
-
-  function toggleSnapshotChooser(recipeId: string) {
-    setShowSnapshotChooser((current) => ({
-      ...current,
-      [recipeId]: !current[recipeId],
-    }));
   }
 
   return (
@@ -351,7 +338,7 @@ export function PeopleSearchPanel({
           <input type="hidden" name="peopleRecipeId" value={peopleRecipe.id} />
           <button
             className="primary-button"
-            disabled={currentOrganizationCount === 0}
+            disabled={peopleRecipe.peopleFilters.organizationIds.length === 0}
             type="submit"
           >
             Run people search
@@ -397,112 +384,81 @@ export function PeopleSearchPanel({
             </div>
           </div>
 
-          {snapshotGroups.map((group) => (
-            <section key={group.recipeId} className="card stack">
-              {(() => {
-                const activeSnapshotId =
-                  activeSnapshotIds[group.recipeId] ?? group.snapshots[0]?.snapshot.id;
-                const option =
-                  group.snapshots.find((entry) => entry.snapshot.id === activeSnapshotId) ??
-                  group.snapshots[0];
-
-                if (!option) {
-                  return null;
-                }
-
-                const state = selectionState[option.snapshot.id] ?? {
-                  enabled: false,
-                  importMode: "all" as const,
+          <RecipeSnapshotChooser
+            activeSnapshotIds={activeSnapshotIds}
+            expandedRecipeIds={expandedRecipeIds}
+            groups={snapshotGroups.map((group) => ({
+              recipeId: group.recipeId,
+              recipeName: group.recipeName,
+              recipeLabel: "Company recipe",
+              snapshots: group.snapshots.map((entry) => ({
+                id: entry.snapshot.id,
+                count: entry.snapshot.result.rows.length,
+              })),
+              countLabel: "companies",
+            }))}
+            selectedRecipeIds={selectedRecipeIds}
+            onAddRecipe={(recipeId) => {
+              setSelectedRecipeIds((current) => [...current, recipeId]);
+            }}
+            onRemoveRecipe={(recipeId) => {
+              const snapshotId =
+                activeSnapshotIds[recipeId] ??
+                snapshotGroups.find((group) => group.recipeId === recipeId)?.snapshots[0]
+                  ?.snapshot.id;
+              setSelectedRecipeIds((current) =>
+                current.filter((currentRecipeId) => currentRecipeId !== recipeId),
+              );
+              setExpandedRecipeIds((current) =>
+                current.filter((currentRecipeId) => currentRecipeId !== recipeId),
+              );
+              if (snapshotId) {
+                setSelectionState((current) => {
+                  const next = { ...current };
+                  delete next[snapshotId];
+                  return next;
+                });
+              }
+            }}
+            onToggleExpanded={(recipeId) => {
+              setExpandedRecipeIds((current) =>
+                current.includes(recipeId)
+                  ? current.filter((currentRecipeId) => currentRecipeId !== recipeId)
+                  : [...current, recipeId],
+              );
+            }}
+            onSelectSnapshot={(recipeId, snapshotId) => {
+              updateActiveSnapshot(recipeId, snapshotId);
+              const nextState = selectionState[snapshotId];
+              if (!nextState) {
+                updateSnapshotState(snapshotId, () => ({
+                  importMode: "all",
                   selectedCompanyIds: [],
-                };
-                const activeSnapshotLabel =
-                  option.snapshot.id === group.snapshots[0]?.snapshot.id
-                    ? "Latest"
-                    : option.snapshot.id.slice(0, 8);
+                }));
+              }
+            }}
+          />
 
-                return (
-                  <>
-                    <div
-                      className={`snapshot-recipe-tile${state.enabled ? " active" : ""}`}
-                      onClick={() =>
-                        updateSnapshotState(option.snapshot.id, (current) => ({
-                          enabled: !current.enabled,
-                          importMode: "all",
-                          selectedCompanyIds: [],
-                        }))
-                      }
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          updateSnapshotState(option.snapshot.id, (current) => ({
-                            enabled: !current.enabled,
-                            importMode: "all",
-                            selectedCompanyIds: [],
-                          }));
-                        }
-                      }}
-                      role="button"
-                      tabIndex={0}
-                    >
-                      <div className="snapshot-group-header-row">
-                        <div className="heading-with-tip snapshot-card-header-inline">
-                          <h2>{group.recipeName}</h2>
-                          <span className="badge">Company recipe</span>
-                        </div>
-                        <div className="snapshot-card-header-actions">
-                          <span className="meta">
-                            {option.snapshot.result.rows.length} companies
-                          </span>
-                          {group.snapshots.length > 1 ? (
-                            <div
-                              className="snapshot-select-inline"
-                              onClick={(event) => event.stopPropagation()}
-                            >
-                              <button
-                                className="snapshot-select-button"
-                                onClick={() => toggleSnapshotChooser(group.recipeId)}
-                                type="button"
-                              >
-                                Snapshot: {activeSnapshotLabel}
-                              </button>
-                              {showSnapshotChooser[group.recipeId] ? (
-                                <div className="snapshot-choice-menu">
-                                  {group.snapshots.map((snapshotOption, index) => (
-                                    <button
-                                      key={snapshotOption.snapshot.id}
-                                      className={`snapshot-choice-item${
-                                        snapshotOption.snapshot.id === option.snapshot.id
-                                          ? " active"
-                                          : ""
-                                      }`}
-                                      onClick={() => {
-                                        updateActiveSnapshot(group.recipeId, snapshotOption.snapshot.id);
-                                        setShowSnapshotChooser((current) => ({
-                                          ...current,
-                                          [group.recipeId]: false,
-                                        }));
-                                      }}
-                                      type="button"
-                                    >
-                                      <span>
-                                        {index === 0 ? "Latest" : `Older ${index}`} ·{" "}
-                                        {snapshotOption.snapshot.id.slice(0, 8)}
-                                      </span>
-                                      <span className="meta">
-                                        {snapshotOption.snapshot.result.rows.length} companies
-                                      </span>
-                                    </button>
-                                  ))}
-                                </div>
-                              ) : null}
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
+          {snapshotGroups.map((group) => {
+            const activeSnapshotId =
+              activeSnapshotIds[group.recipeId] ?? group.snapshots[0]?.snapshot.id;
+            const option =
+              group.snapshots.find((entry) => entry.snapshot.id === activeSnapshotId) ??
+              group.snapshots[0];
 
-                    {state.enabled ? (
-                      <>
+            if (!option) {
+              return null;
+            }
+
+            const state = selectionState[option.snapshot.id] ?? {
+              enabled: false,
+              importMode: "all" as const,
+              selectedCompanyIds: [],
+            };
+
+            return selectedRecipeIds.includes(group.recipeId) &&
+              expandedRecipeIds.includes(group.recipeId) ? (
+              <section key={`${group.recipeId}-viewer`} className="stack">
                         <div className="option-grid">
                           <button
                             className={`option-pill chip-button${
@@ -552,13 +508,9 @@ export function PeopleSearchPanel({
                             </div>
                           }
                         />
-                      </>
-                    ) : null}
-                  </>
-                );
-              })()}
-            </section>
-          ))}
+              </section>
+            ) : null;
+          })}
         </section>
 
         <section className="subtle-card card stack">

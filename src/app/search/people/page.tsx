@@ -1,6 +1,5 @@
 import { PeopleSearchPanel } from "@/features/people-search/components/people-search-panel";
 import { SavedPeopleSnapshotsPanel } from "@/features/people-search/components/saved-people-snapshots-panel";
-import { PreservedScrollLink } from "@/features/ui/components/preserved-scroll-link";
 import { RecipeEditor } from "@/features/recipes/components/recipe-editor";
 import { RecipeList } from "@/features/recipes/components/recipe-list";
 import { getPeopleRecipeDraft } from "@/features/recipes/lib/recipe-form";
@@ -13,13 +12,8 @@ import {
 import type { CompanySnapshotRecord } from "@/lib/db/repositories/company-snapshots";
 import { listSnapshotsForRecipe } from "@/lib/db/repositories/company-snapshots";
 import { listPeopleSnapshotsForRecipe } from "@/lib/db/repositories/people-snapshots";
-import { listEnrichedPeopleEntriesForSnapshot } from "@/lib/db/repositories/retrieval-run-items";
-import {
-  getLatestRetrievalRunForPeopleSnapshot,
-  getRetrievalRunById,
-} from "@/lib/db/repositories/retrieval-runs";
+import { getRetrievalRunById } from "@/lib/db/repositories/retrieval-runs";
 import { getRecipeById, listRecipesByType } from "@/lib/db/repositories/recipes";
-import { buildRetrievalRunSummary } from "@/lib/retrieval/run-summary";
 
 type SearchPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -67,26 +61,6 @@ export default async function PeopleSearchPage({ searchParams }: SearchPageProps
     ? await listPeopleSnapshotsForRecipe(peopleRecipe.id)
     : [];
   const initialPeopleSnapshotId = activeRetrievalRun?.peopleSnapshotId ?? null;
-  const retrievalRunsBySnapshotId = Object.fromEntries(
-    await Promise.all(
-      peopleSnapshots.map(async (snapshot) => [
-        snapshot.id,
-        await (async () => {
-          const run = await getLatestRetrievalRunForPeopleSnapshot(snapshot.id);
-          return run ? buildRetrievalRunSummary(run.id) : null;
-        })(),
-      ]),
-    ),
-  );
-  const enrichedEntriesBySnapshotId = Object.fromEntries(
-    await Promise.all(
-      peopleSnapshots.map(async (snapshot) => [
-        snapshot.id,
-        await listEnrichedPeopleEntriesForSnapshot(snapshot.id),
-      ]),
-    ),
-  );
-
   const companyRecipes = await listRecipesByType("company");
   const snapshotGroups = await Promise.all(
     companyRecipes.map(async (recipe) => ({
@@ -180,32 +154,12 @@ export default async function PeopleSearchPage({ searchParams }: SearchPageProps
               ) : (
                 <PeopleSearchPanel
                   key={`${peopleRecipe.id}:${activeSourceSnapshotIds.join(",")}`}
-                  activeSourceSnapshotIds={activeSourceSnapshotIds}
                   peopleRecipe={peopleRecipe}
                   snapshotGroups={snapshotOptions}
                 />
               )}
-              <section className="card stack">
-                <div className="workspace-header">
-                  <p className="eyebrow">Next stage</p>
-                  <h2>Use `/enrich` as the batch workspace.</h2>
-                  <p>
-                    Saved people snapshots are now source material for enrichment, not
-                    the enrichment home itself. Move into `/enrich` to create contact
-                    batches, add snapshot people into them, and manage verified-email
-                    retrieval from there.
-                  </p>
-                </div>
-                <div className="workspace-actions">
-                  <PreservedScrollLink className="primary-button" href="/enrich">
-                    Open enrich workspace
-                  </PreservedScrollLink>
-                </div>
-              </section>
               <SavedPeopleSnapshotsPanel
-                enrichedEntriesBySnapshotId={enrichedEntriesBySnapshotId}
                 initialSnapshotId={initialPeopleSnapshotId}
-                retrievalRunsBySnapshotId={retrievalRunsBySnapshotId}
                 snapshots={peopleSnapshots}
               />
             </>

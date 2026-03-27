@@ -75,10 +75,11 @@ export function RetrievalRunResultsTable({
 
 function toEnrichedPeopleRow(entry: EnrichedPeopleEntry): EnrichedPeopleRow {
   const payloadColumns = flattenPayload(entry.providerPayload);
+  const apolloFullName = getApolloFullName(payloadColumns);
 
   return {
     apollo_id: entry.personApolloId,
-    full_name: entry.fullName || payloadColumns.name || payloadColumns.first_name || "—",
+    full_name: apolloFullName || entry.fullName || "—",
     company_name: entry.companyName || payloadColumns.organization_name || "—",
     title: entry.title || payloadColumns.title || "—",
     email: entry.email || payloadColumns.email || "—",
@@ -91,6 +92,25 @@ function toEnrichedPeopleRow(entry: EnrichedPeopleEntry): EnrichedPeopleRow {
     error: entry.error ?? "—",
     ...payloadColumns,
   };
+}
+
+function getApolloFullName(payloadColumns: Record<string, string>) {
+  const rawName = payloadColumns.name;
+  if (rawName && rawName !== "—") {
+    return rawName;
+  }
+
+  const firstName =
+    payloadColumns.first_name && payloadColumns.first_name !== "—"
+      ? payloadColumns.first_name
+      : "";
+  const lastName =
+    payloadColumns.last_name && payloadColumns.last_name !== "—"
+      ? payloadColumns.last_name
+      : "";
+
+  const combined = `${firstName} ${lastName}`.trim();
+  return combined || "";
 }
 
 function flattenPayload(
