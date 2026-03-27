@@ -1,5 +1,6 @@
 import { PeopleSearchPanel } from "@/features/people-search/components/people-search-panel";
 import { SavedPeopleSnapshotsPanel } from "@/features/people-search/components/saved-people-snapshots-panel";
+import { PreservedScrollLink } from "@/features/ui/components/preserved-scroll-link";
 import { RecipeEditor } from "@/features/recipes/components/recipe-editor";
 import { RecipeList } from "@/features/recipes/components/recipe-list";
 import { getPeopleRecipeDraft } from "@/features/recipes/lib/recipe-form";
@@ -184,6 +185,23 @@ export default async function PeopleSearchPage({ searchParams }: SearchPageProps
                   snapshotGroups={snapshotOptions}
                 />
               )}
+              <section className="card stack">
+                <div className="workspace-header">
+                  <p className="eyebrow">Next stage</p>
+                  <h2>Use `/enrich` as the batch workspace.</h2>
+                  <p>
+                    Saved people snapshots are now source material for enrichment, not
+                    the enrichment home itself. Move into `/enrich` to create contact
+                    batches, add snapshot people into them, and manage verified-email
+                    retrieval from there.
+                  </p>
+                </div>
+                <div className="workspace-actions">
+                  <PreservedScrollLink className="primary-button" href="/enrich">
+                    Open enrich workspace
+                  </PreservedScrollLink>
+                </div>
+              </section>
               <SavedPeopleSnapshotsPanel
                 enrichedEntriesBySnapshotId={enrichedEntriesBySnapshotId}
                 initialSnapshotId={initialPeopleSnapshotId}

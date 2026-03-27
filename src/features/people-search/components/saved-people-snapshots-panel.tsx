@@ -1,6 +1,6 @@
 "use client";
 
-import { enrichSelectedPeopleAction } from "@/app/recipes/actions";
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { PeopleResultsTable } from "@/features/people-search/components/people-results-table";
 import { EnrichedPeopleResults } from "@/features/retrieval-runs/components/enriched-people-results";
@@ -46,7 +46,7 @@ export function SavedPeopleSnapshotsPanel({
     <section className="card stack">
       <div className="workspace-header">
         <p className="eyebrow">Saved people snapshots</p>
-        <h2>Review a saved snapshot, then enrich the people you choose.</h2>
+        <h2>Review saved people snapshots, then move into the enrich workflow.</h2>
       </div>
       {snapshots.length === 0 ? (
         <div className="empty-message">
@@ -74,30 +74,32 @@ export function SavedPeopleSnapshotsPanel({
               selectable
               snapshot={activeSnapshot}
               summarySlot={
-                <form action={enrichSelectedPeopleAction} className="stack">
-                  <input name="peopleSnapshotId" type="hidden" value={activeSnapshot.id} />
-                  <input
-                    name="selectedApolloIds"
-                    type="hidden"
-                    value={JSON.stringify(selectedApolloIds)}
-                  />
+                <div className="stack">
                   <div className="workspace-header">
-                    <p className="eyebrow">Quick enrichment</p>
-                    <h3>Enrich selected people</h3>
+                    <p className="eyebrow">Enrichment handoff</p>
+                    <h3>Add reviewed people inside `/enrich`</h3>
                     <p>
-                      Check one or more people in this reviewed snapshot, then start enrichment directly from their Apollo IDs.
+                      Use this page to produce and review saved people snapshots. The
+                      batch-centric enrichment workspace now owns adding members and
+                      running verified-email retrieval.
                     </p>
                   </div>
                   <div className="workspace-actions">
-                    <button
+                    <Link
                       className="primary-button"
-                      disabled={selectedApolloIds.length === 0}
-                      type="submit"
+                      href={`/enrich?sourceSnapshot=${activeSnapshot.id}`}
                     >
-                      Enrich {selectedApolloIds.length > 0 ? selectedApolloIds.length : ""} selected people
-                    </button>
+                      Open enrich workspace
+                    </Link>
                   </div>
-                </form>
+                  {selectedApolloIds.length > 0 ? (
+                    <p className="meta">
+                      {selectedApolloIds.length} row
+                      {selectedApolloIds.length === 1 ? "" : "s"} selected here for
+                      review. Re-select them in `/enrich` when adding to a batch.
+                    </p>
+                  ) : null}
+                </div>
               }
             />
           ) : null}

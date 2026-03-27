@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ContactBatchList } from "@/features/enrich/components/contact-batch-list";
+import { AddToBatchFromSnapshot } from "@/features/enrich/components/add-to-batch-from-snapshot";
 import { ContactBatchPanel } from "@/features/enrich/components/contact-batch-panel";
 import { WorkspaceEmptyState } from "@/features/search-workspace/components/workspace-empty-state";
 import {
@@ -18,6 +19,7 @@ import {
   listContactBatchMembersWithCoverage,
 } from "@/lib/db/repositories/contact-batch-members";
 import { getEnrichedPeopleByApolloIds } from "@/lib/db/repositories/enriched-people";
+import { listPeopleSnapshots } from "@/lib/db/repositories/people-snapshots";
 
 type EnrichPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -111,7 +113,9 @@ async function deleteBatchAction(formData: FormData) {
 export default async function EnrichPage({ searchParams }: EnrichPageProps) {
   const params = searchParams ? await searchParams : {};
   const selectedBatchId = getSingleParam(params, "batch");
+  const selectedSourceSnapshotId = getSingleParam(params, "sourceSnapshot");
   const batches = await listContactBatches();
+  const peopleSnapshots = await listPeopleSnapshots();
   const summaries = await Promise.all(batches.map(buildBatchSummary));
   const activeBatchSummary =
     summaries.find((summary) => summary.batch.id === selectedBatchId) ?? summaries[0] ?? null;
@@ -157,6 +161,12 @@ export default async function EnrichPage({ searchParams }: EnrichPageProps) {
           />
         </div>
         <div className="stack search-main">
+          <AddToBatchFromSnapshot
+            activeBatchId={activeBatch?.id ?? null}
+            batches={batches}
+            initialSnapshotId={selectedSourceSnapshotId}
+            snapshots={peopleSnapshots}
+          />
           {activeBatch ? (
             <ContactBatchPanel
               batch={activeBatch}
