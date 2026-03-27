@@ -2,10 +2,13 @@
 
 import React, { useMemo, useState } from "react";
 import { enrichContactBatchAction } from "@/app/recipes/actions";
+import { RetrievalRunStatusCard } from "@/features/retrieval-runs/components/retrieval-run-status-card";
+import { InfoTip } from "@/features/ui/components/info-tip";
 import type { ContactBatchRecord } from "@/lib/db/repositories/contact-batches";
 import type { ContactBatchMemberCoverageRecord } from "@/lib/db/repositories/contact-batch-members";
 import type { EnrichedPersonRecord } from "@/lib/db/repositories/enriched-people";
 import { isVerifiedBusinessEmailQuality } from "@/lib/retrieval/quality";
+import type { RetrievalRunSummary } from "@/lib/retrieval/run-summary";
 
 type BatchSummary = {
   batch: ContactBatchRecord;
@@ -19,6 +22,8 @@ type ContactBatchPanelProps = {
   members: ContactBatchMemberCoverageRecord[];
   summary: BatchSummary;
   enrichedByApolloId: Map<string, EnrichedPersonRecord>;
+  retrievalSummary: RetrievalRunSummary | null;
+  removeMemberAction: (formData: FormData) => Promise<void>;
 };
 
 function getEnrichmentState(
@@ -45,11 +50,31 @@ function getEnrichmentState(
   };
 }
 
+function getApolloFullName(apolloPerson: Record<string, unknown> | null) {
+  if (!apolloPerson) {
+    return "";
+  }
+
+  if (typeof apolloPerson.name === "string" && apolloPerson.name.trim().length > 0) {
+    return apolloPerson.name;
+  }
+
+  const firstName =
+    typeof apolloPerson.first_name === "string" ? apolloPerson.first_name : "";
+  const lastName =
+    typeof apolloPerson.last_name === "string" ? apolloPerson.last_name : "";
+  const combined = `${firstName} ${lastName}`.trim();
+
+  return combined;
+}
+
 export function ContactBatchPanel({
   batch,
   members,
   summary,
   enrichedByApolloId,
+  retrievalSummary,
+  removeMemberAction,
 }: ContactBatchPanelProps) {
   const [selectedApolloIds, setSelectedApolloIds] = useState<string[]>([]);
 
@@ -65,6 +90,14 @@ export function ContactBatchPanel({
       ),
     [members, selectedApolloIds],
   );
+  const exportableMembers = useMemo(
+    () =>
+      members.filter((member) => {
+        const enriched = enrichedByApolloId.get(member.personApolloId);
+        return Boolean(enriched);
+      }),
+    [enrichedByApolloId, members],
+  );
 
   function toggleSelection(personApolloId: string) {
     setSelectedApolloIds((current) =>
@@ -74,84 +107,148 @@ export function ContactBatchPanel({
     );
   }
 
+  function exportBatchCsv() {
+    const escapeCsv = (value: string) => `"${value.replaceAll('"', '""')}"`;
+    const lines = [
+      ["Company", "Full Name", "Role", "Email Address"]
+        .map(escapeCsv)
+        .join(","),
+      ...exportableMembers.map((member) => {
+        const enriched = enrichedByApolloId.get(member.personApolloId);
+        return [
+          member.companyName || "",
+          getApolloFullName(enriched?.apolloPerson ?? null) || member.fullName || "",
+          member.title || "",
+          enriched?.email || "",
+        ]
+          .map(escapeCsv)
+          .join(",");
+      }),
+    ];
+
+    const blob = new Blob([lines.join("\n")], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${batch.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "contact-batch"}-enriched.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <section className="card stack">
       <div className="workspace-header">
         <p className="eyebrow">Current batch</p>
-        <h2>{batch.name}</h2>
-        <p>
-          Manage this contact batch as a reusable enrichment workset. Member rows
-          show frozen display data from source snapshots plus current coverage from
-          the append-only enriched-people store.
-        </p>
+        <h2 className="heading-with-tip">
+          <span>{batch.name}</span>
+          <InfoTip
+            content="Batch members keep frozen display data from source snapshots while enrichment coverage comes from the append-only enriched-people store."
+            label="Current batch help"
+          />
+        </h2>
       </div>
       <div className="stats-grid">
         <div className="stat-tile">
-          <span className="meta">Members</span>
+          <span className="meta">People</span>
           <strong>{summary.totalMembers}</strong>
         </div>
         <div className="stat-tile">
-          <span className="meta">Already handled</span>
+          <span className="meta">Enriched</span>
           <strong>{summary.alreadyEnrichedMembers}</strong>
         </div>
         <div className="stat-tile">
-          <span className="meta">Still missing</span>
+          <span className="meta">Not yet enriched</span>
           <strong>{missingMembers.length}</strong>
-        </div>
-        <div className="stat-tile">
-          <span className="meta">Latest snapshot</span>
-          <strong>{summary.lastAddedFromSnapshot?.slice(0, 8) ?? "None yet"}</strong>
         </div>
       </div>
       {batch.notes ? <div className="empty-message">{batch.notes}</div> : null}
       {members.length > 0 ? (
-        <div className="subtle-card card stack">
-          <div className="workspace-header">
-            <p className="eyebrow">Batch enrichment actions</p>
-            <h3>Send only globally missing members to Apollo</h3>
-            <p>
-              The executor re-checks the central enriched-person store before each
-              Apollo call. Previously verified and previously unusable people are
-              both skipped automatically.
-            </p>
+        <div className="batch-action-layout">
+          <div className="batch-enrichment-panel">
+            <div className="batch-action-header">
+              <p className="meta">Enrichment</p>
+              <strong>{missingMembers.length} missing</strong>
+            </div>
+            <div className="workspace-actions batch-enrich-actions">
+              <form action={enrichContactBatchAction}>
+                <input name="batchId" type="hidden" value={batch.id} />
+                <input name="mode" type="hidden" value="selected" />
+                <input
+                  name="selectedApolloIds"
+                  type="hidden"
+                  value={JSON.stringify(selectedApolloIds)}
+                />
+                <button
+                  className="primary-button"
+                  disabled={selectedMissingMembers.length === 0}
+                  type="submit"
+                >
+                  Enrich selected ({selectedMissingMembers.length})
+                </button>
+              </form>
+              <form action={enrichContactBatchAction}>
+                <input name="batchId" type="hidden" value={batch.id} />
+                <input name="mode" type="hidden" value="all-missing" />
+                <input name="selectedApolloIds" type="hidden" value="[]" />
+                <button
+                  className="secondary-button"
+                  disabled={missingMembers.length === 0}
+                  type="submit"
+                >
+                  Enrich all missing ({missingMembers.length})
+                </button>
+              </form>
+            </div>
           </div>
-          <div className="workspace-actions">
-            <form action={enrichContactBatchAction}>
+          <div className="batch-utility-actions">
+            <form action={removeMemberAction}>
               <input name="batchId" type="hidden" value={batch.id} />
-              <input name="mode" type="hidden" value="selected" />
               <input
                 name="selectedApolloIds"
                 type="hidden"
                 value={JSON.stringify(selectedApolloIds)}
               />
               <button
-                className="primary-button"
-                disabled={selectedMissingMembers.length === 0}
+                className="secondary-button destructive-button"
+                disabled={selectedApolloIds.length === 0}
                 type="submit"
               >
-                Enrich selected missing ({selectedMissingMembers.length})
+                Remove selected ({selectedApolloIds.length})
               </button>
             </form>
-            <form action={enrichContactBatchAction}>
-              <input name="batchId" type="hidden" value={batch.id} />
-              <input name="mode" type="hidden" value="all-missing" />
-              <input name="selectedApolloIds" type="hidden" value="[]" />
+            <div className="batch-utility-divider" aria-hidden="true" />
+            <div>
               <button
                 className="secondary-button"
-                disabled={missingMembers.length === 0}
-                type="submit"
+                disabled={exportableMembers.length === 0}
+                onClick={exportBatchCsv}
+                type="button"
               >
-                Enrich all missing ({missingMembers.length})
+                Export enriched ({exportableMembers.length})
               </button>
-            </form>
+            </div>
           </div>
-          <p className="meta">
-            {selectedApolloIds.length} selected. Only the {selectedMissingMembers.length}{" "}
-            globally missing member
-            {selectedMissingMembers.length === 1 ? "" : "s"} in that selection can
-            start a new Apollo enrichment.
-          </p>
         </div>
+      ) : null}
+      {retrievalSummary ? (
+        <details className="snapshot-param-disclosure batch-retrieval-disclosure">
+          <summary>
+            <span className="meta">
+              Retrieval run
+              {`: ${retrievalSummary.runStatus} · ${retrievalSummary.run.processedItems}/${retrievalSummary.run.totalItems} processed`}
+            </span>
+          </summary>
+          <div className="batch-retrieval-panel">
+            <RetrievalRunStatusCard initialSummary={retrievalSummary} />
+          </div>
+        </details>
       ) : null}
       {members.length === 0 ? (
         <div className="empty-message">

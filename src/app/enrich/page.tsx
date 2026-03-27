@@ -1,13 +1,14 @@
-import Link from "next/link";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { ContactBatchList } from "@/features/enrich/components/contact-batch-list";
 import { AddToBatchFromSnapshot } from "@/features/enrich/components/add-to-batch-from-snapshot";
 import { ContactBatchPanel } from "@/features/enrich/components/contact-batch-panel";
+import { EnrichedPeopleStorePanel } from "@/features/enrich/components/enriched-people-store-panel";
 import { EnrichedPeopleResults } from "@/features/retrieval-runs/components/enriched-people-results";
-import { RetrievalRunStatusCard } from "@/features/retrieval-runs/components/retrieval-run-status-card";
 import { WorkspaceEmptyState } from "@/features/search-workspace/components/workspace-empty-state";
+import { WorkspaceStageNav } from "@/features/search-workspace/components/workspace-stage-nav";
+import { InfoTip } from "@/features/ui/components/info-tip";
 import {
   createContactBatch,
   deleteContactBatch,
@@ -16,9 +17,11 @@ import {
   updateContactBatch,
   type ContactBatchRecord,
 } from "@/lib/db/repositories/contact-batches";
+import { listRecipesByType } from "@/lib/db/repositories/recipes";
 import {
   deleteContactBatchMembers,
   listContactBatchMembersWithCoverage,
+  removeContactBatchMember,
 } from "@/lib/db/repositories/contact-batch-members";
 import { getEnrichedPeopleByApolloIds } from "@/lib/db/repositories/enriched-people";
 import { listPeopleSnapshots } from "@/lib/db/repositories/people-snapshots";
@@ -115,15 +118,37 @@ async function deleteBatchAction(formData: FormData) {
   redirect("/enrich");
 }
 
+async function removeBatchMemberAction(formData: FormData) {
+  "use server";
+
+  const batchId = String(formData.get("batchId") ?? "");
+  const selectedApolloIds = z
+    .array(z.string().min(1))
+    .parse(JSON.parse(String(formData.get("selectedApolloIds") ?? "[]")));
+
+  if (!batchId || selectedApolloIds.length === 0) {
+    throw new Error("Batch and selected people are required");
+  }
+
+  for (const personApolloId of selectedApolloIds) {
+    await removeContactBatchMember(batchId, personApolloId);
+  }
+
+  revalidatePath("/enrich");
+  redirect(`/enrich?batch=${batchId}`);
+}
+
 export default async function EnrichPage({ searchParams }: EnrichPageProps) {
   const params = searchParams ? await searchParams : {};
   const selectedBatchId = getSingleParam(params, "batch");
-  const selectedSourceSnapshotId = getSingleParam(params, "sourceSnapshot");
+  const currentView = getSingleParam(params, "view");
+  const showingStore = currentView === "store";
   const batches = await listContactBatches();
   const peopleSnapshots = await listPeopleSnapshots();
+  const peopleRecipes = await listRecipesByType("people");
   const summaries = await Promise.all(batches.map(buildBatchSummary));
   const activeBatchSummary =
-    summaries.find((summary) => summary.batch.id === selectedBatchId) ?? summaries[0] ?? null;
+    summaries.find((summary) => summary.batch.id === selectedBatchId) ?? null;
   const activeBatch = activeBatchSummary
     ? await getContactBatchById(activeBatchSummary.batch.id)
     : null;
@@ -148,20 +173,14 @@ export default async function EnrichPage({ searchParams }: EnrichPageProps) {
       <section className="workspace-panel search-hero">
         <div className="workspace-header">
           <p className="eyebrow">Enrichment workflow</p>
-          <h1>Work from contact batches instead of people snapshots.</h1>
-          <p>
-            Contact batches are the operator workspace for verified-email retrieval.
-            They stay mutable, dedupe by Apollo person ID, and show whether the global
-            enriched-people store already covers each member.
-          </p>
-          <div className="workspace-actions">
-            <Link className="secondary-button" href="/search/people">
-              Browse people snapshots
-            </Link>
-            <Link className="secondary-button" href="/enrich/store">
-              Open enriched-people store
-            </Link>
-          </div>
+          <h1 className="heading-with-tip">
+            <span>Work from contact batches instead of people snapshots.</span>
+            <InfoTip
+              content="Contact batches are the reusable enrichment workspace. They stay mutable, dedupe by Apollo person ID, and reflect whether the global enriched-people store already covers each member."
+              label="Enrichment workflow help"
+            />
+          </h1>
+          <WorkspaceStageNav current="enrich" />
         </div>
       </section>
       <div className="workspace-grid workspace-grid-wide search-grid">
@@ -171,25 +190,23 @@ export default async function EnrichPage({ searchParams }: EnrichPageProps) {
             batches={summaries}
             createAction={createBatchAction}
             deleteAction={deleteBatchAction}
+            showingStore={showingStore}
             updateAction={updateBatchAction}
           />
         </div>
         <div className="stack search-main">
-          <AddToBatchFromSnapshot
-            activeBatchId={activeBatch?.id ?? null}
-            batches={batches}
-            initialSnapshotId={selectedSourceSnapshotId}
-            snapshots={peopleSnapshots}
-          />
-          {activeBatch ? (
+          {showingStore ? (
+            <EnrichedPeopleStorePanel />
+          ) : activeBatch ? (
             <>
               <ContactBatchPanel
                 batch={activeBatch}
                 enrichedByApolloId={enrichedByApolloId}
                 members={activeMembers}
-                summary={activeBatchSummary}
+                removeMemberAction={removeBatchMemberAction}
+                retrievalSummary={activeRetrievalSummary}
+                summary={activeBatchSummary!}
               />
-              <RetrievalRunStatusCard initialSummary={activeRetrievalSummary} />
               <EnrichedPeopleResults
                 emptyMessage="This batch has no stored enrichment outcomes yet."
                 entries={activeEnrichedEntries}
@@ -197,14 +214,30 @@ export default async function EnrichPage({ searchParams }: EnrichPageProps) {
                 scopeLabel={`contact batch ${activeBatch.name}`}
                 title="Inspect stored outcomes for this contact batch"
               />
+              <AddToBatchFromSnapshot
+                activeBatchId={activeBatch?.id ?? null}
+                recipes={peopleRecipes.map((recipe) => ({
+                  id: recipe.id,
+                  name: recipe.name,
+                }))}
+                snapshots={peopleSnapshots}
+              />
             </>
-          ) : summaries.length === 0 ? (
+          ) : !showingStore && summaries.length === 0 ? (
             <WorkspaceEmptyState
               eyebrow="Enrichment workflow"
               title="No contact batches created yet."
               description="Create a contact batch here, then use saved people snapshots as source material for adding members into that batch."
               primaryAction={{ href: "/search/people", label: "Open people workflow" }}
-              secondaryAction={{ href: "/enrich/store", label: "View enriched-people store" }}
+              secondaryAction={{ href: "/enrich?view=store", label: "View enriched-people store" }}
+            />
+          ) : !showingStore ? (
+            <WorkspaceEmptyState
+              eyebrow="Enrichment workflow"
+              title="Choose a contact batch."
+              description="Select one saved contact batch from the left before you add members or run enrichment."
+              primaryAction={{ href: "/search/people", label: "Browse people snapshots" }}
+              secondaryAction={{ href: "/enrich?view=store", label: "View enriched-people store" }}
             />
           ) : null}
         </div>
