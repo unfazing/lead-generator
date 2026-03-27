@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Company Search and Snapshot Preview** - Let the user search Apollo companies, inspect results, and persist company snapshots safely. Completed 2026-03-23.
 - [x] **Phase 3: People Discovery and Run Planning** - Turn reviewed companies into people previews and gated retrieval plans with estimated cost. Completed 2026-03-23.
 - [x] **Phase 4: Retrieval Execution and Run Safety** - Execute Apollo `match` / `bulk_match` verified-email enrichment with monitoring, resumability, and spend protection. Completed 2026-03-24.
-- [ ] **Phase 04.1: Contact Batch Enrichment Workflow (INSERTED)** - Introduce reusable contact batches above people snapshots so enrichment can accumulate across multiple source snapshots while reusing the global enriched-people store.
+- [x] **Phase 04.1: Contact Batch Enrichment Workflow (INSERTED)** - Introduce reusable contact batches above people snapshots so enrichment can accumulate across multiple source snapshots while reusing the global enriched-people store. (completed 2026-03-27)
 - [ ] **Phase 5: Verified Export and Repeatable Reruns** - Export trusted CSVs with provenance, dedupe, and recipe-driven replay.
 
 ## Phase Details
@@ -134,5 +134,5 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 2.2 -> 3 -> 3.1 -> 4 -> 4.1 ->
 | 3. People Discovery and Run Planning | 3/3 | Complete | 2026-03-23 |
 | 03.1. Rework the search flow | 3/3 | Complete | 2026-03-24 |
 | 4. Retrieval Execution and Run Safety | 3/3 | Complete | 2026-03-24 |
-| 04.1. Contact Batch Enrichment Workflow | 2/3 | In Progress|  |
+| 04.1. Contact Batch Enrichment Workflow | 3/3 | Complete   | 2026-03-27 |
 | 5. Verified Export and Repeatable Reruns | 0/2 | Not started | - |

@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 04.1-contact-batch-enrichment-workflow-02-PLAN.md
-last_updated: "2026-03-27T00:03:23.006Z"
+stopped_at: Completed 04.1-contact-batch-enrichment-workflow-03-PLAN.md
+last_updated: "2026-03-27T00:12:11.459Z"
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 18
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # Project State
@@ -54,6 +54,7 @@ Plan: 3 of 3
 | Phase 04 P03 | 11min | 2 tasks | 17 files |
 | Phase 04.1-contact-batch-enrichment-workflow P01 | 5min | 2 tasks | 6 files |
 | Phase 04.1-contact-batch-enrichment-workflow P02 | 6 | 2 tasks | 8 files |
+| Phase 04.1-contact-batch-enrichment-workflow P03 | 8 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,8 @@ Recent decisions affecting current work:
 - [Phase 04.1-contact-batch-enrichment-workflow]: /enrich now owns mutable batch management and member ingestion; /search/people is source-and-review only
 - [Phase 04.1-contact-batch-enrichment-workflow]: Saved people snapshots remain the only allowed source of new batch members; no manual Apollo ID entry was added
 - [Phase 04.1-contact-batch-enrichment-workflow]: Existing-batch snapshot ingestion updates batch timestamps so recently changed batches rise in the left rail
+- [Phase 04.1-contact-batch-enrichment-workflow]: Contact-batch enrichment reuses the existing retrieval executor, with the batch linked onto retrieval runs instead of creating a separate execution model.
+- [Phase 04.1-contact-batch-enrichment-workflow]: Batch-scoped and global enrichment inspection both use the shared snapshot viewer stack, with serialized provider payload columns for export and filtering.
 
 ### Pending Todos
 
@@ -106,6 +109,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-27T00:03:22.998Z
-Stopped at: Completed 04.1-contact-batch-enrichment-workflow-02-PLAN.md
+Last session: 2026-03-27T00:12:11.450Z
+Stopped at: Completed 04.1-contact-batch-enrichment-workflow-03-PLAN.md
 Resume file: None
