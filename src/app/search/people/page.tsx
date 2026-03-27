@@ -120,13 +120,7 @@ export default async function PeopleSearchPage({ searchParams }: SearchPageProps
           />
         </div>
         <div className="stack search-main">
-          {peopleRecipes.length === 0 ? (
-            <WorkspaceEmptyState
-              eyebrow="People workflow"
-              title="Save a people recipe to continue."
-              description="People search runs from a saved recipe after you choose which companies to add to it."
-            />
-          ) : editorMode === "new" || (editorMode === "edit" && peopleRecipe) ? (
+          {editorMode === "new" || (editorMode === "edit" && peopleRecipe) ? (
             <RecipeEditor
               closeHref={closeHref}
               draft={peopleDraft}
@@ -135,6 +129,12 @@ export default async function PeopleSearchPage({ searchParams }: SearchPageProps
               returnBasePath="/search/people"
               returnSourceSnapshotIds={activeSourceSnapshotIds}
               type="people"
+            />
+          ) : peopleRecipes.length === 0 ? (
+            <WorkspaceEmptyState
+              eyebrow="People workflow"
+              title="Save a people recipe to continue."
+              description="People search runs from a saved recipe after you choose which companies to add to it."
             />
           ) : !peopleRecipe ? (
             <WorkspaceEmptyState

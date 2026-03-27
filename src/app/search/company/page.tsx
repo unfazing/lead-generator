@@ -74,13 +74,7 @@ export default async function CompanySearchPage({ searchParams }: SearchPageProp
           />
         </div>
         <div className="stack search-main">
-          {companyRecipes.length === 0 ? (
-            <WorkspaceEmptyState
-              eyebrow="Company workflow"
-              title="Save a company recipe to start."
-              description="Company search runs from saved Apollo filters. Create one recipe, then return here to run or reopen snapshots."
-            />
-          ) : editorMode === "new" || (editorMode === "edit" && companyRecipe) ? (
+          {editorMode === "new" || (editorMode === "edit" && companyRecipe) ? (
             <RecipeEditor
               closeHref={closeHref}
               draft={companyDraft}
@@ -88,6 +82,12 @@ export default async function CompanySearchPage({ searchParams }: SearchPageProp
               recipe={editorMode === "new" ? null : companyRecipe}
               returnBasePath="/search/company"
               type="company"
+            />
+          ) : companyRecipes.length === 0 ? (
+            <WorkspaceEmptyState
+              eyebrow="Company workflow"
+              title="Save a company recipe to start."
+              description="Company search runs from saved Apollo filters. Create one recipe, then return here to run or reopen snapshots."
             />
           ) : !companyRecipe ? (
             <WorkspaceEmptyState
