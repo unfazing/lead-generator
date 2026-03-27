@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
-stopped_at: Completed 04.1-contact-batch-enrichment-workflow-01-PLAN.md
-last_updated: "2026-03-26T23:54:41.867Z"
+stopped_at: Completed 04.1-contact-batch-enrichment-workflow-02-PLAN.md
+last_updated: "2026-03-27T00:03:23.006Z"
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 18
-  completed_plans: 16
+  completed_plans: 17
 ---
 
 # Project State
@@ -24,7 +24,7 @@ See: `.planning/PROJECT.md` (updated 2026-03-23)
 ## Current Position
 
 Phase: 04.1 (contact-batch-enrichment-workflow) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Plan: 2 of 3
 | Phase 04 P02 | 16min | 2 tasks | 13 files |
 | Phase 04 P03 | 11min | 2 tasks | 17 files |
 | Phase 04.1-contact-batch-enrichment-workflow P01 | 5min | 2 tasks | 6 files |
+| Phase 04.1-contact-batch-enrichment-workflow P02 | 6 | 2 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -85,6 +86,9 @@ Recent decisions affecting current work:
 - [Phase 04.1]: Contact batches are mutable groupings above the append-only central enriched-people store; global enriched people are never deleted or re-enriched.
 - [Phase 04.1]: Batch enrichment must always skip Apollo calls for any Apollo person ID already present in the central enriched-people store, including unusable prior outcomes.
 - [Phase 04.1]: Contact batches now persist independently from recipes and dedupe membership by Apollo person ID while merging source snapshot provenance.
+- [Phase 04.1-contact-batch-enrichment-workflow]: /enrich now owns mutable batch management and member ingestion; /search/people is source-and-review only
+- [Phase 04.1-contact-batch-enrichment-workflow]: Saved people snapshots remain the only allowed source of new batch members; no manual Apollo ID entry was added
+- [Phase 04.1-contact-batch-enrichment-workflow]: Existing-batch snapshot ingestion updates batch timestamps so recently changed batches rise in the left rail
 
 ### Pending Todos
 
@@ -102,6 +106,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T23:54:41.862Z
-Stopped at: Completed 04.1-contact-batch-enrichment-workflow-01-PLAN.md
+Last session: 2026-03-27T00:03:22.998Z
+Stopped at: Completed 04.1-contact-batch-enrichment-workflow-02-PLAN.md
 Resume file: None

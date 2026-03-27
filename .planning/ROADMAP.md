@@ -134,5 +134,5 @@ Phases execute in numeric order: 1 -> 2 -> 2.1 -> 2.2 -> 3 -> 3.1 -> 4 -> 4.1 ->
 | 3. People Discovery and Run Planning | 3/3 | Complete | 2026-03-23 |
 | 03.1. Rework the search flow | 3/3 | Complete | 2026-03-24 |
 | 4. Retrieval Execution and Run Safety | 3/3 | Complete | 2026-03-24 |
-| 04.1. Contact Batch Enrichment Workflow | 1/3 | In Progress|  |
+| 04.1. Contact Batch Enrichment Workflow | 2/3 | In Progress|  |
 | 5. Verified Export and Repeatable Reruns | 0/2 | Not started | - |
