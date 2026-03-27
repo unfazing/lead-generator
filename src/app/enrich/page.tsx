@@ -5,6 +5,8 @@ import { z } from "zod";
 import { ContactBatchList } from "@/features/enrich/components/contact-batch-list";
 import { AddToBatchFromSnapshot } from "@/features/enrich/components/add-to-batch-from-snapshot";
 import { ContactBatchPanel } from "@/features/enrich/components/contact-batch-panel";
+import { EnrichedPeopleResults } from "@/features/retrieval-runs/components/enriched-people-results";
+import { RetrievalRunStatusCard } from "@/features/retrieval-runs/components/retrieval-run-status-card";
 import { WorkspaceEmptyState } from "@/features/search-workspace/components/workspace-empty-state";
 import {
   createContactBatch,
@@ -20,6 +22,9 @@ import {
 } from "@/lib/db/repositories/contact-batch-members";
 import { getEnrichedPeopleByApolloIds } from "@/lib/db/repositories/enriched-people";
 import { listPeopleSnapshots } from "@/lib/db/repositories/people-snapshots";
+import { getLatestRetrievalRunForContactBatch } from "@/lib/db/repositories/retrieval-runs";
+import { listEnrichedPeopleEntriesForBatch } from "@/lib/db/repositories/retrieval-run-items";
+import { buildRetrievalRunSummary } from "@/lib/retrieval/run-summary";
 
 type EnrichPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -125,6 +130,15 @@ export default async function EnrichPage({ searchParams }: EnrichPageProps) {
   const activeMembers = activeBatch
     ? await listContactBatchMembersWithCoverage(activeBatch.id)
     : [];
+  const activeRetrievalRun = activeBatch
+    ? await getLatestRetrievalRunForContactBatch(activeBatch.id)
+    : null;
+  const activeRetrievalSummary = activeRetrievalRun
+    ? await buildRetrievalRunSummary(activeRetrievalRun.id)
+    : null;
+  const activeEnrichedEntries = activeBatch
+    ? await listEnrichedPeopleEntriesForBatch(activeBatch.id)
+    : [];
   const enrichedByApolloId = await getEnrichedPeopleByApolloIds(
     activeMembers.map((member) => member.personApolloId),
   );
@@ -168,12 +182,22 @@ export default async function EnrichPage({ searchParams }: EnrichPageProps) {
             snapshots={peopleSnapshots}
           />
           {activeBatch ? (
-            <ContactBatchPanel
-              batch={activeBatch}
-              enrichedByApolloId={enrichedByApolloId}
-              members={activeMembers}
-              summary={activeBatchSummary}
-            />
+            <>
+              <ContactBatchPanel
+                batch={activeBatch}
+                enrichedByApolloId={enrichedByApolloId}
+                members={activeMembers}
+                summary={activeBatchSummary}
+              />
+              <RetrievalRunStatusCard initialSummary={activeRetrievalSummary} />
+              <EnrichedPeopleResults
+                emptyMessage="This batch has no stored enrichment outcomes yet."
+                entries={activeEnrichedEntries}
+                metaLabel="Batch results"
+                scopeLabel={`contact batch ${activeBatch.name}`}
+                title="Inspect stored outcomes for this contact batch"
+              />
+            </>
           ) : summaries.length === 0 ? (
             <WorkspaceEmptyState
               eyebrow="Enrichment workflow"

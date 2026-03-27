@@ -20,10 +20,16 @@ function getStringField(value: unknown, key: string) {
   return typeof candidate === "string" ? candidate : "";
 }
 
+function stringifyPayload(value: unknown) {
+  return value ? JSON.stringify(value) : "";
+}
+
 export default async function EnrichedPeopleStorePage() {
   const records = await listEnrichedPeople();
   const rows = records.map((record) => ({
     apollo_id: record.personApolloId,
+    fullName: getStringField(record.apolloPerson, "name"),
+    title: getStringField(record.apolloPerson, "title"),
     quality: record.quality,
     email: record.email ?? "",
     emailStatus: record.emailStatus ?? "",
@@ -36,7 +42,12 @@ export default async function EnrichedPeopleStorePage() {
       record.apolloPerson ? record.apolloPerson.organization : null,
       "name",
     ),
-    fullName: getStringField(record.apolloPerson, "name"),
+    companyApolloId: getStringField(
+      record.apolloPerson ? record.apolloPerson.organization : null,
+      "id",
+    ),
+    linkedinUrl: getStringField(record.apolloPerson, "linkedin_url"),
+    apolloPersonPayload: stringifyPayload(record.apolloPerson),
   }));
   const availableColumns = Array.from(
     new Set(rows.flatMap((row) => Object.keys(row))),
@@ -68,6 +79,7 @@ export default async function EnrichedPeopleStorePage() {
           scope: "append-only enriched-people store",
           dedupeKey: "personApolloId",
           skipRule: "Any stored Apollo person ID is skipped before Apollo enrichment",
+          payloadColumn: "apolloPersonPayload",
         }}
         snapshot={{
           result: {

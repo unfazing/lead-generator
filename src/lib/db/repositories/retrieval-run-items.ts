@@ -210,3 +210,44 @@ export async function listEnrichedPeopleEntriesForSnapshot(
     ),
   );
 }
+
+export async function listEnrichedPeopleEntriesForBatch(contactBatchId: string) {
+  const [runs, items] = await Promise.all([
+    listRetrievalRuns(),
+    readRetrievalRunItems(),
+  ]);
+  const runsForBatch = runs.filter((run) => run.contactBatchId === contactBatchId);
+  const runMap = new Map(runsForBatch.map((run) => [run.id, run]));
+  const latestByPerson = new Map<string, EnrichedPeopleEntry>();
+
+  for (const item of items) {
+    const run = runMap.get(item.runId);
+    if (!run || item.executionStatus !== "completed") {
+      continue;
+    }
+
+    const entry: EnrichedPeopleEntry = {
+      ...item,
+      peopleSnapshotId: run.peopleSnapshotId,
+      retrievalStatus: run.status,
+    };
+    const existing = latestByPerson.get(item.personApolloId);
+
+    if (!existing) {
+      latestByPerson.set(item.personApolloId, entry);
+      continue;
+    }
+
+    const existingTime = existing.completedAt ?? existing.updatedAt;
+    const nextTime = entry.completedAt ?? entry.updatedAt;
+    if (nextTime.localeCompare(existingTime) >= 0) {
+      latestByPerson.set(item.personApolloId, entry);
+    }
+  }
+
+  return Array.from(latestByPerson.values()).sort((left, right) =>
+    (right.completedAt ?? right.updatedAt).localeCompare(
+      left.completedAt ?? left.updatedAt,
+    ),
+  );
+}
