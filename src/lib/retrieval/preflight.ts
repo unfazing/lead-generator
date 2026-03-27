@@ -1,7 +1,13 @@
-import type { PeoplePreviewRow } from "@/lib/apollo/people-search";
 import { getEnrichedPeopleByApolloIds } from "@/lib/db/repositories/enriched-people";
 import type { RetrievalRunItemRecord } from "@/lib/db/repositories/retrieval-run-items";
 import { isVerifiedBusinessEmailQuality } from "@/lib/retrieval/quality";
+
+type RetrievalPreflightRow = {
+  apollo_id: string;
+  full_name: string;
+  title: string;
+  company_name: string;
+};
 
 export type RetrievalPreflightCounts = {
   pendingCallCount: number;
@@ -30,7 +36,7 @@ export type PreflightSeedItem = Pick<
 >;
 
 export async function buildRetrievalPreflight(
-  rows: PeoplePreviewRow[],
+  rows: RetrievalPreflightRow[],
   maxContacts: number,
 ) {
   const limitedRows = rows.slice(0, maxContacts);

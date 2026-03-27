@@ -25,6 +25,7 @@ const retrievalRunLeaseSchema = z.object({
 export const retrievalRunRecordSchema = z.object({
   id: z.string().min(1),
   peopleSnapshotId: z.string().min(1),
+  contactBatchId: z.string().min(1).nullable().default(null),
   companyRecipeId: z.string().min(1),
   peopleRecipeId: z.string().min(1),
   companySnapshotId: z.string().min(1),
@@ -131,12 +132,22 @@ export async function getLatestRetrievalRunForPeopleSnapshot(
   );
 }
 
+export async function getLatestRetrievalRunForContactBatch(contactBatchId: string) {
+  const records = await readRetrievalRuns();
+  return (
+    records
+      .filter((record) => record.contactBatchId === contactBatchId)
+      .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0] ?? null
+  );
+}
+
 export async function createRetrievalRunFromPlan(
   input: {
     companyRecipeId: string;
     peopleRecipeId: string;
     companySnapshotId: string;
     peopleSnapshotId: string;
+    contactBatchId?: string | null;
     maxContacts: number;
     estimatedContacts: number;
     estimateSummary: string;
@@ -149,6 +160,7 @@ export async function createRetrievalRunFromPlan(
   const run: RetrievalRunRecord = {
     id: randomUUID(),
     peopleSnapshotId: input.peopleSnapshotId,
+    contactBatchId: input.contactBatchId ?? null,
     companyRecipeId: input.companyRecipeId,
     peopleRecipeId: input.peopleRecipeId,
     companySnapshotId: input.companySnapshotId,

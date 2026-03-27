@@ -13,9 +13,11 @@ import {
 } from "@/lib/db/repositories/company-snapshots";
 import {
   createContactBatch,
+  getContactBatchById,
   updateContactBatch,
 } from "@/lib/db/repositories/contact-batches";
 import {
+  listContactBatchMembersWithCoverage,
   upsertContactBatchMembers,
 } from "@/lib/db/repositories/contact-batch-members";
 import {
@@ -28,6 +30,7 @@ import { getRetrievalRunById } from "@/lib/db/repositories/retrieval-runs";
 import {
   executeRetrievalRun,
   getRetrievalRunResumeSummary,
+  kickoffRetrievalRunForBatch,
   kickoffRetrievalRun,
 } from "@/lib/retrieval/execution";
 import {
@@ -245,6 +248,12 @@ const addSnapshotPeopleToBatchSchema = z.discriminatedUnion("destinationMode", [
     newBatchNotes: z.string().default(""),
   }),
 ]);
+
+const enrichBatchSchema = z.object({
+  batchId: z.string().min(1),
+  mode: z.enum(["selected", "all-missing"]),
+  selectedApolloIds: z.array(z.string().min(1)).default([]),
+});
 
 export async function runPeopleSearchAction(formData: FormData) {
   const peopleRecipeId = formData.get("peopleRecipeId");
@@ -485,6 +494,90 @@ export async function addSnapshotPeopleToBatchAction(formData: FormData) {
   revalidatePath("/enrich");
   revalidatePath("/search/people");
   redirect(`/enrich?batch=${batch.id}&sourceSnapshot=${snapshot.id}`);
+}
+
+export async function enrichContactBatchAction(formData: FormData) {
+  const parsed = enrichBatchSchema.parse({
+    batchId: formData.get("batchId"),
+    mode: formData.get("mode"),
+    selectedApolloIds: JSON.parse(String(formData.get("selectedApolloIds") ?? "[]")),
+  });
+
+  const batch = await getContactBatchById(parsed.batchId);
+  if (!batch) {
+    throw new Error("Contact batch not found");
+  }
+
+  const members = await listContactBatchMembersWithCoverage(parsed.batchId);
+  if (members.length === 0) {
+    throw new Error("Add at least one batch member before starting enrichment");
+  }
+
+  const selectedApolloIds =
+    parsed.mode === "selected" ? new Set(parsed.selectedApolloIds) : null;
+  const requestedMembers = members.filter((member) =>
+    selectedApolloIds ? selectedApolloIds.has(member.personApolloId) : !member.alreadyEnriched,
+  );
+
+  if (requestedMembers.length === 0) {
+    throw new Error(
+      parsed.mode === "selected"
+        ? "Select at least one globally missing member before starting enrichment"
+        : "This batch has no globally missing members to enrich",
+    );
+  }
+
+  const latestSource =
+    requestedMembers
+      .flatMap((member) =>
+        member.provenance.map((entry) => ({
+          ...entry,
+          personApolloId: member.personApolloId,
+        })),
+      )
+      .sort((left, right) => right.addedAt.localeCompare(left.addedAt))[0] ?? null;
+
+  if (!latestSource) {
+    throw new Error("Batch member provenance is required before enrichment");
+  }
+
+  const snapshot = await getPeopleSnapshotById(latestSource.peopleSnapshotId);
+  if (!snapshot) {
+    throw new Error("Source people snapshot not found for batch enrichment");
+  }
+
+  const selectedMissingApolloIds = requestedMembers
+    .filter((member) => !member.alreadyEnriched)
+    .map((member) => member.personApolloId);
+
+  const run = await kickoffRetrievalRunForBatch({
+    batchId: batch.id,
+    companyRecipeId: snapshot.companyRecipeId,
+    peopleRecipeId: snapshot.peopleRecipeId,
+    companySnapshotId: snapshot.companySnapshotId,
+    peopleSnapshotId: snapshot.id,
+    maxContacts: requestedMembers.length,
+    estimatedContacts: selectedMissingApolloIds.length,
+    estimateSummary: `${selectedMissingApolloIds.length} globally missing contact${
+      selectedMissingApolloIds.length === 1 ? "" : "s"
+    } selected for batch enrichment`,
+    estimateNote:
+      "Batch enrichment re-checks the global enriched-people store before Apollo calls and skips any person already handled there, including unusable outcomes.",
+    members: requestedMembers.map((member) => ({
+      personApolloId: member.personApolloId,
+      fullName: member.fullName,
+      title: member.title,
+      companyName: member.companyName,
+    })),
+    selectedApolloIds:
+      parsed.mode === "selected"
+        ? requestedMembers.map((member) => member.personApolloId)
+        : undefined,
+  });
+
+  revalidatePath("/enrich");
+  revalidatePath("/enrich/store");
+  redirect(`/enrich?batch=${batch.id}&retrievalRun=${run.id}`);
 }
 
 export async function resumeRetrievalRunAction(formData: FormData) {

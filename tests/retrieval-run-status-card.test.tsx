@@ -49,6 +49,7 @@ describe("retrieval-run-status-card", () => {
           run: {
             id: "run-1",
             peopleSnapshotId: "snapshot-1",
+            contactBatchId: null,
             companyRecipeId: "company-recipe-1",
             peopleRecipeId: "people-recipe-1",
             companySnapshotId: "company-snapshot-1",

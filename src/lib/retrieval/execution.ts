@@ -29,30 +29,41 @@ import {
 const DEFAULT_BATCH_SIZE = 10;
 const DEFAULT_THROTTLE_MS = 50;
 
-export async function kickoffRetrievalRun(input: {
+type RetrievalSeedRow = {
+  apollo_id: string;
+  full_name: string;
+  title: string;
+  company_name: string;
+};
+
+function normalizeSeedRows(
+  rows: RetrievalSeedRow[],
+  selectedApolloIds?: string[],
+) {
+  const selectedApolloIdSet = selectedApolloIds?.length
+    ? new Set(selectedApolloIds)
+    : null;
+
+  return selectedApolloIdSet
+    ? rows.filter((row) => selectedApolloIdSet.has(row.apollo_id))
+    : rows;
+}
+
+async function kickoffRetrievalRunForRows(input: {
   companyRecipeId: string;
   peopleRecipeId: string;
   companySnapshotId: string;
   peopleSnapshotId: string;
+  contactBatchId?: string | null;
   maxContacts: number;
   estimatedContacts: number;
   estimateSummary: string;
   estimateNote: string;
+  rows: RetrievalSeedRow[];
   selectedApolloIds?: string[];
   autoExecute?: boolean;
 }) {
-  const snapshot = await getPeopleSnapshotById(input.peopleSnapshotId);
-
-  if (!snapshot) {
-    throw new Error("People snapshot not found");
-  }
-
-  const selectedApolloIds = input.selectedApolloIds?.length
-    ? new Set(input.selectedApolloIds)
-    : null;
-  const eligibleRows = selectedApolloIds
-    ? snapshot.result.rows.filter((row) => selectedApolloIds.has(row.apollo_id))
-    : snapshot.result.rows;
+  const eligibleRows = normalizeSeedRows(input.rows, input.selectedApolloIds);
   const preflight = await buildRetrievalPreflight(eligibleRows, input.maxContacts);
   const totalItems = preflight.items.length;
   const run = await createRetrievalRunFromPlan(input, totalItems);
@@ -77,6 +88,66 @@ export async function kickoffRetrievalRun(input: {
     void executeRetrievalRun(run.id);
   }
   return run;
+}
+
+export async function kickoffRetrievalRun(input: {
+  companyRecipeId: string;
+  peopleRecipeId: string;
+  companySnapshotId: string;
+  peopleSnapshotId: string;
+  maxContacts: number;
+  estimatedContacts: number;
+  estimateSummary: string;
+  estimateNote: string;
+  selectedApolloIds?: string[];
+  autoExecute?: boolean;
+}) {
+  const snapshot = await getPeopleSnapshotById(input.peopleSnapshotId);
+
+  if (!snapshot) {
+    throw new Error("People snapshot not found");
+  }
+
+  return kickoffRetrievalRunForRows({
+    ...input,
+    rows: snapshot.result.rows.map((row) => ({
+      apollo_id: row.apollo_id,
+      full_name: row.full_name,
+      title: row.title,
+      company_name: row.company_name,
+    })),
+  });
+}
+
+export async function kickoffRetrievalRunForBatch(input: {
+  batchId: string;
+  companyRecipeId: string;
+  peopleRecipeId: string;
+  companySnapshotId: string;
+  peopleSnapshotId: string;
+  maxContacts: number;
+  estimatedContacts: number;
+  estimateSummary: string;
+  estimateNote: string;
+  members: Array<{
+    personApolloId: string;
+    fullName: string;
+    title: string;
+    companyName: string;
+  }>;
+  selectedApolloIds?: string[];
+  autoExecute?: boolean;
+}) {
+  return kickoffRetrievalRunForRows({
+    ...input,
+    contactBatchId: input.batchId,
+    rows: input.members.map((member) => ({
+      apollo_id: member.personApolloId,
+      full_name: member.fullName,
+      title: member.title,
+      company_name: member.companyName,
+    })),
+  });
 }
 
 function toTargets(items: Awaited<ReturnType<typeof listRetrievalRunItems>>): EnrichmentTarget[] {
