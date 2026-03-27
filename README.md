@@ -106,8 +106,8 @@ SSH into the instance and run:
 ```bash
 sudo apt update
 sudo apt install -y nginx git curl
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-sudo apt install -y nodejs
+curl -fsSL https://deb.nodesource.com/setup_24.x | sudo -E bash -
+sudo apt-get install -y nodejs
 node -v
 npm -v
 ```
@@ -116,14 +116,14 @@ npm -v
 
 ```bash
 cd /home/ubuntu
-git clone YOUR_REPO_URL apollo
-cd /home/ubuntu/apollo
+git clone YOUR_REPO_URL lead-generator
+cd /home/ubuntu/lead-generator
 npm ci
 ```
 
 ### 7. Create the production environment file
 
-Create `/home/ubuntu/apollo/.env.production`:
+Create `/home/ubuntu/lead-generator/.env.production`:
 
 ```dotenv
 NODE_ENV=production
@@ -143,14 +143,14 @@ Notes:
 The current app persists JSON data on disk, so make sure the directory exists and is writable:
 
 ```bash
-mkdir -p /home/ubuntu/apollo/data
-sudo chown -R ubuntu:ubuntu /home/ubuntu/apollo
+mkdir -p /home/ubuntu/lead-generator/data
+sudo chown -R ubuntu:ubuntu /home/ubuntu/lead-generator
 ```
 
 ### 9. Build the app
 
 ```bash
-cd /home/ubuntu/apollo
+cd /home/ubuntu/lead-generator
 npm run build
 ```
 
@@ -164,7 +164,7 @@ If that works, stop it with `Ctrl+C` and continue with `systemd`.
 
 ### 10. Run the app with systemd
 
-Create `/etc/systemd/system/apollo.service`:
+Create `/etc/systemd/system/lead-generator.service`:
 
 ```ini
 [Unit]
@@ -174,9 +174,9 @@ After=network.target
 [Service]
 Type=simple
 User=ubuntu
-WorkingDirectory=/home/ubuntu/apollo
+WorkingDirectory=/home/ubuntu/lead-generator
 Environment=NODE_ENV=production
-EnvironmentFile=/home/ubuntu/apollo/.env.production
+EnvironmentFile=/home/ubuntu/lead-generator/.env.production
 ExecStart=/usr/bin/npm run start
 Restart=always
 RestartSec=5
@@ -189,14 +189,14 @@ Enable and start it:
 
 ```bash
 sudo systemctl daemon-reload
-sudo systemctl enable apollo
-sudo systemctl start apollo
-sudo systemctl status apollo
+sudo systemctl enable lead-generator
+sudo systemctl start lead-generator
+sudo systemctl status lead-generator
 ```
 
 ### 11. Configure Nginx
 
-Create `/etc/nginx/sites-available/apollo`:
+Create `/etc/nginx/sites-available/lead-generator`:
 
 ```nginx
 server {
@@ -219,7 +219,7 @@ server {
 Enable the site:
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/apollo /etc/nginx/sites-enabled/apollo
+sudo ln -s /etc/nginx/sites-available/lead-generator /etc/nginx/sites-enabled/lead-generator
 sudo nginx -t
 sudo systemctl reload nginx
 ```
@@ -252,11 +252,11 @@ sudo certbot renew --dry-run
 For a simple manual deploy:
 
 ```bash
-cd /home/ubuntu/apollo
+cd /home/ubuntu/lead-generator
 git pull
 npm ci
 npm run build
-sudo systemctl restart apollo
+sudo systemctl restart lead-generator
 ```
 
 ## Operations Notes
@@ -271,13 +271,13 @@ sudo systemctl restart apollo
 Check app service logs:
 
 ```bash
-sudo journalctl -u apollo -n 200 --no-pager
+sudo journalctl -u lead-generator -n 200 --no-pager
 ```
 
 Restart the app:
 
 ```bash
-sudo systemctl restart apollo
+sudo systemctl restart lead-generator
 ```
 
 Check Nginx status:
