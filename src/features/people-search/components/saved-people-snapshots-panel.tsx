@@ -33,7 +33,7 @@ export function SavedPeopleSnapshotsPanel({
 
     const requestedOrganizations =
       activeSnapshot.result.request.organizationIds.length;
-    const sourceSnapshotCount = activeSnapshot.organizationImports.length || 1;
+    const sourceSnapshotCount = activeSnapshot.organizationImports.length;
     const selectedImportCount = activeSnapshot.organizationImports.filter(
       (entry) => entry.importMode === "selected",
     ).length;
@@ -83,7 +83,11 @@ export function SavedPeopleSnapshotsPanel({
                 </div>
                 <div className="compact-summary-item">
                   <dt>Source snapshots</dt>
-                  <dd>{querySummary.sourceSnapshotCount}</dd>
+                  <dd>
+                    {querySummary.sourceSnapshotCount > 0
+                      ? querySummary.sourceSnapshotCount
+                      : "Direct recipe run"}
+                  </dd>
                 </div>
                 <div className="compact-summary-item">
                   <dt>Companies queried</dt>

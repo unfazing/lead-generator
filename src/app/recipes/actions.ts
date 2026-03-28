@@ -245,6 +245,13 @@ const enrichBatchSchema = z.object({
   selectedApolloIds: z.array(z.string().min(1)).default([]),
 });
 
+function getRecipeOnlyPeopleSearchSourceIds(peopleRecipeId: string) {
+  return {
+    companyRecipeId: `recipe-only:${peopleRecipeId}`,
+    companySnapshotId: `recipe-only:${peopleRecipeId}`,
+  };
+}
+
 export async function runPeopleSearchAction(formData: FormData) {
   const peopleRecipeId = formData.get("peopleRecipeId");
 
@@ -257,33 +264,35 @@ export async function runPeopleSearchAction(formData: FormData) {
     throw new Error("Selected recipe is not a people recipe");
   }
 
-  if (peopleRecipe.organizationImports.length === 0) {
-    throw new Error("Apply one or more company snapshots to the people recipe before running search");
-  }
-
   const payload = peopleSearchPayloadSchema.parse(peopleRecipe.peopleFilters);
-  const primaryImport = peopleRecipe.organizationImports[0];
   const sourceSnapshotIds = peopleRecipe.organizationImports.map(
     (entry) => entry.snapshotId,
   );
+  const primaryImport = peopleRecipe.organizationImports[0] ?? null;
+  const sourceIds = primaryImport
+    ? {
+        companyRecipeId: primaryImport.companyRecipeId,
+        companySnapshotId: primaryImport.snapshotId,
+      }
+    : getRecipeOnlyPeopleSearchSourceIds(peopleRecipeId);
 
   const request = {
     ...payload,
-    companyRecipeId: primaryImport.companyRecipeId,
-    companySnapshotId: primaryImport.snapshotId,
+    companyRecipeId: sourceIds.companyRecipeId,
+    companySnapshotId: sourceIds.companySnapshotId,
     peopleRecipeId,
-    mode: primaryImport.importMode,
-    selectedCompanyIds: [],
+    mode: primaryImport?.importMode ?? "all",
+    selectedCompanyIds: primaryImport?.selectedCompanyIds ?? [],
   };
 
   const result = await searchPeople(request);
   await savePeopleSnapshot(
     {
-      companyRecipeId: primaryImport.companyRecipeId,
-      companySnapshotId: primaryImport.snapshotId,
+      companyRecipeId: sourceIds.companyRecipeId,
+      companySnapshotId: sourceIds.companySnapshotId,
       peopleRecipeId,
       recipeParams: payload,
-      selectionMode: primaryImport.importMode,
+      selectionMode: primaryImport?.importMode ?? "all",
       selectedCompanyIds: payload.organizationIds,
       organizationImports: peopleRecipe.organizationImports,
     },
