@@ -338,7 +338,6 @@ export function PeopleSearchPanel({
           <input type="hidden" name="peopleRecipeId" value={peopleRecipe.id} />
           <button
             className="primary-button"
-            disabled={peopleRecipe.peopleFilters.organizationIds.length === 0}
             type="submit"
           >
             Run people search
