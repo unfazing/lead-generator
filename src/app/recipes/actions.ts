@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { searchCompanies, createCompanySearchSignature } from "@/lib/apollo/company-search";
-import { searchPeople } from "@/lib/apollo/people-search";
+import { searchPeople, searchPeopleAcrossPages } from "@/lib/apollo/people-search";
 import {
   getCompanySnapshotById,
   getLatestSnapshotForSignature,
@@ -245,6 +245,11 @@ const enrichBatchSchema = z.object({
   selectedApolloIds: z.array(z.string().min(1)).default([]),
 });
 
+const finalizePeopleSearchSchema = z.object({
+  peopleRecipeId: z.string().min(1),
+  desiredCount: z.union([z.literal("all"), z.coerce.number().int().min(1)]),
+});
+
 function getRecipeOnlyPeopleSearchSourceIds(peopleRecipeId: string) {
   return {
     companyRecipeId: `recipe-only:${peopleRecipeId}`,
@@ -285,29 +290,102 @@ export async function runPeopleSearchAction(formData: FormData) {
     selectedCompanyIds: primaryImport?.selectedCompanyIds ?? [],
   };
 
-  const result = await searchPeople(request);
-  await savePeopleSnapshot(
-    {
-      companyRecipeId: sourceIds.companyRecipeId,
-      companySnapshotId: sourceIds.companySnapshotId,
-      peopleRecipeId,
-      recipeParams: payload,
-      selectionMode: primaryImport?.importMode ?? "all",
-      selectedCompanyIds: payload.organizationIds,
-      organizationImports: peopleRecipe.organizationImports,
-    },
-    result,
-  );
-
-  revalidatePath("/search");
-  revalidatePath("/search/people");
-  const query = buildSearchWorkspaceQuery({
+  const baseQuery = buildSearchWorkspaceQuery({
     workflow: "people",
     peopleRecipeId,
     retrievalRunId: null,
     sourceSnapshotIds,
   });
-  redirect(`/search/people?${query}`);
+
+  try {
+    const result = await searchPeople({
+      ...request,
+      page: 1,
+    });
+    const query = new URLSearchParams(baseQuery);
+    query.set("peopleSearchStatus", "preview");
+    query.set("peopleSearchTotalEntries", String(result.totalDisplayCount));
+    redirect(`/search/people?${query.toString()}`);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "People search failed unexpectedly.";
+    const query = new URLSearchParams(baseQuery);
+    query.set("peopleSearchStatus", "error");
+    query.set("peopleSearchError", message);
+    redirect(`/search/people?${query.toString()}`);
+  }
+}
+
+export async function finalizePeopleSearchAction(formData: FormData) {
+  const parsed = finalizePeopleSearchSchema.parse({
+    peopleRecipeId: formData.get("peopleRecipeId"),
+    desiredCount: String(formData.get("desiredCount") ?? ""),
+  });
+  const peopleRecipe = await getRecipeById(parsed.peopleRecipeId);
+
+  if (!peopleRecipe || peopleRecipe.type !== "people") {
+    throw new Error("Selected recipe is not a people recipe");
+  }
+
+  const payload = peopleSearchPayloadSchema.parse(peopleRecipe.peopleFilters);
+  const sourceSnapshotIds = peopleRecipe.organizationImports.map(
+    (entry) => entry.snapshotId,
+  );
+  const primaryImport = peopleRecipe.organizationImports[0] ?? null;
+  const sourceIds = primaryImport
+    ? {
+        companyRecipeId: primaryImport.companyRecipeId,
+        companySnapshotId: primaryImport.snapshotId,
+      }
+    : getRecipeOnlyPeopleSearchSourceIds(parsed.peopleRecipeId);
+
+  const request = {
+    ...payload,
+    companyRecipeId: sourceIds.companyRecipeId,
+    companySnapshotId: sourceIds.companySnapshotId,
+    peopleRecipeId: parsed.peopleRecipeId,
+    mode: primaryImport?.importMode ?? "all",
+    selectedCompanyIds: primaryImport?.selectedCompanyIds ?? [],
+  };
+
+  const baseQuery = buildSearchWorkspaceQuery({
+    workflow: "people",
+    peopleRecipeId: parsed.peopleRecipeId,
+    retrievalRunId: null,
+    sourceSnapshotIds,
+  });
+
+  try {
+    const result = await searchPeopleAcrossPages(request, parsed.desiredCount);
+    await savePeopleSnapshot(
+      {
+        companyRecipeId: sourceIds.companyRecipeId,
+        companySnapshotId: sourceIds.companySnapshotId,
+        peopleRecipeId: parsed.peopleRecipeId,
+        recipeParams: payload,
+        selectionMode: primaryImport?.importMode ?? "all",
+        selectedCompanyIds: payload.organizationIds,
+        organizationImports: peopleRecipe.organizationImports,
+      },
+      result,
+    );
+
+    revalidatePath("/search");
+    revalidatePath("/search/people");
+
+    const query = new URLSearchParams(baseQuery);
+    query.set("peopleSearchStatus", "success");
+    query.set("peopleSearchTotalEntries", String(result.totalDisplayCount));
+    query.set("peopleSearchRetrievedCount", String(result.rows.length));
+    redirect(`/search/people?${query.toString()}`);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "People search failed unexpectedly.";
+    const query = new URLSearchParams(baseQuery);
+    query.set("peopleSearchStatus", "error");
+    query.set("peopleSearchError", message);
+    redirect(`/search/people?${query.toString()}`);
+  }
 }
 
 export async function applyCompaniesToPeopleRecipeAction(formData: FormData) {

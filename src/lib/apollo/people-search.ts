@@ -44,6 +44,19 @@ function getPagination(value: unknown): ApolloPagination {
   return value as ApolloPagination;
 }
 
+function getNumericValue(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+
+  return undefined;
+}
+
 function compactPayload(payload: Record<string, unknown>) {
   return Object.fromEntries(
     Object.entries(payload).filter(([, value]) => {
@@ -278,6 +291,18 @@ export async function searchPeople(request: PeopleSearchRequest) {
       ? payloadJson.contacts
       : [];
   const pagination = getPagination(payloadJson.pagination);
+  const totalEntries =
+    getNumericValue(payloadJson.total_entries) ??
+    getNumericValue(pagination.total_entries) ??
+    people.length;
+  const resolvedPage =
+    getNumericValue(payloadJson.page) ??
+    getNumericValue(pagination.page) ??
+    normalized.page;
+  const resolvedPerPage =
+    getNumericValue(payloadJson.per_page) ??
+    getNumericValue(pagination.per_page) ??
+    normalized.perPage;
   const rows = people
     .filter(
       (value): value is Record<string, unknown> =>
@@ -290,11 +315,66 @@ export async function searchPeople(request: PeopleSearchRequest) {
     fetchedAt: new Date().toISOString(),
     request: normalized,
     rows,
-    page: Number(pagination.page ?? normalized.page),
-    perPage: Number(pagination.per_page ?? normalized.perPage),
-    totalDisplayCount: Number(pagination.total_entries ?? rows.length),
-    hasMore: rows.length === normalized.perPage,
+    page: resolvedPage,
+    perPage: resolvedPerPage,
+    totalDisplayCount: totalEntries,
+    hasMore: resolvedPage * resolvedPerPage < totalEntries,
     availableColumns: Object.keys(rows[0] ?? {}),
     source: "live" as const,
+  };
+}
+
+export async function searchPeopleAcrossPages(
+  request: PeopleSearchRequest,
+  desiredCount: number | "all",
+) {
+  const firstPage = await searchPeople({
+    ...request,
+    page: 1,
+  });
+
+  const cappedDesiredCount =
+    desiredCount === "all"
+      ? firstPage.totalDisplayCount
+      : Math.max(1, Math.min(desiredCount, firstPage.totalDisplayCount));
+
+  if (!firstPage.hasMore || firstPage.rows.length >= cappedDesiredCount) {
+    const rows = firstPage.rows.slice(0, cappedDesiredCount);
+    return {
+      ...firstPage,
+      rows,
+      availableColumns: Array.from(
+        new Set(rows.flatMap((row) => Object.keys(row))),
+      ),
+      hasMore: cappedDesiredCount < firstPage.totalDisplayCount,
+    };
+  }
+
+  const allRows = [...firstPage.rows];
+  const totalPages = Math.ceil(cappedDesiredCount / firstPage.perPage);
+
+  for (let page = 2; page <= totalPages; page += 1) {
+    const nextPage = await searchPeople({
+      ...request,
+      page,
+      perPage: firstPage.perPage,
+    });
+
+    allRows.push(...nextPage.rows);
+
+    if (!nextPage.hasMore || allRows.length >= cappedDesiredCount) {
+      break;
+    }
+  }
+
+  const rows = allRows.slice(0, cappedDesiredCount);
+
+  return {
+    ...firstPage,
+    rows,
+    availableColumns: Array.from(
+      new Set(rows.flatMap((row) => Object.keys(row))),
+    ),
+    hasMore: cappedDesiredCount < firstPage.totalDisplayCount,
   };
 }
