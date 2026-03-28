@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 import { z } from "zod";
 import { searchCompanies, createCompanySearchSignature } from "@/lib/apollo/company-search";
 import { searchPeople, searchPeopleAcrossPages } from "@/lib/apollo/people-search";
@@ -307,6 +308,10 @@ export async function runPeopleSearchAction(formData: FormData) {
     query.set("peopleSearchTotalEntries", String(result.totalDisplayCount));
     redirect(`/search/people?${query.toString()}`);
   } catch (error) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
+
     const message =
       error instanceof Error ? error.message : "People search failed unexpectedly.";
     const query = new URLSearchParams(baseQuery);
@@ -379,6 +384,10 @@ export async function finalizePeopleSearchAction(formData: FormData) {
     query.set("peopleSearchRetrievedCount", String(result.rows.length));
     redirect(`/search/people?${query.toString()}`);
   } catch (error) {
+    if (isRedirectError(error)) {
+      throw error;
+    }
+
     const message =
       error instanceof Error ? error.message : "People search failed unexpectedly.";
     const query = new URLSearchParams(baseQuery);
