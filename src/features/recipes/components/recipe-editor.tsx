@@ -71,7 +71,9 @@ export function RecipeEditor(props: RecipeEditorProps) {
     props.type === "company" ? props.draft.companyFilters.organizationName : "",
   );
   const [organizationDomains, setOrganizationDomains] = useState(
-    props.type === "company" ? props.draft.companyFilters.qOrganizationDomainsList : [],
+    props.type === "company"
+      ? props.draft.companyFilters.qOrganizationDomainsList
+      : props.draft.peopleFilters.qOrganizationDomainsList,
   );
 
   useEffect(() => {
@@ -495,11 +497,22 @@ export function RecipeEditor(props: RecipeEditorProps) {
                 values={props.draft.peopleFilters.organizationLocations}
               />
               <MultiValueInput
+                actions={
+                  <CompanyListImporter
+                    onImport={(domains) => {
+                      setOrganizationDomains((current) =>
+                        Array.from(new Set([...current, ...domains])),
+                      );
+                      setIsDirty(true);
+                    }}
+                  />
+                }
                 hint="Add employer domains without www or @."
                 label="Employer domains"
                 name="qOrganizationDomainsList"
                 placeholder="apollo.io"
-                values={props.draft.peopleFilters.qOrganizationDomainsList}
+                onValuesChange={setOrganizationDomains}
+                values={organizationDomains}
               />
               <MultiValueInput
                 hint="Paste Apollo organization IDs one by one."
