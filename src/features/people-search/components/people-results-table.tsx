@@ -27,11 +27,13 @@ export function PeopleResultsTable({
   snapshot,
   summarySlot,
 }: PeopleResultsTableProps) {
-  const paramsForViewer = {
-    ...snapshot?.recipeParams,
-    organizationIds: snapshot?.recipeParams.organizationIds,
-    selectionMode: snapshot?.selectionMode,
-  };
+  const paramsForViewer = snapshot
+    ? {
+        ...snapshot.result.request,
+        queriedOrganizationCount: snapshot.result.request.organizationIds.length,
+        sourceSnapshotCount: snapshot.organizationImports.length || 1,
+      }
+    : {};
 
   return (
     <DataSnapshotViewer
