@@ -1,4 +1,5 @@
 import { PeopleSearchPanel } from "@/features/people-search/components/people-search-panel";
+import { PeopleSearchRunAlert } from "@/features/people-search/components/people-search-run-alert";
 import { SavedPeopleSnapshotsPanel } from "@/features/people-search/components/saved-people-snapshots-panel";
 import { RecipeEditor } from "@/features/recipes/components/recipe-editor";
 import { RecipeList } from "@/features/recipes/components/recipe-list";
@@ -92,6 +93,13 @@ export default async function PeopleSearchPage({ searchParams }: SearchPageProps
 
   return (
     <main className="shell workspace-shell">
+      <PeopleSearchRunAlert
+        error={getSingleParam(params, "peopleSearchError")}
+        peopleRecipeId={getSingleParam(params, "peopleRecipe")}
+        retrievedCount={getSingleParam(params, "peopleSearchRetrievedCount")}
+        status={getSingleParam(params, "peopleSearchStatus")}
+        totalEntries={getSingleParam(params, "peopleSearchTotalEntries")}
+      />
       <section className="workspace-panel search-hero">
         <div className="workspace-header">
           <p className="eyebrow">People workflow</p>

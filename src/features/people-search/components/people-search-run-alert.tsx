@@ -1,23 +1,31 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { finalizePeopleSearchAction } from "@/app/recipes/actions";
 
-export function PeopleSearchRunAlert() {
+type PeopleSearchRunAlertProps = {
+  status?: string | null;
+  peopleRecipeId?: string | null;
+  totalEntries?: string | null;
+  retrievedCount?: string | null;
+  error?: string | null;
+};
+
+export function PeopleSearchRunAlert({
+  status = null,
+  peopleRecipeId = null,
+  totalEntries = null,
+  retrievedCount = null,
+  error = null,
+}: PeopleSearchRunAlertProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const formRef = useRef<HTMLFormElement>(null);
-  const status = searchParams.get("peopleSearchStatus");
-  const peopleRecipeId = searchParams.get("peopleRecipe");
-  const totalEntries = searchParams.get("peopleSearchTotalEntries");
-  const retrievedCount = searchParams.get("peopleSearchRetrievedCount");
-  const error = searchParams.get("peopleSearchError");
   const [desiredCount, setDesiredCount] = useState<string | null>(null);
 
   function clearQueryFeedback() {
-    const nextParams = new URLSearchParams(searchParams.toString());
+    const nextParams = new URLSearchParams(window.location.search);
     nextParams.delete("peopleSearchStatus");
     nextParams.delete("peopleSearchTotalEntries");
     nextParams.delete("peopleSearchRetrievedCount");
@@ -93,7 +101,6 @@ export function PeopleSearchRunAlert() {
     peopleRecipeId,
     retrievedCount,
     router,
-    searchParams,
     status,
     totalEntries,
   ]);
